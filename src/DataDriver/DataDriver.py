@@ -30,10 +30,16 @@ class DataDriver:
                  dialect='Excel-DE',
                  encoding='cp1252'):
 
+        self.ROBOT_LIBRARY_LISTENER = self
+
         self.file = file
         self.csv_dialect = dialect
         self.csv_encoding = encoding
-        self.ROBOT_LIBRARY_LISTENER = self
+
+        self.suite_source = None
+        self.template_test = None
+        self.template_keyword = None
+        self.data_table = None
 
     def _start_suite(self, suite, result):
         self.suite_source = suite.source
@@ -113,7 +119,7 @@ class DataDriver:
 
 
     def _create_test_from_template(self):
-        self.test =  deepcopy(self.template_test)
+        self.test = deepcopy(self.template_test)
         self._replace_test_case_name()
         self._replace_test_case_keywords()
         self._add_test_case_tags()
@@ -132,12 +138,12 @@ class DataDriver:
         self.test.keywords.clear()
         if self.template_test.keywords.setup != None:
             self.test.keywords.create(name=self.template_test.keywords.setup.name, type='setup',
-                                 args=self.template_test.keywords.setup.args)
+                                      args=self.template_test.keywords.setup.args)
         self.test.keywords.create(name=self.template_keyword.name,
-                             args=self._get_template_args_for_index())
+                                  args=self._get_template_args_for_index())
         if self.template_test.keywords.teardown != None:
             self.test.keywords.create(name=self.template_test.keywords.teardown.name, type='teardown',
-                                 args=self.template_test.keywords.teardown.args)
+                                      args=self.template_test.keywords.teardown.args)
 
     def _replace_test_case_name(self):
         if self.data_table[self.TESTCASE_HEADER][self.index] == '':
@@ -145,7 +151,7 @@ class DataDriver:
                 if key[:1] == '$':
                     self.test.name = self.test.name.replace(key, self.data_table[key][self.index])
         else:
-           self.test.name = self.data_table[self.TESTCASE_HEADER][self.index]
+            self.test.name = self.data_table[self.TESTCASE_HEADER][self.index]
 
     def _get_template_args_for_index(self):
         return_args = []
