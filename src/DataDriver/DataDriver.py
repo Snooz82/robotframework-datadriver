@@ -1,10 +1,21 @@
+# Copyright 2018-  René Rohner
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 import os.path
 import csv
 from copy import deepcopy
-from robot.libraries import BuiltIn
-
-
-#TODO: variablen dem TestCase übergeben
 
 class DataDriver:
     ROBOT_LISTENER_API_VERSION = 3
@@ -16,7 +27,7 @@ class DataDriver:
 
     def __init__(self,
                  file=None,
-                 dialect='Exel-DE',
+                 dialect='Excel-DE',
                  encoding='cp1252'):
 
         self.file = file
@@ -43,8 +54,16 @@ class DataDriver:
             self._check_if_file_exists_as_path_or_in_suite()
 
         with open(self.file, 'r', encoding=self.csv_encoding) as csvfile:
-            csv.register_dialect('Exel-DE', delimiter=';', quotechar='"', escapechar='\\', doublequote=True,
-                                 skipinitialspace=False, lineterminator='\r\n', quoting=csv.QUOTE_ALL)
+
+            csv.register_dialect('Excel-DE',
+                                 delimiter=';',
+                                 quotechar='"',
+                                 escapechar='\\',
+                                 doublequote=True,
+                                 skipinitialspace=False,
+                                 lineterminator='\r\n',
+                                 quoting=csv.QUOTE_ALL)
+
             reader = csv.reader(csvfile, self.csv_dialect)
             table = {}
             for row_index, row in enumerate(reader):
