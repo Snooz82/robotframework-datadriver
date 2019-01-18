@@ -30,10 +30,16 @@ class DataDriver:
                  dialect='Excel-DE',
                  encoding='cp1252'):
 
+        self.ROBOT_LIBRARY_LISTENER = self
+
         self.file = file
         self.csv_dialect = dialect
         self.csv_encoding = encoding
-        self.ROBOT_LIBRARY_LISTENER = self
+        self.suite_source = None
+        self.template_test = None
+        self.template_keyword = None
+        self.data_table = None
+
 
     def _start_suite(self, suite, result):
         self.suite_source = suite.source
@@ -105,15 +111,15 @@ class DataDriver:
                     return keyword
         raise AttributeError('Not "Test Template" found for first test case.')
 
-    def _get_unsharp_keyword(self, keyword):
+    def _get_normalized_keyword(self, keyword):
         return keyword.lower().replace(' ', '').replace('_', '')
 
     def _is_same_keyword(self, first, second):
-        return self._get_unsharp_keyword(first) == self._get_unsharp_keyword(second)
+        return self._get_normalized_keyword(first) == self._get_normalized_keyword(second)
 
 
     def _create_test_from_template(self):
-        self.test =  deepcopy(self.template_test)
+        self.test = deepcopy(self.template_test)
         self._replace_test_case_name()
         self._replace_test_case_keywords()
         self._add_test_case_tags()
