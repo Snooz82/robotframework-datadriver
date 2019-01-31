@@ -41,7 +41,7 @@ class DataDriver:
         self.data_table = None
 
 
-    def _start_suite(self, suite, result):
+    def start_suite(self, suite, result):
         self.suite_source = suite.source
         self._create_data_table()
         self.template_test = suite.tests[0]

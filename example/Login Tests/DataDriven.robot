@@ -1,5 +1,4 @@
 *** Settings ***
-Library    DataDriver  
 Resource    login_resources.robot
 Suite Setup    Open my Browser
 Suite Teardown    Close Browsers    
