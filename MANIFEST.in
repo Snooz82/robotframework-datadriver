@@ -1,0 +1,8 @@
+include *.txt
+include LICENSE
+recursive-include doc *.html
+recursive-include example *.css
+recursive-include example *.csv
+recursive-include example *.html
+recursive-include example *.py
+recursive-include example *.robot
