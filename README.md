@@ -19,25 +19,68 @@ or if you have Python 2 and 3 installed in parallel you may use
 
 ## Table of contents
 
- - What DataDriver does 
- - How DataDriver works 
- - Usage 
- - Structure of test suite
- - Structure of data file
- - Encoding and CSV Dialect
+ - [What DataDriver does](#WhatDataDriverdoes)
+ - [How DataDriver works](#HowDataDriverworks)
+ - [Usage](#Usage)
+ - [Structure of test suite](#Structureoftestsuite)
+ - [Structure of data file](#Structureofdatafile)
+ - [Encoding and CSV Dialect](#EncodingandCSVDialect)
   
 
 ## What DataDriver does
+<a name="WhatDataDriverdoes"></a>
 
 DataDriver is an alternative approach to create Data-Driven Tests with Robot Framework. DataDriver creates multiple test cases based on a test template and data content of a CSV file. All created tests share the same test sequence (keywords) and differ in the test data. Because these tests are created on runtime only the template has to be specified within the robot test specification and the used data are specified in an external CSV file.  
-  
+
+DataDriver gives an alternative to the build in data driven approach like:
+
+    *** Settings ***
+    Resource    login_resources.robot
+    
+    Suite Setup    Open my Browser
+    Suite Teardown    Close Browsers    
+    Test Setup      Open Login Page
+    Test Template    Invalid login
+    
+    
+    *** Test Cases ***       User        Passwort
+    Right user empty pass    demo        ${EMPTY}
+    Right user wrong pass    demo        FooBar
+        
+    Empty user right pass    ${EMPTY}    mode
+    Empty user empty pass    ${EMPTY}    ${EMPTY}
+    Empty user wrong pass    ${EMPTY}    FooBar
+        
+    Wrong user right pass    FooBar      mode
+    Wrong user empty pass    FooBar      ${EMPTY}
+    Wrong user wrong pass    FooBar      FooBar
+            
+    *** Keywords ***
+    Invalid login
+        [Arguments]    ${username}    ${password}
+        Input username    ${username}
+        Input pwd    ${password}
+        click login button
+        Error page should be visible
+
+This inbuild approach is fine for a hand full of data and a hand full of test cases.
+If you have generated or calculated data and specially if you have a variable amount of test case / combinations these robot files becom quite a pain. 
+With datadriver you may write the same test case syntax but only once and deliver the data from en external data file.
+
+One of the rare reasons when Microsoft&reg; Excel or  LibreOffice Calc may be used in testing... ;-)
+
+[See example test suite](#example-suite)
+
+[See example csv table](#example-csv)
 
 ## How DataDriver works
+<a name="HowDataDriverworks"></a>
 
  When the DataDriver is used in a test suite it will be activated before the test suite starts. It uses the Listener Interface Version 3 of Robot Framework to read and modify the test specification objects. After activation it searches for the `Test Template` -Keyword to analyze the `[Arguments]` it has. As a second step, it loads the data from the specified CSV file. Based on the `Test Template` -Keyword, DataDriver creates as much test cases as lines are in the CSV file. As values for the arguments of the `Test Template` -Keyword it reads values from the column of the CSV file with the matching name of the `[Arguments]`. For each line of the CSV data table, one test case will be created. It is also possible to specify test case names, tags and documentation for each test case in the specific test suite related CSV file.  
  
 
 ## Usage
+<a name="Usage"></a>
 
  Data Driver is a "Listener" but should not be set as a global listener as command line option of robot. Because Data Driver is a listener and a library at the same time it sets itself as a listener when this library is imported into a test suite.  
 
@@ -64,6 +107,7 @@ You may also specify some options if the default parameters do not fit your need
 
   
 ## Structure of test suite
+<a name="Structureoftestsuite"></a>
 ### Requirements
 In the Moment there are some requirements how a test suite must be structured so that the DataDriver can get all the information it needs.  
  - only the first test case will be used as a template. All other test cases will be deleted. 
@@ -71,6 +115,7 @@ In the Moment there are some requirements how a test suite must be structured so
  - The keyword which is used as `Test Template` must be defined within the test suite (in the same \*.robot file). If the keyword which is used as `Test Template` is defined in a `Resource` the DataDriver has no access to its arguments names.  
 
 ### Example Test Suite
+<a name="example-suite"></a>
 
     ***Settings*** 
     Library              DataDriver 
@@ -96,6 +141,7 @@ In the Moment there are some requirements how a test suite must be structured so
  This template test will only be used as a template. The specified data `Default` and `UserData` would only be used if no CSV file has been found.  
  
 ## Structure of data file
+<a name="Structureofdatafile"></a>
 ### min. required columns
  
 - `*** Test Cases ***` column has to be the first one. 
@@ -106,7 +152,7 @@ In the Moment there are some requirements how a test suite must be structured so
 - *[Documentation]* column may be used to add specific test case documentation.  
 
 ### Example CSV file
-
+<a name="example-csv"></a>
 
 |*** Test Cases ***|${username}|${password}|[Tags]|[Documentation]|
 |--|--|--|--|--|
@@ -122,6 +168,7 @@ In the Moment there are some requirements how a test suite must be structured so
  In this CSV file, eight test cases are defined. Each line specifies one test case. The first two test cases have specific names. The other six test cases will generate names based on template test cases name with the replacement of variables in this name. The order of columns is irrelevant except the first column, `*** Test Cases ***`  
  
 ## Encoding and CSV Dialect
+<a name="EncodingandCSVDialect"></a>
 CSV is far away from well designed and has absolutely no "common" format. Therefore it is possible to define your own dialect or use predefined. The default is Excel-EU which is a semicolon separated file.  
  These Settings are changeable as options of the Data Driver Library.  
  
