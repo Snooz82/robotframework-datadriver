@@ -14,10 +14,12 @@
 
 
 import os.path
-import csv
 from copy import deepcopy
+from .csvreader import CsvReader
+from .xlsreader import XlsReader
+from .pictreader import PictReader
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 
 class DataDriver:
@@ -231,7 +233,6 @@ class DataDriver:
     ROBOT_LISTENER_API_VERSION = 3
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
 
-    TESTCASE_HEADER = '*** Test Cases ***'
     TAGS_HEADER = '[Tags]'
     DOC_HEADER = '[Documentation]'
 
@@ -262,13 +263,14 @@ class DataDriver:
         self.file = file
         self.csv_encoding = encoding
         self.csv_dialect = dialect
-        self.user_dialect = {'delimiter': delimiter,
-                             'quotechar': quotechar,
-                             'escapechar': escapechar,
-                             'doublequote': doublequote,
-                             'skipinitialspace': skipinitialspace,
-                             'lineterminator': lineterminator
-                             }
+        self.delimiter = delimiter
+        self.quotechar = quotechar
+        self.escapechar = escapechar
+        self.doublequote = doublequote
+        self.skipinitialspace = skipinitialspace
+        self.lineterminator = lineterminator
+
+        self.testcase_table_name = '*** Test Cases ***'
 
         self.suite_source = None
         self.template_test = None
@@ -284,13 +286,15 @@ class DataDriver:
         :param suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
         :param result: NOT USED
         """
+        if suite.rpa:
+            self.testcase_table_name = '*** Tasks ***'
+
         self.suite_source = suite.source
         self._create_data_table()
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
         temp_test_list = list()
-        for self.index, lines in enumerate(self.data_table[self.TESTCASE_HEADER]):
-            # self.test = None
+        for self.index, lines in enumerate(self.data_table[self.testcase_table_name]):
             self._create_test_from_template()
             temp_test_list.append(self.test)
         suite.tests = temp_test_list
@@ -301,60 +305,47 @@ class DataDriver:
         Keys are header names.
         Values are data of this column as array.
         """
-        if not self.file:
+
+        if (not self.file) or ('' == self.file[:self.file.rfind('.')]):
             self._get_data_file_from_suite_source()
         else:
             self._check_if_file_exists_as_path_or_in_suite()
 
-        with open(self.file, 'r', encoding=self.csv_encoding) as csvfile:
+        filename, file_extension = os.path.splitext(self.file)
+        if (file_extension.lower() == '.xlsx') or (file_extension == '.xls'):
+            xls = XlsReader(self.file)
+            self.data_table = xls.get_data_from_xls()
 
-            if self.csv_dialect == 'UserDefined':
-                csv.register_dialect(self.csv_dialect,
-                                     delimiter=self.user_dialect['delimiter'],
-                                     quotechar=self.user_dialect['quotechar'],
-                                     escapechar=self.user_dialect['escapechar'],
-                                     doublequote=self.user_dialect['doublequote'],
-                                     skipinitialspace=self.user_dialect['skipinitialspace'],
-                                     lineterminator=self.user_dialect['lineterminator'],
-                                     quoting=csv.QUOTE_ALL)
+        elif file_extension.lower() == '.pict':
+            pict = PictReader(self.file, self.testcase_table_name)
+            self.data_table = pict.get_data_from_pict()
+        else:
+            csv = CsvReader(self.file,
+                            self.csv_encoding,
+                            self.testcase_table_name,
+                            self.csv_dialect,
+                            self.delimiter,
+                            self.quotechar,
+                            self.escapechar,
+                            self.doublequote,
+                            self.skipinitialspace,
+                            self.lineterminator)
 
-            elif self.csv_dialect == 'Excel-EU':
-                csv.register_dialect(self.csv_dialect,
-                                     delimiter=';',
-                                     quotechar='"',
-                                     escapechar='\\',
-                                     doublequote=True,
-                                     skipinitialspace=False,
-                                     lineterminator='\r\n',
-                                     quoting=csv.QUOTE_ALL)
-
-            reader = csv.reader(csvfile, self.csv_dialect)
-            table = {}
-            header = []
-            for row_index, row in enumerate(reader):
-                if row_index == 0:
-                    header = row
-                    if header[0] == self.TESTCASE_HEADER:
-                        for cell in header:
-                            table[cell] = []
-                    else:
-                        raise SyntaxError('First column is not "'
-                                          + self.TESTCASE_HEADER
-                                          + '". This Column is mandatory.')
-                else:
-                    for cell_index, cell in enumerate(row):
-                        table[header[cell_index]].append(cell)
-
-        self.data_table = table
+            self.data_table = csv.get_data_from_csv()
 
     def _get_data_file_from_suite_source(self):
-        suite_path_as_csv = str(self.suite_source[:self.suite_source.rfind('.')]) + '.csv'
-        if os.path.isfile(suite_path_as_csv):
-            self.file = suite_path_as_csv
+        if not self.file:
+            suite_path_as_data_file = f'{self.suite_source[:self.suite_source.rfind(".")]}.csv'
+        else:
+            suite_path_as_data_file = \
+                f'{self.suite_source[:self.suite_source.rfind(".")]}{self.file[self.file.rfind("."):]}'
+
+        if os.path.isfile(suite_path_as_data_file):
+            self.file = suite_path_as_data_file
         else:
             raise FileNotFoundError(
                 'File attribute was empty. Tried to find '
-                + suite_path_as_csv + ' but file does not exist.')
+                + suite_path_as_data_file + ' but file does not exist.')
 
     def _check_if_file_exists_as_path_or_in_suite(self):
         if not os.path.isfile(self.file):
@@ -410,12 +401,12 @@ class DataDriver:
                                       args=self.template_test.keywords.teardown.args)
 
     def _replace_test_case_name(self):
-        if self.data_table[self.TESTCASE_HEADER][self.index] == '':
+        if self.data_table[self.testcase_table_name][self.index] == '':
             for key in self.data_table.keys():
                 if key[:1] == '$':
                     self.test.name = self.test.name.replace(key, self.data_table[key][self.index])
         else:
-            self.test.name = self.data_table[self.TESTCASE_HEADER][self.index]
+            self.test.name = self.data_table[self.testcase_table_name][self.index]
 
     def _get_template_args_for_index(self):
         return_args = []
