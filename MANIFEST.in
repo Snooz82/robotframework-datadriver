@@ -9,3 +9,4 @@ recursive-include example *.pict
 recursive-include example *.pictout
 recursive-include example *.py
 recursive-include example *.robot
+recursive-include example *.xlsx

@@ -32,6 +32,10 @@ setup(
         "Topic :: Software Development :: Testing :: Acceptance",
         "Framework :: Robot Framework",
     ],
-    install_requires=['numpy', 'pandas'],
+    install_requires=[
+        'numpy',
+        'pandas',
+        'xlrd',
+        'robotframework >= 3.1'],
     python_requires='>3.6'
 )
