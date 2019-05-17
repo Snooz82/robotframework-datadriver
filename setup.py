@@ -5,7 +5,7 @@ from os.path import abspath, dirname, join
 
 CURDIR = dirname(abspath(__file__))
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 with open(join(CURDIR, 'src', 'DataDriver', 'DataDriver.py')) as f:
@@ -18,7 +18,7 @@ setup(
     author_email="snooz@posteo.de",
     description="A library for Data-Driven Testing.",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     url="https://github.com/Snooz82/robotframework-datadriver",
     package_dir={'': 'src'},
     packages=find_packages('src'),
