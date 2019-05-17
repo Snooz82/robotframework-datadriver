@@ -1,5 +1,6 @@
 include *.in
 include *.txt
+include *.rst
 include LICENSE
 recursive-include doc *.html
 recursive-include example *.css

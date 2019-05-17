@@ -5,10 +5,10 @@ from os.path import abspath, dirname, join
 
 CURDIR = dirname(abspath(__file__))
 
-with open("README.rst", "r") as fh:
+with open("README.rst", "r", encoding='utf-8') as fh:
     long_description = fh.read()
 
-with open(join(CURDIR, 'src', 'DataDriver', 'DataDriver.py')) as f:
+with open(join(CURDIR, 'src', 'DataDriver', 'DataDriver.py'), encoding='utf-8') as f:
     VERSION = re.search("\n__version__ = '(.*)'", f.read()).group(1)
 
 setup(
@@ -18,7 +18,7 @@ setup(
     author_email="snooz@posteo.de",
     description="A library for Data-Driven Testing.",
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type='text/markdown',
     url="https://github.com/Snooz82/robotframework-datadriver",
     package_dir={'': 'src'},
     packages=find_packages('src'),
