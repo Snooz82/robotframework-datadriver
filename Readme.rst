@@ -210,7 +210,7 @@ Usage in Robot Framework
 |
 
 Example Excel Tab (\\\\t seperated)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Dialect Defaults:
 
@@ -233,7 +233,7 @@ Usage in Robot Framework
 |
 
 Example Unix Dialect
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 Dialect Defaults:
 
@@ -256,7 +256,7 @@ Usage in Robot Framework
 |
 
 Example User Defined
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 User may define the format completely free.
 If an option is not set, the default values are used.
