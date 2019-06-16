@@ -19,7 +19,7 @@ from .csvreader import CsvReader
 from .xlsreader import XlsReader
 from .pictreader import PictReader
 
-__version__ = '0.0.8'
+__version__ = '0.0.9'
 
 
 class DataDriver:
@@ -158,7 +158,7 @@ each test case in the specific test suite related CSV file.
 Usage
 -----
 
-Data Driver is a “Listener” but should not be set as a global listener
+Data Driver is a "Listener" but should not be set as a global listener
 as command line option of robot. Because Data Driver is a listener and a
 library at the same time it sets itself as a listener when this library
 is imported into a test suite.
@@ -184,7 +184,7 @@ Options
 
     *** Settings ***
     Library    DataDriver
-    ...    file=None,
+    ...    file=None
     ...    encoding=cp1252
     ...    dialect=Excel-EU
     ...    delimiter=;
@@ -193,6 +193,7 @@ Options
     ...    doublequote=True
     ...    skipinitialspace=False
     ...    lineterminator=\\r\\n
+    ...    sheet_name=0
 
 
 |
@@ -339,9 +340,9 @@ cells. Numbers are typically of the type float. If these data are not
 explicitly defined as text in Excel, pandas will read it as the type
 that is has in excel. Because we have to work with strings in Robot
 Framework these data are converted to string. This leads to the
-situation that a European time value like “04.02.2019” (4th January
-2019) is handed over to Robot Framework in Iso time “2019-01-04
-00:00:00”. This may cause unwanted behavior. To mitigate this risk you
+situation that a European time value like "04.02.2019" (4th January
+2019) is handed over to Robot Framework in Iso time "2019-01-04
+00:00:00". This may cause unwanted behavior. To mitigate this risk you
 should define Excel based files explicitly as text within Excel.
 
 |
@@ -541,8 +542,11 @@ XLS / XLSX Files
 
 If you want to use Excel based data sources, you may just set the file
 to the extention or you may point to the correct file. If the extention
-is “.xls” or “.xlsx” DataDriver will interpret it as Excel file. XLS
-interpreter will ignore all other options like encoding, delimiters etc.
+is ".xls" or ".xlsx" DataDriver will interpret it as Excel file.
+You may select the sheet which will be read by the option ``sheet_name``.
+By default it is set to 0 which will be the first table sheet.
+You may use sheet index (0 is first sheet) or sheet name(case sensitive).
+XLS interpreter will ignore all other options like encoding, delimiters etc.
 
 .. code :: robotframework
 
@@ -554,7 +558,7 @@ or:
 .. code :: robotframework
 
     *** Settings ***
-    Library    DataDriver    file=my_data_source.xlsx
+    Library    DataDriver    file=my_data_source.xlsx    sheet_name=2nd Sheet
 
 |
 
@@ -572,7 +576,7 @@ Requirements
 ^^^^^^^^^^^^
 
 -  Path to pict.exe must be set in the %PATH% environment variable.
--  Data model file has the file extention “.pict”
+-  Data model file has the file extention ".pict"
 -  Pict model file must be encoded in UTF-8
 
 |
@@ -582,7 +586,7 @@ How it works
 
 If the file option is set to a file with the extention pict, DataDriver
 will hand over this file to pict.exe and let it automatically generates
-a file with the extention “.pictout”. This file will the be used as data
+a file with the extention ".pictout". This file will the be used as data
 source for the test generation. (It is tab seperated and UTF-8 encoded)
 Except the file option all other options of the library will be ignored.
 
@@ -596,7 +600,7 @@ Except the file option all other options of the library will be ignored.
 CSV Encoding and CSV Dialect
 ----------------------------
 
-CSV is far away from well designed and has absolutely no “common”
+CSV is far away from well designed and has absolutely no "common"
 format. Therefore it is possible to define your own dialect or use
 predefined. The default is Excel-EU which is a semicolon separated
 file.
@@ -677,7 +681,9 @@ Defaults:
     escapechar='\\\\',
     doublequote=True,
     skipinitialspace=False,
-    lineterminator='\\r\\n'
+    lineterminator='\\r\\n',
+    sheet_name=0
+
 
     """
     ROBOT_LIBRARY_DOC_FORMAT = 'reST'
@@ -697,7 +703,8 @@ Defaults:
                  escapechar='\\',
                  doublequote=True,
                  skipinitialspace=False,
-                 lineterminator='\r\n'
+                 lineterminator='\r\n',
+                 sheet_name=0
                  ):
         """**Example:**
 
@@ -713,7 +720,7 @@ Options
 
     *** Settings ***
     Library    DataDriver
-    ...    file=None,
+    ...    file=None
     ...    encoding=cp1252
     ...    dialect=Excel-EU
     ...    delimiter=;
@@ -722,6 +729,7 @@ Options
     ...    doublequote=True
     ...    skipinitialspace=False
     ...    lineterminator=\\r\\n
+    ...    sheet_name=0
 
 
 |
@@ -842,6 +850,7 @@ Usage in Robot Framework
         self.doublequote = doublequote
         self.skipinitialspace = skipinitialspace
         self.lineterminator = lineterminator
+        self.sheet_name = sheet_name
 
         self.testcase_table_name = '*** Test Cases ***'
 
@@ -889,7 +898,7 @@ Usage in Robot Framework
 
         filename, file_extension = os.path.splitext(self.file)
         if (file_extension.lower() == '.xlsx') or (file_extension == '.xls'):
-            xls = XlsReader(self.file)
+            xls = XlsReader(self.file, self.sheet_name)
             self.data_table = xls.get_data_from_xls()
 
         elif file_extension.lower() == '.pict':

@@ -18,7 +18,7 @@ setup(
     author_email="snooz@posteo.de",
     description="A library for Data-Driven Testing.",
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type='text/x-rst',
     url="https://github.com/Snooz82/robotframework-datadriver",
     package_dir={'': 'src'},
     packages=find_packages('src'),

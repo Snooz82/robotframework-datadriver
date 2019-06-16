@@ -18,11 +18,12 @@ import numpy as np
 
 class XlsReader:
 
-    def __init__(self, file):
+    def __init__(self, file, sheet_name):
         self.file = file
+        self.sheet_name = sheet_name
 
     def get_data_from_xls(self):
-        data_frame = pd.read_excel(self.file, dtype=str).replace(np.nan, '', regex=True)
+        data_frame = pd.read_excel(self.file, sheet_name=self.sheet_name, dtype=str).replace(np.nan, '', regex=True)
         table = {}
         for header in data_frame.columns:
             table[header] = data_frame[header].tolist()
