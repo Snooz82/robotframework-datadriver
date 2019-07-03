@@ -22,7 +22,7 @@ from .ReaderConfig import ReaderConfig
 from robot.libraries.BuiltIn import BuiltIn
 import importlib
 
-__version__ = '0.0.9'
+__version__ = '0.1.0'
 
 
 class DataDriver:
