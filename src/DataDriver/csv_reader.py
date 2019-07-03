@@ -14,38 +14,12 @@
 
 
 import csv
+from .Abstract_Reader_Class import Abstract_Reader_Class
 
 
-class CsvReader:
+class csv_Reader(Abstract_Reader_Class):
 
-    def __init__(self,
-                 file,
-                 encoding,
-                 testcase_table_name,
-                 dialect='Excel-EU',
-                 delimiter=';',
-                 quotechar='"',
-                 escapechar='\\',
-                 doublequote=True,
-                 skipinitialspace=False,
-                 lineterminator='\r\n'
-                 ):
-
-        self.file = file
-        self.csv_encoding = encoding
-        self.csv_dialect = dialect
-        self.delimiter = delimiter
-        self.quotechar = quotechar
-        self.escapechar = escapechar
-        self.doublequote = doublequote
-        self.skipinitialspace = skipinitialspace
-        self.lineterminator = lineterminator
-
-        self.TESTCASE_TABLE_NAME = testcase_table_name
-        self.data_table = None
-        self.index = None
-
-    def get_data_from_csv(self):
+    def get_data_from_source(self):
         self._register_dialects()
         self._read_file_to_dictionaries()
         return self.data_table
@@ -82,9 +56,8 @@ class CsvReader:
                         for cell in header:
                             table[cell] = []
                     else:
-                        raise SyntaxError('First column is not "'
-                                          + self.TESTCASE_TABLE_NAME
-                                          + '". This Column is mandatory.')
+                        raise SyntaxError(f'First column is not "{self.TESTCASE_TABLE_NAME}".'
+                                          f' This Column is mandatory.')
                 else:
                     for cell_index, cell in enumerate(row):
                         table[header[cell_index]].append(cell)

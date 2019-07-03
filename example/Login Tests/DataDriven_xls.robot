@@ -1,5 +1,5 @@
 *** Settings ***
-Library           DataDriver
+Library           DataDriver    DataDriven.xls
 Resource          login_resources.robot
 
 Suite Setup       Open my Browser

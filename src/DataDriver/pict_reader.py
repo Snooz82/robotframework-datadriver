@@ -15,17 +15,13 @@
 
 import csv
 import os
+from .Abstract_Reader_Class import Abstract_Reader_Class
 
 
-class PictReader:
+class pict_Reader(Abstract_Reader_Class):
 
-    def __init__(self, file, testcase_table_name):
-        self.file = file
+    def get_data_from_source(self):
         self.filename, self.file_extension = os.path.splitext(self.file)
-        self.testcase_table_name = testcase_table_name
-        self.data_table = None
-
-    def get_data_from_pict(self):
         self._register_dialect()
         self._create_gemerated_file_from_model_file()
         self._read_generated_file_to_dictionaries()
@@ -56,5 +52,5 @@ class PictReader:
                     for cell_index, cell in enumerate(row):
                         table[f'${{{header[cell_index]}}}'].append(cell)
                     test_case_column.append('')
-            table[self.testcase_table_name] = test_case_column
+            table[self.TESTCASE_TABLE_NAME] = test_case_column
         self.data_table = table

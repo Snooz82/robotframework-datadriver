@@ -15,9 +15,12 @@
 
 import os.path
 from copy import deepcopy
-from .csvreader import CsvReader
-from .xlsreader import XlsReader
-from .pictreader import PictReader
+
+from sqlalchemy.orm.strategy_options import loader_option
+
+from .ReaderConfig import ReaderConfig
+from robot.libraries.BuiltIn import BuiltIn
+import importlib
 
 __version__ = '0.0.9'
 
@@ -841,26 +844,29 @@ Usage in Robot Framework
         """
         self.ROBOT_LIBRARY_LISTENER = self
 
-        self.file = file
-        self.csv_encoding = encoding
-        self.csv_dialect = dialect
-        self.delimiter = delimiter
-        self.quotechar = quotechar
-        self.escapechar = escapechar
-        self.doublequote = doublequote
-        self.skipinitialspace = skipinitialspace
-        self.lineterminator = lineterminator
-        self.sheet_name = sheet_name
-
         self.testcase_table_name = '*** Test Cases ***'
+
+        self.reader_config = ReaderConfig(
+            file=file,
+            encoding=encoding,
+            dialect=dialect,
+            delimiter=delimiter,
+            quotechar=quotechar,
+            escapechar=escapechar,
+            doublequote=doublequote,
+            skipinitialspace=skipinitialspace,
+            lineterminator=lineterminator,
+            sheet_name=sheet_name,
+            testcase_table_name=self.testcase_table_name
+        )
 
         self.suite_source = None
         self.template_test = None
         self.template_keyword = None
         self.data_table = None
         self.index = None
+        self.loglevel = BuiltIn().get_variable_value('${LOG LEVEL}')
 
-    # noinspection PyUnusedLocal
     def _start_suite(self, suite, result):
         """Called when a test suite starts.
         Data and result are model objects representing the executed test suite and its execution results, respectively.
@@ -890,54 +896,54 @@ Usage in Robot Framework
         Keys are header names.
         Values are data of this column as array.
         """
+        self._resolve_file_attribute()
 
-        if (not self.file) or ('' == self.file[:self.file.rfind('.')]):
+        self.data_table = self._data_reader().get_data_from_source()
+        if self.loglevel == 'DEBUG':
+            BuiltIn().log_to_console(f"[ DataDriver ] Opening file '{self.reader_config.file}'")
+            BuiltIn().log_to_console(f'[ DataDriver ] {len(self.data_table[self.testcase_table_name])}'
+                                     f' Test Cases loaded...')
+
+    def _data_reader(self):
+        filename, file_extension = os.path.splitext(self.reader_config.file)
+        reader_type = file_extension.lower()[1:]
+        if self.loglevel == 'DEBUG':
+            BuiltIn().log_to_console(f'[ DataDriver ] Initialized in {reader_type}-mode.')
+        reader_module = importlib.import_module(f'..{reader_type}_reader', 'DataDriver.DataDriver')
+        if self.loglevel == 'DEBUG':
+            BuiltIn().log_to_console(f'[ DataDriver ] Reader Module: {reader_module}')
+        reader_class = getattr(reader_module, f'{reader_type}_Reader')
+
+        reader = reader_class(self.reader_config)
+        return reader
+
+    def _resolve_file_attribute(self):
+        if (not self.reader_config.file) or ('' == self.reader_config.file[:self.reader_config.file.rfind('.')]):
             self._get_data_file_from_suite_source()
         else:
             self._check_if_file_exists_as_path_or_in_suite()
 
-        filename, file_extension = os.path.splitext(self.file)
-        if (file_extension.lower() == '.xlsx') or (file_extension == '.xls'):
-            xls = XlsReader(self.file, self.sheet_name)
-            self.data_table = xls.get_data_from_xls()
-
-        elif file_extension.lower() == '.pict':
-            pict = PictReader(self.file, self.testcase_table_name)
-            self.data_table = pict.get_data_from_pict()
-        else:
-            csv = CsvReader(self.file,
-                            self.csv_encoding,
-                            self.testcase_table_name,
-                            self.csv_dialect,
-                            self.delimiter,
-                            self.quotechar,
-                            self.escapechar,
-                            self.doublequote,
-                            self.skipinitialspace,
-                            self.lineterminator)
-
-            self.data_table = csv.get_data_from_csv()
-
     def _get_data_file_from_suite_source(self):
-        if not self.file:
+        if not self.reader_config.file:
             suite_path_as_data_file = f'{self.suite_source[:self.suite_source.rfind(".")]}.csv'
         else:
-            suite_path_as_data_file = \
-                f'{self.suite_source[:self.suite_source.rfind(".")]}{self.file[self.file.rfind("."):]}'
+            suite_path = self.suite_source[:self.suite_source.rfind(".")]
+            file_extension = self.reader_config.file[self.reader_config.file.rfind("."):]
+            suite_path_as_data_file = f'{suite_path}{file_extension}'
 
         if os.path.isfile(suite_path_as_data_file):
-            self.file = suite_path_as_data_file
+            self.reader_config.file = suite_path_as_data_file
         else:
             raise FileNotFoundError(
                 'File attribute was empty. Tried to find '
                 + suite_path_as_data_file + ' but file does not exist.')
 
     def _check_if_file_exists_as_path_or_in_suite(self):
-        if not os.path.isfile(self.file):
+        if not os.path.isfile(self.reader_config.file):
             suite_dir = str(os.path.dirname(self.suite_source))
-            file_in_suite_dir = os.path.join(suite_dir, self.file)
+            file_in_suite_dir = os.path.join(suite_dir, self.reader_config.file)
             if os.path.isfile(file_in_suite_dir):
-                self.file = file_in_suite_dir
+                self.reader_config.file = file_in_suite_dir
             else:
                 raise FileNotFoundError(
                     'File attribute was not a full path. Tried to find '
