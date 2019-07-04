@@ -11,3 +11,6 @@ recursive-include example *.pictout
 recursive-include example *.py
 recursive-include example *.robot
 recursive-include example *.xlsx
+
+# added by check_manifest.py
+recursive-include example *.xls

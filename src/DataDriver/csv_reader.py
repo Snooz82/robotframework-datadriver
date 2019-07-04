@@ -15,6 +15,7 @@
 
 import csv
 from .Abstract_Reader_Class import Abstract_Reader_Class
+from .ReaderConfig import TestCaseData
 
 
 class csv_Reader(Abstract_Reader_Class):
@@ -47,18 +48,43 @@ class csv_Reader(Abstract_Reader_Class):
     def _read_file_to_dictionaries(self):
         with open(self.file, 'r', encoding=self.csv_encoding) as csvfile:
             reader = csv.reader(csvfile, self.csv_dialect)
-            table = {}
-            header = []
+            self.test_case_column_id = None
+            self.arguments_column_ids = []
+            self.tags_column_id = None
+            self.documentation_column_id = None
+            self.header = []
             for row_index, row in enumerate(reader):
                 if row_index == 0:
-                    header = row
-                    if header[0] == self.TESTCASE_TABLE_NAME:
-                        for cell in header:
-                            table[cell] = []
-                    else:
-                        raise SyntaxError(f'First column is not "{self.TESTCASE_TABLE_NAME}".'
-                                          f' This Column is mandatory.')
+                    self._analyse_header(row)
                 else:
-                    for cell_index, cell in enumerate(row):
-                        table[header[cell_index]].append(cell)
-            self.data_table = table
+                    self._read_data_from_table(row)
+
+    def _analyse_header(self, row):
+        self.header = row
+        for cell_index, cell in enumerate(self.header):
+            if cell_index == 0:
+                if self._is_test_case_header(cell):
+                    self.test_case_column_id = cell_index
+                else:
+                    raise SyntaxError(f'First column is not "{self.TESTCASE_TABLE_NAME}".'
+                                      f' This Column is mandatory. it is {cell}')
+            if self._is_variable(cell):
+                self.arguments_column_ids.append(cell_index)
+            elif self._is_tags(cell):
+                self.tags_column_id = cell_index
+            elif self._is_documentation(cell):
+                self.documentation_column_id = cell_index
+
+    def _read_data_from_table(self, row):
+
+        test_case_name = row[self.test_case_column_id]
+
+        arguments = {}
+        for arguments_column_id in self.arguments_column_ids:
+            arguments[self.header[arguments_column_id]] = row[arguments_column_id]
+
+        tags = row[self.tags_column_id].split(',')
+
+        documentation = row[self.documentation_column_id]
+
+        self.data_table.append(TestCaseData(test_case_name, arguments, tags, documentation))

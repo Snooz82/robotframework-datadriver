@@ -14,6 +14,7 @@
 
 
 from .ReaderConfig import ReaderConfig
+import re
 
 
 class Abstract_Reader_Class:
@@ -30,7 +31,30 @@ class Abstract_Reader_Class:
         self.skipinitialspace = reader_config.skipinitialspace
         self.lineterminator = reader_config.lineterminator
         self.sheet_name = reader_config.sheet_name
-        self.TESTCASE_TABLE_NAME = reader_config.testcase_table_name
+
+        self.data_table = []
+
+        self.TESTCASE_TABLE_NAME = ReaderConfig.TEST_CASE_TABLE_NAME
+        self.TEST_CASE_TABLE_PATTERN = r'(?i)^(\*+\s*test ?cases?[\s*].*)'
+        self.VARIABLE_PATTERN = r'([$@&]{1}\{)(.*?)(\})'
+        self.TAGS_PATTERN = r'(?i)(\[)(tags)(\])'
+        self.DOCUMENTATION_PATTERN = r'(?i)(\[)(documentation)(\])'
 
     def get_data_from_source(self):
-        raise NotImplementedError("This method should be implemented and return the Data to DataDriver...")
+        raise NotImplementedError("This method should be implemented and return self.data_table to DataDriver...")
+
+    def _is_test_case_header(self, header_string: str):
+        if re.fullmatch(self.TEST_CASE_TABLE_PATTERN, header_string):
+            return True
+
+    def _is_variable(self, header_string: str):
+        if re.match(self.VARIABLE_PATTERN, header_string):
+            return True
+
+    def _is_tags(self, header_string: str):
+        if re.match(self.TAGS_PATTERN, header_string):
+            return True
+
+    def _is_documentation(self, header_string: str):
+        if re.match(self.DOCUMENTATION_PATTERN, header_string):
+            return True

@@ -15,10 +15,8 @@
 
 import os.path
 from copy import deepcopy
-
-from sqlalchemy.orm.strategy_options import loader_option
-
 from .ReaderConfig import ReaderConfig
+from .ReaderConfig import TestCaseData
 from robot.libraries.BuiltIn import BuiltIn
 import importlib
 
@@ -844,8 +842,6 @@ Usage in Robot Framework
         """
         self.ROBOT_LIBRARY_LISTENER = self
 
-        self.testcase_table_name = '*** Test Cases ***'
-
         self.reader_config = ReaderConfig(
             file=file,
             encoding=encoding,
@@ -857,14 +853,16 @@ Usage in Robot Framework
             skipinitialspace=skipinitialspace,
             lineterminator=lineterminator,
             sheet_name=sheet_name,
-            testcase_table_name=self.testcase_table_name
         )
+
+        self.testcase_table_name = ReaderConfig.TEST_CASE_TABLE_NAME
 
         self.suite_source = None
         self.template_test = None
         self.template_keyword = None
         self.data_table = None
         self.index = None
+        self.test_case_data = TestCaseData()
         self.loglevel = BuiltIn().get_variable_value('${LOG LEVEL}')
 
     def _start_suite(self, suite, result):
@@ -885,7 +883,7 @@ Usage in Robot Framework
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
         temp_test_list = list()
-        for self.index, lines in enumerate(self.data_table[self.testcase_table_name]):
+        for self.index, self.test_case_data in enumerate(self.data_table):
             self._create_test_from_template()
             temp_test_list.append(self.test)
         suite.tests = temp_test_list
@@ -901,7 +899,7 @@ Usage in Robot Framework
         self.data_table = self._data_reader().get_data_from_source()
         if self.loglevel == 'DEBUG':
             BuiltIn().log_to_console(f"[ DataDriver ] Opening file '{self.reader_config.file}'")
-            BuiltIn().log_to_console(f'[ DataDriver ] {len(self.data_table[self.testcase_table_name])}'
+            BuiltIn().log_to_console(f'[ DataDriver ] {len(self.data_table)}'
                                      f' Test Cases loaded...')
 
     def _data_reader(self):
@@ -971,14 +969,12 @@ Usage in Robot Framework
         self._add_test_case_tags()
         self._replace_test_case_doc()
 
-    def _add_test_case_tags(self):
-        if self.TAGS_HEADER in self.data_table:
-            for tag in self.data_table[self.TAGS_HEADER][self.index].split(','):
-                self.test.tags.add(tag.strip())
-
-    def _replace_test_case_doc(self):
-        if self.DOC_HEADER in self.data_table:
-            self.test.doc = self.data_table[self.DOC_HEADER][self.index]
+    def _replace_test_case_name(self):
+        if self.test_case_data.test_case_name == '':
+            for variable_name in self.test_case_data.arguments:
+                self.test.name = self.test.name.replace(variable_name, self.test_case_data.arguments[variable_name])
+        else:
+            self.test.name = self.test_case_data.test_case_name
 
     def _replace_test_case_keywords(self):
         self.test.keywords.clear()
@@ -986,24 +982,23 @@ Usage in Robot Framework
             self.test.keywords.create(name=self.template_test.keywords.setup.name, type='setup',
                                       args=self.template_test.keywords.setup.args)
         self.test.keywords.create(name=self.template_keyword.name,
-                                  args=self._get_template_args_for_index())
+                                  args=self._get_template_arguments())
         if self.template_test.keywords.teardown is not None:
             self.test.keywords.create(name=self.template_test.keywords.teardown.name, type='teardown',
                                       args=self.template_test.keywords.teardown.args)
 
-    def _replace_test_case_name(self):
-        if self.data_table[self.testcase_table_name][self.index] == '':
-            for key in self.data_table.keys():
-                if key[:1] == '$':
-                    self.test.name = self.test.name.replace(key, self.data_table[key][self.index])
-        else:
-            self.test.name = self.data_table[self.testcase_table_name][self.index]
-
-    def _get_template_args_for_index(self):
-        return_args = []
+    def _get_template_arguments(self):
+        return_arguments = []
         for arg in self.template_keyword.args:
-            if arg in self.data_table:
-                return_args.append(self.data_table[arg][self.index])
+            if arg in self.test_case_data.arguments:
+                return_arguments.append(self.test_case_data.arguments[arg]) #Todo: here i have to handle the dictionaries stuff
             else:
-                return_args.append(arg)
-        return return_args
+                return_arguments.append(arg)
+        return return_arguments
+
+    def _add_test_case_tags(self):
+        for tag in self.test_case_data.tags:
+            self.test.tags.add(tag.strip())
+
+    def _replace_test_case_doc(self):
+        self.test.doc = self.test_case_data.documentation
