@@ -858,7 +858,6 @@ Usage in Robot Framework
         self.data_table = None
         self.index = None
         self.test_case_data = TestCaseData()
-        self.loglevel = BuiltIn().get_variable_value('${LOG LEVEL}')
 
     def _start_suite(self, suite, result):
         """Called when a test suite starts.
@@ -867,6 +866,7 @@ Usage in Robot Framework
         :param suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
         :param result: NOT USED
         """
+        self.loglevel = BuiltIn().get_variable_value('${LOG LEVEL}')
 
         self.suite_source = suite.source
         self._create_data_table()
