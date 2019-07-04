@@ -20,7 +20,7 @@ from .ReaderConfig import TestCaseData
 from robot.libraries.BuiltIn import BuiltIn
 import importlib
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 
 class DataDriver:
@@ -692,9 +692,6 @@ Defaults:
     ROBOT_LISTENER_API_VERSION = 3
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
 
-    TAGS_HEADER = '[Tags]'
-    DOC_HEADER = '[Documentation]'
-
     def __init__(self,
                  file=None,
                  encoding='cp1252',
@@ -855,8 +852,6 @@ Usage in Robot Framework
             sheet_name=sheet_name,
         )
 
-        self.testcase_table_name = ReaderConfig.TEST_CASE_TABLE_NAME
-
         self.suite_source = None
         self.template_test = None
         self.template_keyword = None
@@ -872,11 +867,6 @@ Usage in Robot Framework
         :param suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
         :param result: NOT USED
         """
-        try:
-            if suite.rpa:
-                self.testcase_table_name = '*** Tasks ***'
-        except AttributeError:
-            pass
 
         self.suite_source = suite.source
         self._create_data_table()
@@ -991,7 +981,8 @@ Usage in Robot Framework
         return_arguments = []
         for arg in self.template_keyword.args:
             if arg in self.test_case_data.arguments:
-                return_arguments.append(self.test_case_data.arguments[arg]) #Todo: here i have to handle the dictionaries stuff
+                return_arguments.append(self.test_case_data.arguments[arg])
+                # Todo: here i have to handle the dictionaries stuff
             else:
                 return_arguments.append(arg)
         return return_arguments

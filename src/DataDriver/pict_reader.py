@@ -15,13 +15,13 @@
 
 import csv
 import os
-from .Abstract_Reader_Class import Abstract_Reader_Class
+from .AbstractReaderClass import AbstractReaderClass
 
 
-class pict_Reader(Abstract_Reader_Class):
+class pict_Reader(AbstractReaderClass):
 
     def get_data_from_source(self):
-        self.filename, self.file_extension = os.path.splitext(self.file)
+        self.pictout_file = f'{os.path.splitext(self.file)[0]}.pictout'
         self._register_dialect()
         self._create_gemerated_file_from_model_file()
         self._read_generated_file_to_dictionaries()
@@ -35,22 +35,16 @@ class pict_Reader(Abstract_Reader_Class):
                              quoting=csv.QUOTE_NONE)
 
     def _create_gemerated_file_from_model_file(self):
-        os.system(f'pict "{self.file}" > "{self.filename}.pictout"')
+        os.system(f'pict "{self.file}" > "{self.pictout_file}"')
 
     def _read_generated_file_to_dictionaries(self):
-        with open(f'{self.filename}.pictout', 'r', encoding='utf_8') as csvfile:
+        with open(self.pictout_file, 'r', encoding='utf_8') as csvfile:
             reader = csv.reader(csvfile, 'PICT')
-            table = {}
-            header = []
-            test_case_column = []
             for row_index, row in enumerate(reader):
                 if row_index == 0:
-                    header = row
-                    for header_cell in header:
-                        table[f'${{{header_cell}}}'] = []
+                    row_of_variables = []
+                    for cell in row:
+                        row_of_variables.append(f'${{{cell}}}')
+                    self._analyse_header(row_of_variables)
                 else:
-                    for cell_index, cell in enumerate(row):
-                        table[f'${{{header[cell_index]}}}'].append(cell)
-                    test_case_column.append('')
-            table[self.TESTCASE_TABLE_NAME] = test_case_column
-        self.data_table = table
+                    self._read_data_from_table(row)

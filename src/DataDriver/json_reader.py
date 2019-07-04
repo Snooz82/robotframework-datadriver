@@ -12,8 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .xls_reader import xls_Reader
+
+"""
+[
+  {
+    "test_case_name": "first",
+    "arguments": {
+      "${username}": "demo",
+      "${password}": "mode"
+    },
+    "tags": [
+      "tag1",
+      "tag2",
+      "smoke"
+    ],
+    "documentation": "This is the doc"
+  },
+  {
+    "test_case_name": "second",
+    "arguments": {
+      "${username}": "${EMPTY}",
+      "${password}": "mode"
+    },
+    "tags": [
+      "tag1",
+      "smoke"
+    ],
+    "documentation": "This is the doc"
+  }
+]
+"""
+
+from .AbstractReaderClass import AbstractReaderClass
 
 
-class xlsx_Reader(xls_Reader):
+class json_Reader(AbstractReaderClass):
     pass

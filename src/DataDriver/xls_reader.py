@@ -14,14 +14,14 @@
 
 import pandas as pd
 import numpy as np
-from .Abstract_Reader_Class import Abstract_Reader_Class
+from .AbstractReaderClass import AbstractReaderClass
 
 
-class xls_Reader(Abstract_Reader_Class):
+class xls_Reader(AbstractReaderClass):
 
     def get_data_from_source(self):
         data_frame = pd.read_excel(self.file, sheet_name=self.sheet_name, dtype=str).replace(np.nan, '', regex=True)
-        table = {}
-        for header in data_frame.columns:
-            table[header] = data_frame[header].tolist()
-        return table
+        self._analyse_header(list(data_frame))
+        for row in data_frame.values.tolist():
+            self._read_data_from_table(row)
+        return self.data_table
