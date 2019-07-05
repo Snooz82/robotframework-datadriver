@@ -14,10 +14,11 @@
 
 
 import csv
+import os
 from .AbstractReaderClass import AbstractReaderClass
 
 
-class csv_Reader(AbstractReaderClass):
+class generic_csv_reader(AbstractReaderClass):
 
     def get_data_from_source(self):
         self._register_dialects()
@@ -49,6 +50,9 @@ class csv_Reader(AbstractReaderClass):
             reader = csv.reader(csvfile, self.csv_dialect)
             for row_index, row in enumerate(reader):
                 if row_index == 0:
-                    self._analyse_header(row)
+                    row_of_variables = []
+                    for cell in row:
+                        row_of_variables.append(f'${{{cell}}}')
+                    self._analyse_header(row_of_variables)
                 else:
                     self._read_data_from_table(row)

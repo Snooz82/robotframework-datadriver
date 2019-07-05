@@ -28,6 +28,9 @@ class ReaderConfig:
                  skipinitialspace=None,
                  lineterminator=None,
                  sheet_name=None,
+                 reader_class=None,
+                 file_search_strategy='path',
+                 file_regex=None
                  ):
 
         self.ROBOT_LIBRARY_LISTENER = self
@@ -42,7 +45,9 @@ class ReaderConfig:
         self.skipinitialspace = skipinitialspace
         self.lineterminator = lineterminator
         self.sheet_name = sheet_name
-
+        self.reader_class = reader_class
+        self.file_search_strategy = file_search_strategy
+        self.file_regex = file_regex
 
 class TestCaseData:
 

@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import os
 import os.path
+import re
 from copy import deepcopy
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
@@ -702,7 +703,10 @@ Defaults:
                  doublequote=True,
                  skipinitialspace=False,
                  lineterminator='\r\n',
-                 sheet_name=0
+                 sheet_name=0,
+                 reader_class=None,
+                 file_search_strategy='path',
+                 file_regex=f'(?i)(.*?)(\.csv)'
                  ):
         """**Example:**
 
@@ -839,6 +843,13 @@ Usage in Robot Framework
         """
         self.ROBOT_LIBRARY_LISTENER = self
 
+        try:
+            re.compile(file_regex)
+        except re.error as e:
+            file_regex = r'(?i)(.*?)(\.csv)'
+            BuiltIn().log_to_console(f'[ DataDriver ] invalid Regex! used {file_regex} instead.')
+            BuiltIn().log_to_console(e)
+
         self.reader_config = ReaderConfig(
             file=file,
             encoding=encoding,
@@ -850,6 +861,9 @@ Usage in Robot Framework
             skipinitialspace=skipinitialspace,
             lineterminator=lineterminator,
             sheet_name=sheet_name,
+            reader_class=reader_class,
+            file_search_strategy=file_search_strategy.lower(),
+            file_regex=file_regex
         )
 
         self.suite_source = None
@@ -893,6 +907,13 @@ Usage in Robot Framework
                                      f' Test Cases loaded...')
 
     def _data_reader(self):
+        if not self.reader_config.reader_class:
+            reader = self._get_data_reader_from_file_extension()
+        else:
+            reader = self._get_data_reader_from_reader_class()
+        return reader
+
+    def _get_data_reader_from_file_extension(self):
         filename, file_extension = os.path.splitext(self.reader_config.file)
         reader_type = file_extension.lower()[1:]
         if self.loglevel == 'DEBUG':
@@ -905,13 +926,35 @@ Usage in Robot Framework
         reader = reader_class(self.reader_config)
         return reader
 
-    def _resolve_file_attribute(self):
-        if (not self.reader_config.file) or ('' == self.reader_config.file[:self.reader_config.file.rfind('.')]):
-            self._get_data_file_from_suite_source()
-        else:
-            self._check_if_file_exists_as_path_or_in_suite()
+    def _get_data_reader_from_reader_class(self):
+        reader_name = self.reader_config.reader_class
+        if self.loglevel == 'DEBUG':
+            BuiltIn().log_to_console(f'[ DataDriver ] Initializes  {reader_name}')
+        reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
+        if self.loglevel == 'DEBUG':
+            BuiltIn().log_to_console(f'[ DataDriver ] Reader Module: {reader_module}')
+        reader_class = getattr(reader_module, f'{reader_name}')
+        if self.loglevel == 'DEBUG':
+            BuiltIn().log_to_console(f'[ DataDriver ] Reader Class: {reader_class}')
+        reader = reader_class(self.reader_config)
+        return reader
 
-    def _get_data_file_from_suite_source(self):
+    def _resolve_file_attribute(self):
+        if self.reader_config.file_search_strategy == 'path':
+            if (not self.reader_config.file) or ('' == self.reader_config.file[:self.reader_config.file.rfind('.')]):
+                self._set_data_file_to_suite_source()
+            else:
+                self._check_if_file_exists_as_path_or_in_suite()
+        elif self.reader_config.file_search_strategy == 'regex':
+            self._search_file_from_regex()
+        elif self.reader_config.file_search_strategy == 'evaluate':
+            pass  # ToDo: implement other search calls
+        elif self.reader_config.file_search_strategy == 'none':
+            pass
+        else:
+            raise ValueError(f'file_search_strategy={self.reader_config.file_search_strategy} is not a valid value!')
+
+    def _set_data_file_to_suite_source(self):
         if not self.reader_config.file:
             suite_path_as_data_file = f'{self.suite_source[:self.suite_source.rfind(".")]}.csv'
         else:
@@ -936,6 +979,13 @@ Usage in Robot Framework
                 raise FileNotFoundError(
                     'File attribute was not a full path. Tried to find '
                     + file_in_suite_dir + ' but file does not exist.')
+
+    def _search_file_from_regex(self):
+        if os.path.isdir(self.reader_config.file):
+            for filename in os.listdir(self.reader_config.file):
+                if re.match(self.reader_config.file_regex, filename):
+                    self.reader_config.file = os.path.join(self.reader_config.file, filename)
+                    break
 
     def _get_template_keyword(self, suite):
         template = self.template_test.template
