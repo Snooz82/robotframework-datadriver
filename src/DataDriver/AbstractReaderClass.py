@@ -81,7 +81,7 @@ class AbstractReaderClass:
                 self.documentation_column_id = cell_index
 
     def _read_data_from_table(self, row):
-        test_case_name = row[self.test_case_column_id] if self.test_case_column_id else ''
+        test_case_name = row[self.test_case_column_id] if self.test_case_column_id is not None else ''
         arguments = {}
         for arguments_column_id in self.arguments_column_ids:
             arguments[self.header[arguments_column_id]] = row[arguments_column_id]

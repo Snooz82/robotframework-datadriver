@@ -705,7 +705,7 @@ Defaults:
                  lineterminator='\r\n',
                  sheet_name=0,
                  reader_class=None,
-                 file_search_strategy='path',
+                 file_search_strategy='PATH',
                  file_regex=f'(?i)(.*?)(\.csv)'
                  ):
         """**Example:**
@@ -862,7 +862,7 @@ Usage in Robot Framework
             lineterminator=lineterminator,
             sheet_name=sheet_name,
             reader_class=reader_class,
-            file_search_strategy=file_search_strategy.lower(),
+            file_search_strategy=file_search_strategy.upper(),
             file_regex=file_regex
         )
 
@@ -940,16 +940,16 @@ Usage in Robot Framework
         return reader
 
     def _resolve_file_attribute(self):
-        if self.reader_config.file_search_strategy == 'path':
+        if self.reader_config.file_search_strategy == 'PATH':
             if (not self.reader_config.file) or ('' == self.reader_config.file[:self.reader_config.file.rfind('.')]):
                 self._set_data_file_to_suite_source()
             else:
                 self._check_if_file_exists_as_path_or_in_suite()
-        elif self.reader_config.file_search_strategy == 'regex':
+        elif self.reader_config.file_search_strategy == 'REGEX':
             self._search_file_from_regex()
-        elif self.reader_config.file_search_strategy == 'evaluate':
+        elif self.reader_config.file_search_strategy == 'EVALUATE':
             pass  # ToDo: implement other search calls
-        elif self.reader_config.file_search_strategy == 'none':
+        elif self.reader_config.file_search_strategy == 'NONE':
             pass
         else:
             raise ValueError(f'file_search_strategy={self.reader_config.file_search_strategy} is not a valid value!')
