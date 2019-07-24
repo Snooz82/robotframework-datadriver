@@ -21,7 +21,7 @@ from .ReaderConfig import TestCaseData
 from robot.libraries.BuiltIn import BuiltIn
 import importlib
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 
 class DataDriver:
