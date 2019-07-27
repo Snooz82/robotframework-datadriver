@@ -1,6 +1,5 @@
 *** Settings ***
 Resource    login_resources.robot
-
 Suite Setup    Open my Browser
 Suite Teardown    Close Browsers    
 Test Setup      Open Login Page

@@ -1,7 +1,6 @@
 *** Settings ***
 Library           DataDriver   file=${CURDIR}    reader_class=generic_csv_reader    file_search_strategy=regex    file_regex=(?i)(.*?)(\\.pictout)    dialect=userdefined   delimiter=\t    encoding=UTF-8
 Resource          login_resources.robot
-Library         DebugLibrary
 
 Suite Setup       Open my Browser
 Suite Teardown    Close Browsers

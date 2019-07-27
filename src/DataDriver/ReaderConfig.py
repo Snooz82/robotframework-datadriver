@@ -1,3 +1,4 @@
+# coding=utf-8
 # Copyright 2018-  René Rohner
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +49,7 @@ class ReaderConfig:
         self.reader_class = reader_class
         self.file_search_strategy = file_search_strategy
         self.file_regex = file_regex
+
 
 class TestCaseData:
 

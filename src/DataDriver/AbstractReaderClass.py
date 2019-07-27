@@ -1,3 +1,4 @@
+# coding=utf-8
 # Copyright 2018-  René Rohner
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +21,7 @@ import re
 
 class AbstractReaderClass:
 
-    def __init__(self, reader_config: ReaderConfig):
+    def __init__(self, reader_config):
 
         self.file = reader_config.file
         self.csv_encoding = reader_config.encoding
@@ -50,21 +51,25 @@ class AbstractReaderClass:
     def get_data_from_source(self):
         raise NotImplementedError("This method should be implemented and return self.data_table to DataDriver...")
 
-    def _is_test_case_header(self, header_string: str):
-        is_test = re.fullmatch(self.TEST_CASE_TABLE_PATTERN, header_string)
-        is_task = re.fullmatch(self.TASK_TABLE_PATTERN, header_string)
+    def fullmatch(self, regex, string, flags=0):
+        """Emulate python-3.4 re.fullmatch()."""
+        return re.match("(?:" + regex + r")\Z", string, flags=flags)
+
+    def _is_test_case_header(self, header_string):
+        is_test = self.fullmatch(self.TEST_CASE_TABLE_PATTERN, header_string)
+        is_task = self.fullmatch(self.TASK_TABLE_PATTERN, header_string)
         if is_task or is_test:
             return True
 
-    def _is_variable(self, header_string: str):
+    def _is_variable(self, header_string):
         if re.match(self.VARIABLE_PATTERN, header_string):
             return True
 
-    def _is_tags(self, header_string: str):
+    def _is_tags(self, header_string):
         if re.match(self.TAGS_PATTERN, header_string):
             return True
 
-    def _is_documentation(self, header_string: str):
+    def _is_documentation(self, header_string):
         if re.match(self.DOCUMENTATION_PATTERN, header_string):
             return True
 
