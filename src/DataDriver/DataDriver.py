@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2018-  René Rohner
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,15 +16,12 @@ import os
 import os.path
 import re
 from copy import deepcopy
-
-from pandas.compat import FileNotFoundError
-
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
 from robot.libraries.BuiltIn import BuiltIn
 import importlib
 
-__version__ = '0.2.7'
+__version__ = '0.3.0'
 
 
 class DataDriver:
@@ -59,18 +55,14 @@ https://github.com/Microsoft/pict
 Installation
 ------------
 
-If you have Python == 2.7 with pip installed, you can simply
+If you already have Python >= 3.6 with pip installed, you can simply
 run:
 
-``pip install --upgrade robotframework-datadriver==0.2.7``
-
-Version 0.2.7 is the only Version that is compatible with Python 2.7
+``pip install --upgrade robotframework-datadriver``
 
 or if you have Python 2 and 3 installed in parallel you may use
 
 ``pip3 install --upgrade robotframework-datadriver``
-
-Because Python 2 is deprecated and you should use Python 3 instead...
 
 |
 
@@ -696,7 +688,6 @@ Defaults:
 
 
     """
-    reader_config = None  # type: ReaderConfig
     ROBOT_LIBRARY_DOC_FORMAT = 'reST'
 
     ROBOT_LISTENER_API_VERSION = 3
@@ -715,7 +706,7 @@ Defaults:
                  sheet_name=0,
                  reader_class=None,
                  file_search_strategy='PATH',
-                 file_regex=r'(?i)(.*?)(\.csv)'
+                 file_regex=f'(?i)(.*?)(\.csv)'
                  ):
         """**Example:**
 
@@ -856,14 +847,14 @@ Usage in Robot Framework
             re.compile(file_regex)
         except re.error as e:
             file_regex = r'(?i)(.*?)(\.csv)'
-            BuiltIn().log_to_console('[ DataDriver ] invalid Regex! used {} instead.'.format('file_regex'))
+            BuiltIn().log_to_console(f'[ DataDriver ] invalid Regex! used {file_regex} instead.')
             BuiltIn().log_to_console(e)
 
         self.reader_config = ReaderConfig(
             file=file,
             encoding=encoding,
             dialect=dialect,
-            delimiter=str(delimiter),
+            delimiter=delimiter,
             quotechar=quotechar,
             escapechar=escapechar,
             doublequote=doublequote,
@@ -911,8 +902,9 @@ Usage in Robot Framework
 
         self.data_table = self._data_reader().get_data_from_source()
         if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console("[ DataDriver ] Opening file '{}'".format(self.reader_config.file))
-            BuiltIn().log_to_console('[ DataDriver ] {} Test Cases loaded...'.format(len(self.data_table)))
+            BuiltIn().log_to_console(f"[ DataDriver ] Opening file '{self.reader_config.file}'")
+            BuiltIn().log_to_console(f'[ DataDriver ] {len(self.data_table)}'
+                                     f' Test Cases loaded...')
 
     def _data_reader(self):
         if not self.reader_config.reader_class:
@@ -925,11 +917,11 @@ Usage in Robot Framework
         filename, file_extension = os.path.splitext(self.reader_config.file)
         reader_type = file_extension.lower()[1:]
         if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console('[ DataDriver ] Initialized in {}-mode.'.format(reader_type))
-        reader_module = importlib.import_module('..{}_reader'.format(reader_type), 'DataDriver.DataDriver')
+            BuiltIn().log_to_console(f'[ DataDriver ] Initialized in {reader_type}-mode.')
+        reader_module = importlib.import_module(f'..{reader_type}_reader', 'DataDriver.DataDriver')
         if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console('[ DataDriver ] Reader Module: {}'.format(reader_module))
-        reader_class = getattr(reader_module, '{}_Reader'.format(reader_type))
+            BuiltIn().log_to_console(f'[ DataDriver ] Reader Module: {reader_module}')
+        reader_class = getattr(reader_module, f'{reader_type}_Reader')
 
         reader = reader_class(self.reader_config)
         return reader
@@ -937,19 +929,19 @@ Usage in Robot Framework
     def _get_data_reader_from_reader_class(self):
         reader_name = self.reader_config.reader_class
         if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console('[ DataDriver ] Initializes  {}'.format(reader_name))
-        reader_module = importlib.import_module('..{}'.format(reader_name), 'DataDriver.DataDriver')
+            BuiltIn().log_to_console(f'[ DataDriver ] Initializes  {reader_name}')
+        reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
         if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console('[ DataDriver ] Reader Module: {}'.format(reader_module))
-        reader_class = getattr(reader_module, reader_name)
+            BuiltIn().log_to_console(f'[ DataDriver ] Reader Module: {reader_module}')
+        reader_class = getattr(reader_module, f'{reader_name}')
         if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console('[ DataDriver ] Reader Class: {}'.format(reader_class))
+            BuiltIn().log_to_console(f'[ DataDriver ] Reader Class: {reader_class}')
         reader = reader_class(self.reader_config)
         return reader
 
     def _resolve_file_attribute(self):
         if self.reader_config.file_search_strategy == 'PATH':
-            if (not self.reader_config.file) or (self.reader_config.file[:self.reader_config.file.rfind('.')] == ''):
+            if (not self.reader_config.file) or ('' == self.reader_config.file[:self.reader_config.file.rfind('.')]):
                 self._set_data_file_to_suite_source()
             else:
                 self._check_if_file_exists_as_path_or_in_suite()
@@ -960,15 +952,15 @@ Usage in Robot Framework
         elif self.reader_config.file_search_strategy == 'NONE':
             pass
         else:
-            raise ValueError('file_search_strategy={} is not a valid value!'.format(self.reader_config.file_search_strategy))
+            raise ValueError(f'file_search_strategy={self.reader_config.file_search_strategy} is not a valid value!')
 
     def _set_data_file_to_suite_source(self):
         if not self.reader_config.file:
-            suite_path_as_data_file = '{}.csv'.format(self.suite_source[:self.suite_source.rfind(".")])
+            suite_path_as_data_file = f'{self.suite_source[:self.suite_source.rfind(".")]}.csv'
         else:
             suite_path = self.suite_source[:self.suite_source.rfind(".")]
             file_extension = self.reader_config.file[self.reader_config.file.rfind("."):]
-            suite_path_as_data_file = '{}{}'.format(suite_path, file_extension)
+            suite_path_as_data_file = f'{suite_path}{file_extension}'
 
         if os.path.isfile(suite_path_as_data_file):
             self.reader_config.file = suite_path_as_data_file

@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2018-  René Rohner
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +14,6 @@
 
 
 import csv
-import io
 import os
 from .AbstractReaderClass import AbstractReaderClass
 
@@ -23,7 +21,7 @@ from .AbstractReaderClass import AbstractReaderClass
 class pict_Reader(AbstractReaderClass):
 
     def get_data_from_source(self):
-        self.pictout_file = '{}.pictout'.format(os.path.splitext(self.file)[0])
+        self.pictout_file = f'{os.path.splitext(self.file)[0]}.pictout'
         self._register_dialect()
         self._create_gemerated_file_from_model_file()
         self._read_generated_file_to_dictionaries()
@@ -37,16 +35,16 @@ class pict_Reader(AbstractReaderClass):
                              quoting=csv.QUOTE_NONE)
 
     def _create_gemerated_file_from_model_file(self):
-        os.system('pict "{}" > "{}"'.format(self.file, self.pictout_file))
+        os.system(f'pict "{self.file}" > "{self.pictout_file}"')
 
     def _read_generated_file_to_dictionaries(self):
-        with io.open(self.pictout_file, 'r', encoding='utf_8') as csvfile:
+        with open(self.pictout_file, 'r', encoding='utf_8') as csvfile:
             reader = csv.reader(csvfile, 'PICT')
             for row_index, row in enumerate(reader):
                 if row_index == 0:
                     row_of_variables = []
                     for cell in row:
-                        row_of_variables.append('${{{}}}'.format(cell))
+                        row_of_variables.append(f'${{{cell}}}')
                     self._analyse_header(row_of_variables)
                 else:
                     self._read_data_from_table(row)

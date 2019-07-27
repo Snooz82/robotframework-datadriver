@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2018-  René Rohner
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +14,6 @@
 
 
 import csv
-import io
-
 from .AbstractReaderClass import AbstractReaderClass
 
 
@@ -48,7 +45,7 @@ class csv_Reader(AbstractReaderClass):
                                  quoting=csv.QUOTE_ALL)
 
     def _read_file_to_data_table(self):
-        with io.open(self.file, 'r', encoding=self.csv_encoding) as csvfile:
+        with open(self.file, 'r', encoding=self.csv_encoding) as csvfile:
             reader = csv.reader(csvfile, self.csv_dialect)
             for row_index, row in enumerate(reader):
                 if row_index == 0:
