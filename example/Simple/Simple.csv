@@ -1,0 +1,5 @@
+*** Test Cases ***,${message},[Documentation],[Tags]
+First test,Simple message with no tags,"If there are some tags specified, this should not be executed"
+Second test,With the tag we want,Should be executed, lightweight
+Third test,Without a tag we want,Should not be executed, detailed
+Fourth test,"Includes a tag we want, and others",Should be executed because the tag is included in the list,"detailed,lightweight,more,and more"

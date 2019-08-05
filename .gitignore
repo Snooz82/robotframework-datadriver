@@ -121,3 +121,8 @@ dmypy.json
 ### Python Patch ###
 .venv/
 CreatePiPWheel.bat
+
+.vscode/
+log.html
+output.xml
+report.html

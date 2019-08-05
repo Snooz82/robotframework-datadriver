@@ -16,6 +16,7 @@
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
 import re
+import sys
 
 
 class AbstractReaderClass:
@@ -39,6 +40,9 @@ class AbstractReaderClass:
         self.documentation_column_id = None
         self.header = []
         self.data_table = []
+        tag_prefix = "includeTag:"
+        tag_prefix_len = len(tag_prefix)
+        self.include_tags = set([t[tag_prefix_len:] for t in sys.argv if t.startswith(tag_prefix)])
 
         self.TESTCASE_TABLE_NAME = ReaderConfig.TEST_CASE_TABLE_NAME
         self.TEST_CASE_TABLE_PATTERN = r'(?i)^(\*+\s*test ?cases?[\s*].*)'
@@ -85,7 +89,9 @@ class AbstractReaderClass:
         arguments = {}
         for arguments_column_id in self.arguments_column_ids:
             arguments[self.header[arguments_column_id]] = row[arguments_column_id]
-        tags = row[self.tags_column_id].split(',') if self.tags_column_id else []
+        tags = set([t.strip() for t in row[self.tags_column_id].split(',')] if self.tags_column_id and len(row) > self.tags_column_id else [])
+        if self.include_tags and not tags.intersection(self.include_tags):
+            return
         documentation = row[self.documentation_column_id] if self.documentation_column_id else ''
 
         self.data_table.append(TestCaseData(test_case_name, arguments, tags, documentation))
