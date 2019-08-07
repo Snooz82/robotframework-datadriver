@@ -706,7 +706,8 @@ Defaults:
                  sheet_name=0,
                  reader_class=None,
                  file_search_strategy='PATH',
-                 file_regex=f'(?i)(.*?)(\.csv)'
+                 file_regex=f'(?i)(.*?)(\.csv)',
+                 include_tags=None
                  ):
         """**Example:**
 
@@ -872,6 +873,9 @@ Usage in Robot Framework
         self.data_table = None
         self.index = None
         self.test_case_data = TestCaseData()
+        self.include_tags = None
+        if include_tags:
+            self.include_tags = set([t.strip() for t in include_tags.split(",")])
 
     def _start_suite(self, suite, result):
         """Called when a test suite starts.
@@ -888,6 +892,8 @@ Usage in Robot Framework
         self.template_keyword = self._get_template_keyword(suite)
         temp_test_list = list()
         for self.index, self.test_case_data in enumerate(self.data_table):
+            if self.include_tags and not set(self.test_case_data.tags).intersection(self.include_tags):
+                continue
             self._create_test_from_template()
             temp_test_list.append(self.test)
         suite.tests = temp_test_list
