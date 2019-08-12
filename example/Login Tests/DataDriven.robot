@@ -6,6 +6,7 @@ Suite Setup       Open my Browser
 Suite Teardown    Close Browsers
 Test Setup        Open Login Page
 Test Template     Invalid Login
+Force Tags        1    2
 
 *** Test Cases ***
 Login with user '${username}' and password '${password}'    Default    UserData

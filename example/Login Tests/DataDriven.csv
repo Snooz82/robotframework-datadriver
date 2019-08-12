@@ -2,8 +2,8 @@
 Right user empty pass;demo;${EMPTY};1;This is a test case documentation of the first one.
 Right user wrong pass;demo;FooBar;2,3,foo;This test case has the Tags 2,3 and foo
 ;${EMPTY};mode;1,2,3,4;This test case has a generated name based on template name.
-;${EMPTY};${EMPTY};;
-;${EMPTY};FooBar;foo;
-;FooBar;mode;foo;
+;${EMPTY};${EMPTY};4,2;
+;${EMPTY};FooBar;;
+;FooBar;mode;foo,1;
 ;FooBar;${EMPTY};foo;
-;FooBar;FooBar;foo;
+;FooBar;FooBar;foo,2;

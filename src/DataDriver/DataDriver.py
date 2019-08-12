@@ -15,13 +15,17 @@
 import os
 import os.path
 import re
+import sys
 from copy import deepcopy
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
 from robot.libraries.BuiltIn import BuiltIn
+from robot.model.tags import Tags
+from robot.utils.argumentparser import ArgumentParser
+from robot.run import USAGE
 import importlib
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 
 class DataDriver:
@@ -69,13 +73,15 @@ or if you have Python 2 and 3 installed in parallel you may use
 Table of contents
 -----------------
 
--  `What DataDriver does <#WhatDataDriverdoes>`__
--  `How DataDriver works <#HowDataDriverworks>`__
--  `Usage <#Usage>`__
--  `Structure of test suite <#Structureoftestsuite>`__
--  `Structure of data file <#Structureofdatafile>`__
--  `Data Sources <#DataSources>`__
--  `Encoding and CSV Dialect <#EncodingandCSVDialect>`__
+-  `What DataDriver does`_
+-  `How DataDriver works`_
+-  `Usage`_
+-  `Filtering`_
+-  `Structure of test suite`_
+-  `Structure of data file`_
+-  `Data Sources`_
+-  `File Encoding and CSV Dialect`_
+-  `Custom DataReader Classes`_
 
 |
 
@@ -186,7 +192,7 @@ Options
 
     *** Settings ***
     Library    DataDriver
-    ...    file=None
+    ...    file=${None}
     ...    encoding=cp1252
     ...    dialect=Excel-EU
     ...    delimiter=;
@@ -196,7 +202,11 @@ Options
     ...    skipinitialspace=False
     ...    lineterminator=\\r\\n
     ...    sheet_name=0
-
+    ...    reader_class=${None}
+    ...    file_search_strategy=PATH
+    ...    file_regex=(?i)(.*?)(\\.csv)
+    ...    include=${None}
+    ...    exclude=${None}
 
 |
 
@@ -363,6 +373,47 @@ default parameters do not fit your needs.
     *** Settings ***
     Library          DataDriver
     Test Template    Invalid Logins
+
+|
+
+Filtering
+---------
+
+New in ``0.3.1``
+
+It is possible to use tags to filter the data source.
+To use this, tags must be assigned to the test cases in data source.
+
+|
+
+Robot Framework Command Line Arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To filter the source, the normal command line arguments of Robot Framework can be used.
+See Robot Framework Userguide_ for more information
+Be aware that the filtering of Robot Framework itself is done before DataDriver is called.
+This means if the Template test is already filtered out by Robot Framework, DataDriver can never be called.
+If you want to use ``--include`` the DataDriver TestSuite should have a ``DefaultTag`` or ``ForceTag`` that
+fulfills these requirements.
+
+.. _Userguide: http://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#tag-patterns
+
+Example: ``robot --include 1OR2 --exclude foo DataDriven.robot``
+
+|
+
+Filter based on Library Options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is also possible to filter the data source by an init option of DataDriver.
+If these Options are set, Robot Framework Filtering will be ignored.
+
+Example:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    include=1OR2    exclude=foo
 
 |
 
@@ -599,8 +650,8 @@ Except the file option all other options of the library will be ignored.
 
 |
 
-CSV Encoding and CSV Dialect
-----------------------------
+File Encoding and CSV Dialect
+-----------------------------
 
 CSV is far away from well designed and has absolutely no "common"
 format. Therefore it is possible to define your own dialect or use
@@ -686,6 +737,66 @@ Defaults:
     lineterminator='\\r\\n',
     sheet_name=0
 
+|
+
+Custom DataReader Classes
+-------------------------
+
+It is possible to write your own DataReader Class as a plugin for DataDriver.
+DataReader Classes are called from DataDriver to return a list of TestCaseData.
+
+|
+
+Using Custom DataReader
+~~~~~~~~~~~~~~~~~~~~~~~
+
+DataReader classes are loaded dynamically into DataDriver while runtime.
+DataDriver identifies the DataReader to load by the file extantion of the data file or by the option ``reader_class``.
+
+|
+
+Select Reader by File Extension:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    file=mydata.csv
+
+This will load the class ``csv_Reader`` from ``csv_reader.py`` from the same folder.
+
+|
+
+Select Reader by Option:
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code :: robotframework
+
+    *** Settings ***
+        Library    DataDriver   file=mydata.csv    reader_class=generic_csv_reader    dialect=userdefined   delimiter=\t    encoding=UTF-8
+
+This will load the class ``generic_csv_reader`` from ``generic_csv_reader.py`` from same folder.
+
+|
+
+Create Custom Reader
+~~~~~~~~~~~~~~~~~~~~
+
+Recommendation:
+
+Have a look to the Source Code of existing DataReader like ``csv_reader.py`` or ``generic_csv_reader.py`` .
+
+To write you own reader, create a class inherited from ``AbstractReaderClass``.
+
+Your class will get all available configs from DataDriver as an object of ``ReaderConfig`` on ``__init__``.
+
+DataDriver will call the method ``get_data_from_source``
+This method should then load you data from your custom source and stores them into list of object of ``TestCaseData``.
+This List of ```TestCaseData`` will be returned to DataDriver.
+
+``AbstractReaderClass`` has also some optional helper methods that may be useful.
+
+See other readers as example.
 
     """
     ROBOT_LIBRARY_DOC_FORMAT = 'reST'
@@ -706,7 +817,9 @@ Defaults:
                  sheet_name=0,
                  reader_class=None,
                  file_search_strategy='PATH',
-                 file_regex=f'(?i)(.*?)(\.csv)'
+                 file_regex=r'(?i)(.*?)(\.csv)',
+                 include=None,
+                 exclude=None
                  ):
         """**Example:**
 
@@ -732,7 +845,11 @@ Options
     ...    skipinitialspace=False
     ...    lineterminator=\\r\\n
     ...    sheet_name=0
-
+    ...    reader_class=None
+    ...    file_search_strategy=PATH
+    ...    file_regex=(?i)(.*?)(\\.csv)
+    ...    include=None
+    ...    exclude=None
 
 |
 
@@ -850,6 +967,14 @@ Usage in Robot Framework
             BuiltIn().log_to_console(f'[ DataDriver ] invalid Regex! used {file_regex} instead.')
             BuiltIn().log_to_console(e)
 
+        options, datasources = ArgumentParser(USAGE,
+                                  auto_pythonpath=False,
+                                  auto_argumentfile=True,
+                                  env_options='ROBOT_OPTIONS').parse_args(sys.argv[1:])
+
+        self.include = options['include'] if not include else include
+        self.exclude = options['exclude'] if not exclude else exclude
+
         self.reader_config = ReaderConfig(
             file=file,
             encoding=encoding,
@@ -863,14 +988,15 @@ Usage in Robot Framework
             sheet_name=sheet_name,
             reader_class=reader_class,
             file_search_strategy=file_search_strategy.upper(),
-            file_regex=file_regex
+            file_regex=file_regex,
+            include=self.include,
+            exclude=self.exclude
         )
 
         self.suite_source = None
         self.template_test = None
         self.template_keyword = None
         self.data_table = None
-        self.index = None
         self.test_case_data = TestCaseData()
 
     def _start_suite(self, suite, result):
@@ -881,16 +1007,33 @@ Usage in Robot Framework
         :param result: NOT USED
         """
         self.loglevel = BuiltIn().get_variable_value('${LOG LEVEL}')
-
         self.suite_source = suite.source
         self._create_data_table()
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
+        suite.tests = self._get_filtered_test_list()
+
+    def _get_filtered_test_list(self):
         temp_test_list = list()
-        for self.index, self.test_case_data in enumerate(self.data_table):
-            self._create_test_from_template()
-            temp_test_list.append(self.test)
-        suite.tests = temp_test_list
+        for self.test_case_data in self.data_table:
+            if self._included_by_tags() and self._not_excluded_by_tags():
+                self._create_test_from_template()
+                temp_test_list.append(self.test)
+        return temp_test_list
+
+    def _included_by_tags(self):
+        if self.include:
+            tags = Tags()
+            tags.add(self.test_case_data.tags)
+            return tags.match(self.include)
+        return True
+
+    def _not_excluded_by_tags(self):
+        if self.exclude and self.test_case_data.tags:
+            tags = Tags()
+            tags.add(self.test_case_data.tags)
+            return not tags.match(self.exclude)
+        return True
 
     def _create_data_table(self):
         """

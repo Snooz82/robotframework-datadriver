@@ -30,10 +30,10 @@ class ReaderConfig:
                  sheet_name=None,
                  reader_class=None,
                  file_search_strategy='path',
-                 file_regex=None
+                 file_regex=None,
+                 include=None,
+                 exclude=None
                  ):
-
-        self.ROBOT_LIBRARY_LISTENER = self
 
         self.file = file
         self.encoding = encoding
@@ -48,6 +48,8 @@ class ReaderConfig:
         self.reader_class = reader_class
         self.file_search_strategy = file_search_strategy
         self.file_regex = file_regex
+        self.include = include
+        self.exclude = exclude
 
 
 class TestCaseData:
