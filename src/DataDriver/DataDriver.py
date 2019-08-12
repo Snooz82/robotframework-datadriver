@@ -68,6 +68,12 @@ or if you have Python 2 and 3 installed in parallel you may use
 
 ``pip3 install --upgrade robotframework-datadriver``
 
+DataDriver in compatible with Python 2.7 only in Version 0.2.7.
+
+``pip install --upgrade robotframework-datadriver==0.2.7``
+
+Because Python 2.7 is deprecated, there are no new feature to python 2.7 compatible version.
+
 |
 
 Table of contents
