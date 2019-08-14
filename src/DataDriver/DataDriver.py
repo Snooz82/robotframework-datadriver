@@ -977,7 +977,7 @@ Usage in Robot Framework
         options, datasources = ArgumentParser(USAGE,
                                   auto_pythonpath=False,
                                   auto_argumentfile=True,
-                                  env_options='ROBOT_OPTIONS').parse_args([a for a in sys.argv[1:] if a != '--testlevelsplit'])
+                                  env_options='ROBOT_OPTIONS').parse_args([a for a in sys.argv[1:] if a != '--testlevelsplit' and a != '--verbose'])
 
         self.include = options['include'] if not include else include
         self.exclude = options['exclude'] if not exclude else exclude
@@ -1018,13 +1018,16 @@ Usage in Robot Framework
         self._create_data_table()
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
-        suite.tests = self._get_filtered_test_list()
+        predefined_test = BuiltIn().get_variable_value('${DYNAMICTEST}')
+        suite.tests = self._get_filtered_test_list(predefined_test)
 
-    def _get_filtered_test_list(self):
+    def _get_filtered_test_list(self, matching_long_name=None):
         temp_test_list = list()
         for self.test_case_data in self.data_table:
             if self._included_by_tags() and self._not_excluded_by_tags():
                 self._create_test_from_template()
+                if matching_long_name and self.test.longname != matching_long_name:
+                    continue
                 temp_test_list.append(self.test)
         return temp_test_list
 
