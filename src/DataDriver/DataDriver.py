@@ -1019,6 +1019,7 @@ Usage in Robot Framework
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
         predefined_test = BuiltIn().get_variable_value('${DYNAMICTEST}')
+        self._is_pabot_name_run = BuiltIn().get_variable_value('${PABOTQUEUEINDEX}') == '-1'
         suite.tests = self._get_filtered_test_list(predefined_test)
 
     def _get_filtered_test_list(self, matching_long_name=None):
@@ -1193,8 +1194,8 @@ Usage in Robot Framework
     def _add_test_case_tags(self):
         for tag in self.test_case_data.tags:
             self.test.tags.add(tag.strip())
-        #TODO: Good name for this
-        self.test.tags.add("pabot:dynamictest")
+        if self._is_pabot_name_run:
+            self.test.tags.add("pabot:dynamictest")
 
     def _replace_test_case_doc(self):
         self.test.doc = self.test_case_data.documentation
