@@ -973,10 +973,11 @@ Usage in Robot Framework
             BuiltIn().log_to_console(f'[ DataDriver ] invalid Regex! used {file_regex} instead.')
             BuiltIn().log_to_console(e)
 
+        #FIXME: Does not work with non RF args. Remove --testlevelsplit hack.
         options, datasources = ArgumentParser(USAGE,
                                   auto_pythonpath=False,
                                   auto_argumentfile=True,
-                                  env_options='ROBOT_OPTIONS').parse_args(sys.argv[1:])
+                                  env_options='ROBOT_OPTIONS').parse_args([a for a in sys.argv[1:] if a != '--testlevelsplit'])
 
         self.include = options['include'] if not include else include
         self.exclude = options['exclude'] if not exclude else exclude
@@ -1189,6 +1190,8 @@ Usage in Robot Framework
     def _add_test_case_tags(self):
         for tag in self.test_case_data.tags:
             self.test.tags.add(tag.strip())
+        #TODO: Good name for this
+        self.test.tags.add("pabot:dynamictest")
 
     def _replace_test_case_doc(self):
         self.test.doc = self.test_case_data.documentation
