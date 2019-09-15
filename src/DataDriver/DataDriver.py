@@ -973,10 +973,12 @@ Usage in Robot Framework
             BuiltIn().log_to_console(f'[ DataDriver ] invalid Regex! used {file_regex} instead.')
             BuiltIn().log_to_console(e)
 
-        options, datasources = ArgumentParser(USAGE,
-                                  auto_pythonpath=False,
-                                  auto_argumentfile=True,
-                                  env_options='ROBOT_OPTIONS').parse_args(sys.argv[1:])
+        arg_parser = ArgumentParser(USAGE,
+                                    auto_pythonpath=False,
+                                    auto_argumentfile=True,
+                                    env_options='ROBOT_OPTIONS')
+        valid_args = self._filter_args(sys.argv[1:], arg_parser._short_opts, arg_parser._long_opts)
+        options, data_sources = arg_parser.parse_args(valid_args)
 
         self.include = options['include'] if not include else include
         self.exclude = options['exclude'] if not exclude else exclude
@@ -1021,10 +1023,12 @@ Usage in Robot Framework
 
     def _get_filtered_test_list(self):
         temp_test_list = list()
+        dynamic_test_name = BuiltIn().get_variable_value('${DYNAMICTEST}')
         for self.test_case_data in self.data_table:
             if self._included_by_tags() and self._not_excluded_by_tags():
                 self._create_test_from_template()
-                temp_test_list.append(self.test)
+                if not dynamic_test_name or self.test.longname == dynamic_test_name:
+                    temp_test_list.append(self.test)
         return temp_test_list
 
     def _included_by_tags(self):
@@ -1189,6 +1193,37 @@ Usage in Robot Framework
     def _add_test_case_tags(self):
         for tag in self.test_case_data.tags:
             self.test.tags.add(tag.strip())
+            self._add_tag_if_pabot_dryrun()
+
+    def _add_tag_if_pabot_dryrun(self):
+        if BuiltIn().get_variable_value('${PABOTQUEUEINDEX}') == '-1':
+            self.test.tags.add('pabot:dynamictest')
 
     def _replace_test_case_doc(self):
         self.test.doc = self.test_case_data.documentation
+
+    @staticmethod
+    def _filter_args(argv, short_opts, long_opts):
+        NOK, UNDEF, OK, OPT = -1, 0, 1, 2
+        arg_state = UNDEF
+        valid_robot_args = list()
+        param_opt = [l_opt[:-1] for l_opt in long_opts if l_opt[-1:] == '=']
+        for arg in argv:
+            if arg_state == UNDEF:
+                arg_state = NOK
+                if len(arg) == 2 and arg[0] == '-':
+                    if arg[1] in '.?hTX':
+                        arg_state = OK
+                    elif arg[1] in short_opts:
+                        arg_state = OPT
+                elif len(arg) > 2 and arg[:2] == '--':
+                    if arg[2:] in param_opt:
+                        arg_state = OPT
+                    elif arg[2:] in long_opts:
+                        arg_state = OK
+            if arg_state > NOK:
+                valid_robot_args.append(arg)
+                arg_state -= 1
+            else:
+                arg_state = UNDEF
+        return valid_robot_args
