@@ -12,18 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib
 import os
 import os.path
 import re
 import sys
 from copy import deepcopy
+
+from robot.libraries.BuiltIn import BuiltIn
+from robot.api import logger
+from robot.model.tags import Tags
+from robot.run import USAGE
+from robot.utils.argumentparser import ArgumentParser
+
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
-from robot.libraries.BuiltIn import BuiltIn
-from robot.model.tags import Tags
-from robot.utils.argumentparser import ArgumentParser
-from robot.run import USAGE
-import importlib
 
 __version__ = '0.3.2'
 
@@ -970,16 +973,10 @@ Usage in Robot Framework
             re.compile(file_regex)
         except re.error as e:
             file_regex = r'(?i)(.*?)(\.csv)'
-            BuiltIn().log_to_console(f'[ DataDriver ] invalid Regex! used {file_regex} instead.')
-            BuiltIn().log_to_console(e)
+            logger.console(f'[ DataDriver ] invalid Regex! used {file_regex} instead.')
+            logger.console(e)
 
-        arg_parser = ArgumentParser(USAGE,
-                                    auto_pythonpath=False,
-                                    auto_argumentfile=True,
-                                    env_options='ROBOT_OPTIONS')
-        valid_args = self._filter_args(sys.argv[1:], arg_parser._short_opts, arg_parser._long_opts)
-        options, data_sources = arg_parser.parse_args(valid_args)
-
+        options = self._robot_options()
         self.include = options['include'] if not include else include
         self.exclude = options['exclude'] if not exclude else exclude
 
@@ -1014,7 +1011,8 @@ Usage in Robot Framework
         :param suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
         :param result: NOT USED
         """
-        self.loglevel = BuiltIn().get_variable_value('${LOG LEVEL}')
+        log_level = BuiltIn().get_variable_value('${LOG LEVEL}')
+        self.DEBUG = log_level in ['DEBUG', 'TRACE']
         self.suite_source = suite.source
         self._create_data_table()
         self.template_test = suite.tests[0]
@@ -1052,12 +1050,10 @@ Usage in Robot Framework
         Values are data of this column as array.
         """
         self._resolve_file_attribute()
-
         self.data_table = self._data_reader().get_data_from_source()
-        if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console(f"[ DataDriver ] Opening file '{self.reader_config.file}'")
-            BuiltIn().log_to_console(f'[ DataDriver ] {len(self.data_table)}'
-                                     f' Test Cases loaded...')
+        if self.DEBUG:
+            logger.console(f"[ DataDriver ] Opening file '{self.reader_config.file}'")
+            logger.console(f'[ DataDriver ] {len(self.data_table)} Test Cases loaded...')
 
     def _data_reader(self):
         if not self.reader_config.reader_class:
@@ -1069,26 +1065,25 @@ Usage in Robot Framework
     def _get_data_reader_from_file_extension(self):
         filename, file_extension = os.path.splitext(self.reader_config.file)
         reader_type = file_extension.lower()[1:]
-        if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console(f'[ DataDriver ] Initialized in {reader_type}-mode.')
+        if self.DEBUG:
+            logger.console(f'[ DataDriver ] Initialized in {reader_type}-mode.')
         reader_module = importlib.import_module(f'..{reader_type}_reader', 'DataDriver.DataDriver')
-        if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console(f'[ DataDriver ] Reader Module: {reader_module}')
+        if self.DEBUG:
+            logger.console(f'[ DataDriver ] Reader Module: {reader_module}')
         reader_class = getattr(reader_module, f'{reader_type}_Reader')
-
         reader = reader_class(self.reader_config)
         return reader
 
     def _get_data_reader_from_reader_class(self):
         reader_name = self.reader_config.reader_class
-        if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console(f'[ DataDriver ] Initializes  {reader_name}')
+        if self.DEBUG:
+            logger.console(f'[ DataDriver ] Initializes  {reader_name}')
         reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
-        if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console(f'[ DataDriver ] Reader Module: {reader_module}')
+        if self.DEBUG:
+            logger.console(f'[ DataDriver ] Reader Module: {reader_module}')
         reader_class = getattr(reader_module, f'{reader_name}')
-        if self.loglevel == 'DEBUG':
-            BuiltIn().log_to_console(f'[ DataDriver ] Reader Class: {reader_class}')
+        if self.DEBUG:
+            logger.console(f'[ DataDriver ] Reader Class: {reader_class}')
         reader = reader_class(self.reader_config)
         return reader
 
@@ -1100,10 +1095,8 @@ Usage in Robot Framework
                 self._check_if_file_exists_as_path_or_in_suite()
         elif self.reader_config.file_search_strategy == 'REGEX':
             self._search_file_from_regex()
-        elif self.reader_config.file_search_strategy == 'EVALUATE':
-            pass  # ToDo: implement other search calls
         elif self.reader_config.file_search_strategy == 'NONE':
-            pass
+            pass  # If file_search_strategy is None, no validation of the input file is done. Use i.e. for SQL sources.
         else:
             raise ValueError(f'file_search_strategy={self.reader_config.file_search_strategy} is not a valid value!')
 
@@ -1114,13 +1107,11 @@ Usage in Robot Framework
             suite_path = self.suite_source[:self.suite_source.rfind(".")]
             file_extension = self.reader_config.file[self.reader_config.file.rfind("."):]
             suite_path_as_data_file = f'{suite_path}{file_extension}'
-
         if os.path.isfile(suite_path_as_data_file):
             self.reader_config.file = suite_path_as_data_file
         else:
             raise FileNotFoundError(
-                'File attribute was empty. Tried to find '
-                + suite_path_as_data_file + ' but file does not exist.')
+                f'File attribute was empty. Tried to find {suite_path_as_data_file} but file does not exist.')
 
     def _check_if_file_exists_as_path_or_in_suite(self):
         if not os.path.isfile(self.reader_config.file):
@@ -1130,8 +1121,7 @@ Usage in Robot Framework
                 self.reader_config.file = file_in_suite_dir
             else:
                 raise FileNotFoundError(
-                    'File attribute was not a full path. Tried to find '
-                    + file_in_suite_dir + ' but file does not exist.')
+                    f'File attribute was not a full path. Tried to find {file_in_suite_dir} but file does not exist.')
 
     def _search_file_from_regex(self):
         if os.path.isdir(self.reader_config.file):
@@ -1148,12 +1138,11 @@ Usage in Robot Framework
                     return keyword
         raise AttributeError('No "Test Template" keyword found for first test case.')
 
-    # noinspection PyMethodMayBeStatic
-    def _get_normalized_keyword(self, keyword):
-        return keyword.lower().replace(' ', '').replace('_', '')
-
     def _is_same_keyword(self, first, second):
         return self._get_normalized_keyword(first) == self._get_normalized_keyword(second)
+
+    def _get_normalized_keyword(self, keyword):
+        return keyword.lower().replace(' ', '').replace('_', '')
 
     def _create_test_from_template(self):
         self.test = deepcopy(self.template_test)
@@ -1203,28 +1192,36 @@ Usage in Robot Framework
     def _replace_test_case_doc(self):
         self.test.doc = self.test_case_data.documentation
 
-    @staticmethod
-    def _filter_args(argv, short_opts, long_opts):
-        NOK, UNDEF, OK, OPT = -1, 0, 1, 2
-        arg_state = UNDEF
+    def _robot_options(self):
+        arg_parser = ArgumentParser(USAGE, auto_pythonpath=False, auto_argumentfile=True, env_options='ROBOT_OPTIONS')
+        valid_args = self._filter_args(arg_parser)
+        options, data_sources = arg_parser.parse_args(valid_args)
+        return options
+
+    def _filter_args(self, arg_parser):
+        arg_state = 0
         valid_robot_args = list()
-        param_opt = [l_opt[:-1] for l_opt in long_opts if l_opt[-1:] == '=']
-        for arg in argv:
-            if arg_state == UNDEF:
-                arg_state = NOK
-                if len(arg) == 2 and arg[0] == '-':
-                    if arg[1] in '.?hTX':
-                        arg_state = OK
-                    elif arg[1] in short_opts:
-                        arg_state = OPT
-                elif len(arg) > 2 and arg[:2] == '--':
-                    if arg[2:] in param_opt:
-                        arg_state = OPT
-                    elif arg[2:] in long_opts:
-                        arg_state = OK
-            if arg_state > NOK:
+        for arg in sys.argv[1:]:
+            if arg_state == 0:
+                arg_state = self._get_argument_state(arg, arg_parser)
+            if arg_state > 0:
                 valid_robot_args.append(arg)
                 arg_state -= 1
-            else:
-                arg_state = UNDEF
         return valid_robot_args
+
+    def _get_argument_state(self, arg, arg_parser):
+        short_opts = arg_parser._short_opts
+        long_opts = arg_parser._long_opts
+        param_opt = [l_opt[:-1] for l_opt in long_opts if l_opt[-1:] == '=']
+        arg_state = 0
+        if len(arg) == 2 and arg[0] == '-':
+            if arg[1] in '.?hTX':
+                arg_state = 1
+            elif arg[1] in short_opts:
+                arg_state = 2
+        elif len(arg) > 2 and arg[:2] == '--':
+            if arg[2:] in param_opt:
+                arg_state = 2
+            elif arg[2:] in long_opts:
+                arg_state = 1
+        return arg_state
