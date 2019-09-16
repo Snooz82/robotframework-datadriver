@@ -25,7 +25,7 @@ from robot.utils.argumentparser import ArgumentParser
 from robot.run import USAGE
 import importlib
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 
 class DataDriver:
@@ -1032,14 +1032,14 @@ Usage in Robot Framework
         return temp_test_list
 
     def _included_by_tags(self):
-        if self.include:
+        if self.include and isinstance(self.test_case_data.tags, list):
             tags = Tags()
             tags.add(self.test_case_data.tags)
             return tags.match(self.include)
         return True
 
     def _not_excluded_by_tags(self):
-        if self.exclude and self.test_case_data.tags:
+        if self.exclude and isinstance(self.test_case_data.tags, list):
             tags = Tags()
             tags.add(self.test_case_data.tags)
             return not tags.match(self.exclude)
@@ -1191,9 +1191,10 @@ Usage in Robot Framework
         return return_arguments
 
     def _add_test_case_tags(self):
-        for tag in self.test_case_data.tags:
-            self.test.tags.add(tag.strip())
-            self._add_tag_if_pabot_dryrun()
+        if isinstance(self.test_case_data.tags, list):
+            for tag in self.test_case_data.tags:
+                self.test.tags.add(tag.strip())
+        self._add_tag_if_pabot_dryrun()
 
     def _add_tag_if_pabot_dryrun(self):
         if BuiltIn().get_variable_value('${PABOTQUEUEINDEX}') == '-1':

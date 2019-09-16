@@ -63,5 +63,5 @@ class TestCaseData:
 
         self.test_case_name = test_case_name
         self.arguments = arguments if arguments else {}
-        self.tags = tags if tags else []
+        self.tags = tags
         self.documentation = documentation

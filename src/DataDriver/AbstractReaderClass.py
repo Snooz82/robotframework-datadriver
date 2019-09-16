@@ -85,7 +85,7 @@ class AbstractReaderClass:
         arguments = {}
         for arguments_column_id in self.arguments_column_ids:
             arguments[self.header[arguments_column_id]] = row[arguments_column_id]
-        tags = [t.strip() for t in row[self.tags_column_id].split(',')] if self.tags_column_id else []
+        tags = [t.strip() for t in row[self.tags_column_id].split(',')] if self.tags_column_id else None
         documentation = row[self.documentation_column_id] if self.documentation_column_id else ''
 
         self.data_table.append(TestCaseData(test_case_name, arguments, tags, documentation))
