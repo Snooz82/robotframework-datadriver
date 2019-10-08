@@ -1021,13 +1021,27 @@ Usage in Robot Framework
 
     def _get_filtered_test_list(self):
         temp_test_list = list()
-        dynamic_test_name = BuiltIn().get_variable_value('${DYNAMICTEST}')
+        dynamic_test_list = self._get_filter_dynamic_test_names()
         for self.test_case_data in self.data_table:
             if self._included_by_tags() and self._not_excluded_by_tags():
                 self._create_test_from_template()
-                if not dynamic_test_name or self.test.longname == dynamic_test_name:
+                if not dynamic_test_list or self.test.longname in dynamic_test_list:
                     temp_test_list.append(self.test)
         return temp_test_list
+
+    def _get_filter_dynamic_test_names(self):
+        dynamic_test_list = BuiltIn().get_variable_value('${DYNAMICTESTS}')
+        if isinstance(dynamic_test_list, str):
+            dynamic_test_list = dynamic_test_list.split('|')
+        elif isinstance(dynamic_test_list, list):
+            pass  # list can just stay as list.
+        else:
+            dynamic_test_name = BuiltIn().get_variable_value('${DYNAMICTEST}')
+            if dynamic_test_name:
+                dynamic_test_list = [dynamic_test_name]
+            else:
+                dynamic_test_list = None
+        return dynamic_test_list
 
     def _included_by_tags(self):
         if self.include and isinstance(self.test_case_data.tags, list):
