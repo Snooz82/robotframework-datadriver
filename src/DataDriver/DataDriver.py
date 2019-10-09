@@ -85,12 +85,12 @@ Table of contents
 -  `What DataDriver does`_
 -  `How DataDriver works`_
 -  `Usage`_
--  `Filtering`_
 -  `Structure of test suite`_
 -  `Structure of data file`_
 -  `Data Sources`_
 -  `File Encoding and CSV Dialect`_
 -  `Custom DataReader Classes`_
+-  `Selection of Test Cases to execute`_
 
 |
 
@@ -382,47 +382,6 @@ default parameters do not fit your needs.
     *** Settings ***
     Library          DataDriver
     Test Template    Invalid Logins
-
-|
-
-Filtering
----------
-
-New in ``0.3.1``
-
-It is possible to use tags to filter the data source.
-To use this, tags must be assigned to the test cases in data source.
-
-|
-
-Robot Framework Command Line Arguments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To filter the source, the normal command line arguments of Robot Framework can be used.
-See Robot Framework Userguide_ for more information
-Be aware that the filtering of Robot Framework itself is done before DataDriver is called.
-This means if the Template test is already filtered out by Robot Framework, DataDriver can never be called.
-If you want to use ``--include`` the DataDriver TestSuite should have a ``DefaultTag`` or ``ForceTag`` that
-fulfills these requirements.
-
-.. _Userguide: http://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#tag-patterns
-
-Example: ``robot --include 1OR2 --exclude foo DataDriven.robot``
-
-|
-
-Filter based on Library Options
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-It is also possible to filter the data source by an init option of DataDriver.
-If these Options are set, Robot Framework Filtering will be ignored.
-
-Example:
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver    include=1OR2    exclude=foo
 
 |
 
@@ -729,6 +688,7 @@ supported Dialects are:
         lineterminator = '\\n'
         quoting = QUOTE_ALL
 
+|
 
 Defaults:
 ~~~~~~~~~
@@ -782,7 +742,7 @@ Select Reader by Option:
 .. code :: robotframework
 
     *** Settings ***
-        Library    DataDriver   file=mydata.csv    reader_class=generic_csv_reader    dialect=userdefined   delimiter=\t    encoding=UTF-8
+        Library    DataDriver   file=mydata.csv    reader_class=generic_csv_reader    dialect=userdefined   delimiter=\\t    encoding=UTF-8
 
 This will load the class ``generic_csv_reader`` from ``generic_csv_reader.py`` from same folder.
 
@@ -806,6 +766,148 @@ This List of ```TestCaseData`` will be returned to DataDriver.
 ``AbstractReaderClass`` has also some optional helper methods that may be useful.
 
 See other readers as example.
+
+|
+
+Selection of Test Cases to execute
+----------------------------------
+
+Because test cases that are created by DataDriver after parsing while execution,
+it is not possible to use some Robot Framework methods to select test cases.
+
+
+Examples for options that have to be used differently:
+
++-------------------+-----------------------------------------------------------------------+
+| robot option      | Description                                                           |
++===================+=======================================================================+
+| ``--test``        | Selects the test cases by name.                                       |
++-------------------+-----------------------------------------------------------------------+
+| ``--task``        | Alias for --test that can be used when executing tasks.               |
++-------------------+-----------------------------------------------------------------------+
+| ``--rerunfailed`` | Selects failed tests from an earlier output file to be re-executed.   |
++-------------------+-----------------------------------------------------------------------+
+| ``--include``     | Selects the test cases by tag.                                        |
++-------------------+-----------------------------------------------------------------------+
+| ``--exclude``     | Selects the test cases by tag.                                        |
++-------------------+-----------------------------------------------------------------------+
+
+|
+
+Selection of test cases by name
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+|
+
+Select a single test case:
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To execute just a single test case by its exact name it is possible to execute the test suite
+and set the global variable ${DYNAMICTEST} with the name of the test case to execute as value.
+Pattern must be ``suitename.testcasename``.
+
+Example:
+
+.. code ::
+
+    robot --variable "DYNAMICTEST:my suite name.test case to be executed" my_suite_name.robot
+
+Pabot uses this feature to execute a single test case when using ``--testlevelsplit``
+
+|
+
+Select a list of test cases:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is possible to set a list of test case names by using the variable ${DYNAMICTESTS} (plural).
+This variable must be a string and the list of names must be pipe-seperated (``|``).
+
+Example:
+
+.. code::
+
+    robot --variable DYNAMICTESTS:firstsuitename.testcase1|firstsuitename.testcase3|anothersuitename.othertestcase foldername
+
+It is also possible to set the variable @{DYNAMICTESTS} as a list variable from i.e. python code.
+
+|
+
+Re-run failed test cases:
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Because it is not possible to use the command line argument ``--rerunfailed`` from robot directly,
+DataDriver brings a Pre-Run-Modifier that handles this issue.
+
+Normally reexecution of failed testcases has three steps.
+
+- original execution
+- re-execution the failed ones based on original execution output
+- merging original execution output with re-execution output
+
+The DataDriver.rerunfailed Pre-Run-Modifier removes all passed test cases based on a former output.xml.
+
+Example:
+
+.. code ::
+
+    robot --output original.xml tests                                                    # first execute all tests
+    robot --prerunmodifier DataDriver.rerunfailed:original.xml --output rerun.xml tests  # then re-execute failing
+    rebot --merge original.xml rerun.xml                                                 # finally merge results
+
+
+Be aware, that in this case it is not allowed to use "``:``" as character in the original output file path.
+If you want to set a full path on windows like ``e:\\myrobottest\\output.xml`` you have to use "``;``"
+as argument seperator.
+
+Example:
+
+.. code ::
+
+    robot --prerunmodifier DataDriver.rerunfailed;e:\\myrobottest\\output.xml --output e:\\myrobottest\\rerun.xml tests
+
+
+|
+
+Filtering with tags.
+~~~~~~~~~~~~~~~~~~~~
+
+New in ``0.3.1``
+
+It is possible to use tags to filter the data source.
+To use this, tags must be assigned to the test cases in data source.
+
+|
+
+Robot Framework Command Line Arguments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To filter the source, the normal command line arguments of Robot Framework can be used.
+See Robot Framework Userguide_ for more information
+Be aware that the filtering of Robot Framework itself is done before DataDriver is called.
+This means if the Template test is already filtered out by Robot Framework, DataDriver can never be called.
+If you want to use ``--include`` the DataDriver TestSuite should have a ``DefaultTag`` or ``ForceTag`` that
+fulfills these requirements.
+
+.. _Userguide: http://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#tag-patterns
+
+Example: ``robot --include 1OR2 --exclude foo DataDriven.robot``
+
+|
+
+Filter based on Library Options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is also possible to filter the data source by an init option of DataDriver.
+If these Options are set, Robot Framework Filtering will be ignored.
+
+Example:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    include=1OR2    exclude=foo
+
+|
 
     """
     ROBOT_LIBRARY_DOC_FORMAT = 'reST'
@@ -1025,7 +1127,7 @@ Usage in Robot Framework
         for self.test_case_data in self.data_table:
             if self._included_by_tags() and self._not_excluded_by_tags():
                 self._create_test_from_template()
-                if not dynamic_test_list or self.test.longname in dynamic_test_list:
+                if not dynamic_test_list or f'{self.test.parent.name}.{self.test.name}' in dynamic_test_list:
                     temp_test_list.append(self.test)
         return temp_test_list
 
