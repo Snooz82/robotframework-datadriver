@@ -1200,9 +1200,10 @@ Usage in Robot Framework
             if self.DEBUG:
                 logger.console(f'[ DataDriver ] Load from file  {reader_name}')
             dirname, basename = os.path.split(reader_name)
-            sys.path.append(dirname)
+            package = os.path.basename(dirname)
+            sys.path.insert(0, os.path.dirname(dirname))
             module_name = os.path.splitext(basename)[0]
-            reader_module = importlib.import_module(module_name)
+            reader_module = importlib.import_module(package + '.' + module_name)
             reader_name = module_name
         else:
             reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
