@@ -1117,6 +1117,8 @@ Usage in Robot Framework
         self.DEBUG = log_level in ['DEBUG', 'TRACE']
         self.suite_source = suite.source
         self._create_data_table()
+        if self.DEBUG:
+            logger.console('[ DataDriver ] data Table created')
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
         suite.tests = self._get_filtered_test_list()
@@ -1194,7 +1196,16 @@ Usage in Robot Framework
         reader_name = self.reader_config.reader_class
         if self.DEBUG:
             logger.console(f'[ DataDriver ] Initializes  {reader_name}')
-        reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
+        if os.path.isfile(reader_name):
+            if self.DEBUG:
+                logger.console(f'[ DataDriver ] Load from file  {reader_name}')
+            dirname, basename = os.path.split(reader_name)
+            sys.path.append(dirname)
+            module_name = os.path.splitext(basename)[0]
+            reader_module = importlib.import_module(module_name)
+            reader_name = module_name
+        else:
+            reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
         if self.DEBUG:
             logger.console(f'[ DataDriver ] Reader Module: {reader_module}')
         reader_class = getattr(reader_module, f'{reader_name}')
