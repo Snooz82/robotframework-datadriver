@@ -765,6 +765,36 @@ This List of ```TestCaseData`` will be returned to DataDriver.
 
 ``AbstractReaderClass`` has also some optional helper methods that may be useful.
 
+You can either place the custom reader with the others or anywhere on the disk.
+In the first case just use it like the others:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library          DataDriver
+    ...              reader_class=my_reader.py
+
+
+It is possible to pass an absolut path to a custom Reader:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library          DataDriver
+    ...              reader_class=C:/data/my_reader.py
+
+This `my_reader.py` should implement a class inherited from AbstractReaderClass that is named `my_reader`.
+
+.. code :: python
+
+    from DataDriver.AbstractReaderClass import AbstractReaderClass
+
+    class my_reader(AbstractReaderClass):
+        def get_data_from_source(self):
+            ...
+            return self.data_table
+
+
 See other readers as example.
 
 |
