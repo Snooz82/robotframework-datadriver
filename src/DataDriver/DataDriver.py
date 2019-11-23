@@ -765,6 +765,36 @@ This List of ```TestCaseData`` will be returned to DataDriver.
 
 ``AbstractReaderClass`` has also some optional helper methods that may be useful.
 
+You can either place the custom reader with the others or anywhere on the disk.
+In the first case just use it like the others:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library          DataDriver
+    ...              reader_class=my_reader.py
+
+
+It is possible to pass an absolut path to a custom Reader:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library          DataDriver
+    ...              reader_class=C:/data/my_reader.py
+
+This `my_reader.py` should implement a class inherited from AbstractReaderClass that is named `my_reader`.
+
+.. code :: python
+
+    from DataDriver.AbstractReaderClass import AbstractReaderClass
+
+    class my_reader(AbstractReaderClass):
+        def get_data_from_source(self):
+            ...
+            return self.data_table
+
+
 See other readers as example.
 
 |
@@ -1117,6 +1147,8 @@ Usage in Robot Framework
         self.DEBUG = log_level in ['DEBUG', 'TRACE']
         self.suite_source = suite.source
         self._create_data_table()
+        if self.DEBUG:
+            logger.console('[ DataDriver ] data Table created')
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
         suite.tests = self._get_filtered_test_list()
@@ -1194,7 +1226,17 @@ Usage in Robot Framework
         reader_name = self.reader_config.reader_class
         if self.DEBUG:
             logger.console(f'[ DataDriver ] Initializes  {reader_name}')
-        reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
+        if os.path.isfile(reader_name):
+            if self.DEBUG:
+                logger.console(f'[ DataDriver ] Load from file  {reader_name}')
+            dirname, basename = os.path.split(reader_name)
+            package = os.path.basename(dirname)
+            sys.path.insert(0, os.path.dirname(dirname))
+            module_name = os.path.splitext(basename)[0]
+            reader_module = importlib.import_module(package + '.' + module_name)
+            reader_name = module_name
+        else:
+            reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
         if self.DEBUG:
             logger.console(f'[ DataDriver ] Reader Module: {reader_module}')
         reader_class = getattr(reader_module, f'{reader_name}')
