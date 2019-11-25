@@ -14,7 +14,7 @@
 
 
 import csv
-from .AbstractReaderClass import AbstractReaderClass
+from DataDriver.AbstractReaderClass import AbstractReaderClass
 
 
 class generic_csv_reader(AbstractReaderClass):

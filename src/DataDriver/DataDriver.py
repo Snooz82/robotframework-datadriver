@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import importlib
+import inspect
 import os
 import os.path
 import re
@@ -24,9 +25,11 @@ from robot.api import logger
 from robot.model.tags import Tags
 from robot.run import USAGE
 from robot.utils.argumentparser import ArgumentParser
+from robot.utils.importer import Importer
 
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
+from .AbstractReaderClass import AbstractReaderClass
 
 __version__ = '0.3.3'
 
@@ -222,14 +225,18 @@ Options
 Encoding
 ^^^^^^^^
 
-``encoding`` must be set if it shall not be cp1252
+``encoding`` must be set if it shall not be cp1252.
 
-**cp1252** is the same like:
+**cp1252** is:
 
+- Code Page 1252
 - Windows-1252
-- Latin-1
-- ANSI
 - Windows Western European
+
+Most characters are same between ISO-8859-1 (Latin-1) except for the code points 128-159 (0x80-0x9F).
+These Characters are available in cp1252 which are not present in Latin-1.
+
+``€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ``
 
 See `Python Standard Encoding <https://docs.python.org/3/library/codecs.html#standard-encodings>`_ for more encodings
 
@@ -755,13 +762,13 @@ Recommendation:
 
 Have a look to the Source Code of existing DataReader like ``csv_reader.py`` or ``generic_csv_reader.py`` .
 
-To write you own reader, create a class inherited from ``AbstractReaderClass``.
+To write your own reader, create a class inherited from ``AbstractReaderClass``.
 
 Your class will get all available configs from DataDriver as an object of ``ReaderConfig`` on ``__init__``.
 
 DataDriver will call the method ``get_data_from_source``
 This method should then load you data from your custom source and stores them into list of object of ``TestCaseData``.
-This List of ```TestCaseData`` will be returned to DataDriver.
+This List of ``TestCaseData`` will be returned to DataDriver.
 
 ``AbstractReaderClass`` has also some optional helper methods that may be useful.
 
@@ -771,17 +778,16 @@ In the first case just use it like the others:
 .. code :: robotframework
 
     *** Settings ***
-    Library          DataDriver
-    ...              reader_class=my_reader.py
+    Library          DataDriver    reader_class=my_reader
 
+It is possible to use an absolute or relative path to a custom Reader.
+Path can be relative to ${EXECDIR} or to DataDriver/__init__.py:
 
-It is possible to pass an absolut path to a custom Reader:
 
 .. code :: robotframework
 
     *** Settings ***
-    Library          DataDriver
-    ...              reader_class=C:/data/my_reader.py
+    Library          DataDriver    reader_class=C:/data/my_reader.py
 
 This `my_reader.py` should implement a class inherited from AbstractReaderClass that is named `my_reader`.
 
@@ -997,14 +1003,18 @@ Options
 Encoding
 ^^^^^^^^
 
-``encoding`` must be set if it shall not be cp1252
+``encoding`` must be set if it shall not be cp1252.
 
-**cp1252** is the same like:
+**cp1252** is:
 
+- Code Page 1252
 - Windows-1252
-- Latin-1
-- ANSI
 - Windows Western European
+
+Most characters are same between ISO-8859-1 (Latin-1) except for the code points 128-159 (0x80-0x9F).
+These Characters are available in cp1252 which are not present in Latin-1.
+
+``€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ``
 
 See `Python Standard Encoding <https://docs.python.org/3/library/codecs.html#standard-encodings>`_ for more encodings
 
@@ -1147,8 +1157,7 @@ Usage in Robot Framework
         self.DEBUG = log_level in ['DEBUG', 'TRACE']
         self.suite_source = suite.source
         self._create_data_table()
-        if self.DEBUG:
-            logger.console('[ DataDriver ] data Table created')
+        self._debug('[ DataDriver ] data Table created')
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
         suite.tests = self._get_filtered_test_list()
@@ -1159,23 +1168,23 @@ Usage in Robot Framework
         for self.test_case_data in self.data_table:
             if self._included_by_tags() and self._not_excluded_by_tags():
                 self._create_test_from_template()
-                if not dynamic_test_list or f'{self.test.parent.name}.{self.test.name}' in dynamic_test_list:
+                if not dynamic_test_list \
+                        or f'{self.test.parent.name}.{self.test.name}' \
+                        in dynamic_test_list:
                     temp_test_list.append(self.test)
         return temp_test_list
 
-    def _get_filter_dynamic_test_names(self):
+    @staticmethod
+    def _get_filter_dynamic_test_names():
         dynamic_test_list = BuiltIn().get_variable_value('${DYNAMICTESTS}')
         if isinstance(dynamic_test_list, str):
-            dynamic_test_list = dynamic_test_list.split('|')
+            return dynamic_test_list.split('|')
         elif isinstance(dynamic_test_list, list):
-            pass  # list can just stay as list.
+            return dynamic_test_list
         else:
             dynamic_test_name = BuiltIn().get_variable_value('${DYNAMICTEST}')
             if dynamic_test_name:
-                dynamic_test_list = [dynamic_test_name]
-            else:
-                dynamic_test_list = None
-        return dynamic_test_list
+                return [dynamic_test_name]
 
     def _included_by_tags(self):
         if self.include and isinstance(self.test_case_data.tags, list):
@@ -1199,50 +1208,61 @@ Usage in Robot Framework
         """
         self._resolve_file_attribute()
         self.data_table = self._data_reader().get_data_from_source()
-        if self.DEBUG:
-            logger.console(f"[ DataDriver ] Opening file '{self.reader_config.file}'")
-            logger.console(f'[ DataDriver ] {len(self.data_table)} Test Cases loaded...')
+        self._debug(f"[ DataDriver ] Opening file '{self.reader_config.file}'")
+        self._debug(f'[ DataDriver ] {len(self.data_table)} Test Cases loaded...')
 
     def _data_reader(self):
         if not self.reader_config.reader_class:
-            reader = self._get_data_reader_from_file_extension()
+            reader_class = self._get_data_reader_from_file_extension()
         else:
-            reader = self._get_data_reader_from_reader_class()
-        return reader
+            reader_class = self._get_data_reader_from_reader_class()
+        reader_instance = reader_class(self.reader_config)
+        if not isinstance(reader_instance, AbstractReaderClass):
+            raise ImportError(f'{self.reader_config.reader_class} in no instance of AbstractDataReader!')
+
+        return reader_instance
 
     def _get_data_reader_from_file_extension(self):
-        filename, file_extension = os.path.splitext(self.reader_config.file)
+        file_extension = os.path.splitext(self.reader_config.file)[1]
         reader_type = file_extension.lower()[1:]
-        if self.DEBUG:
-            logger.console(f'[ DataDriver ] Initialized in {reader_type}-mode.')
+        self._debug(f'[ DataDriver ] Initialized in {reader_type}-mode.')
         reader_module = importlib.import_module(f'..{reader_type}_reader', 'DataDriver.DataDriver')
-        if self.DEBUG:
-            logger.console(f'[ DataDriver ] Reader Module: {reader_module}')
+        self._debug(f'[ DataDriver ] Reader Module: {reader_module}')
         reader_class = getattr(reader_module, f'{reader_type}_Reader')
-        reader = reader_class(self.reader_config)
-        return reader
+        return reader_class
 
     def _get_data_reader_from_reader_class(self):
         reader_name = self.reader_config.reader_class
-        if self.DEBUG:
-            logger.console(f'[ DataDriver ] Initializes  {reader_name}')
+        self._debug(f'[ DataDriver ] Initializes  {reader_name}')
         if os.path.isfile(reader_name):
-            if self.DEBUG:
-                logger.console(f'[ DataDriver ] Load from file  {reader_name}')
-            dirname, basename = os.path.split(reader_name)
-            package = os.path.basename(dirname)
-            sys.path.insert(0, os.path.dirname(dirname))
-            module_name = os.path.splitext(basename)[0]
-            reader_module = importlib.import_module(package + '.' + module_name)
-            reader_name = module_name
+            reader_class = self._get_reader_class_from_path(reader_name)
         else:
-            reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
-        if self.DEBUG:
-            logger.console(f'[ DataDriver ] Reader Module: {reader_module}')
-        reader_class = getattr(reader_module, f'{reader_name}')
-        if self.DEBUG:
-            logger.console(f'[ DataDriver ] Reader Class: {reader_class}')
-        reader = reader_class(self.reader_config)
+            local_file = os.path.join(os.path.split(os.path.realpath(__file__))[0], reader_name)
+            if os.path.isfile(local_file):
+                reader_class = self._get_reader_class_from_path(local_file)
+            else:
+                reader_class = self._get_reader_class_from_module(reader_name)
+        self._debug(f'[ DataDriver ] Reader Class: {reader_class}')
+        return reader_class
+
+    def _get_reader_class_from_path(self, file_name):
+        self._debug(f'[ DataDriver ] Loading Reader from file {file_name}')
+        abs_path = os.path.abspath(file_name)
+        importer = Importer('DataReader')
+        self._debug(f'[ DataDriver ] Reader path: {abs_path}')
+        reader = importer.import_class_or_module_by_path(abs_path)
+        if not inspect.isclass(reader):
+            message = f"Importing custom DataReader class from {abs_path} failed."
+            raise ImportError(message)
+        return reader
+
+    def _get_reader_class_from_module(self, reader_name):
+        importer = Importer('DataReader')
+        self._debug(f'[ DataDriver ] Reader Module: {reader_name}')
+        reader = importer.import_class_or_module(reader_name)
+        if not inspect.isclass(reader):
+            message = f"Importing custom DataReader class {reader_name} failed."
+            raise ImportError(message)
         return reader
 
     def _resolve_file_attribute(self):
@@ -1299,7 +1319,8 @@ Usage in Robot Framework
     def _is_same_keyword(self, first, second):
         return self._get_normalized_keyword(first) == self._get_normalized_keyword(second)
 
-    def _get_normalized_keyword(self, keyword):
+    @staticmethod
+    def _get_normalized_keyword(keyword):
         return keyword.lower().replace(' ', '').replace('_', '')
 
     def _create_test_from_template(self):
@@ -1353,8 +1374,7 @@ Usage in Robot Framework
     def _robot_options(self):
         arg_parser = ArgumentParser(USAGE, auto_pythonpath=False, auto_argumentfile=True, env_options='ROBOT_OPTIONS')
         valid_args = self._filter_args(arg_parser)
-        options, data_sources = arg_parser.parse_args(valid_args)
-        return options
+        return arg_parser.parse_args(valid_args)[0]
 
     def _filter_args(self, arg_parser):
         arg_state = 0
@@ -1383,3 +1403,7 @@ Usage in Robot Framework
             elif arg[2:] in long_opts:
                 arg_state = 1
         return arg_state
+
+    def _debug(self, msg, newline=True, stream='stdout'):
+        if self.DEBUG:
+            logger.console(msg)
