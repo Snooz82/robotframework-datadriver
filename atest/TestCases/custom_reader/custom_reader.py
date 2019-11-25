@@ -13,16 +13,15 @@
 # limitations under the License.
 
 
-from DataDriver.AbstractReaderClass import AbstractReaderClass
-from DataDriver.ReaderConfig import TestCaseData
+from DataDriver.AbstractReaderClass import AbstractReaderClass  # inherit class from AbstractReaderClass
+from DataDriver.ReaderConfig import TestCaseData  # return list of TestCaseData to DataDriver
 
 
 class custom_reader(AbstractReaderClass):
 
-    def get_data_from_source(self):
-        print(self.kwargs)
+    def get_data_from_source(self):  # This method will be called from DataDriver to get the TestCaseData list.
         test_data = []
-        for i in range(int(self.kwargs['min']), int(self.kwargs['max'])):
-            args = {'${var_1}': str(i), '${var_2}': str(i)}
-            test_data.append(TestCaseData(f'test {i}', args, ['tag']))
-        return test_data
+        for i in range(int(self.kwargs['min']), int(self.kwargs['max'])):  # Dummy code to just generate some data
+            args = {'${var_1}': str(i), '${var_2}': str(i)}  # args is a dictionary. Variable name is the key, value is value.
+            test_data.append(TestCaseData(f'test {i}', args, ['tag']))  # add a TestCaseData object to the list of tests.
+        return test_data  # return the list of TestCaseData to DataDriver

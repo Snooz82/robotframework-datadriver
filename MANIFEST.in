@@ -14,3 +14,14 @@ recursive-include example *.xlsx
 
 # added by check_manifest.py
 recursive-include example *.xls
+
+# added by check_manifest.py
+recursive-include atest *.bat
+recursive-include atest *.csv
+recursive-include atest *.pict
+recursive-include atest *.pictout
+recursive-include atest *.py
+recursive-include atest *.robot
+recursive-include atest *.tsv
+recursive-include atest *.xls
+recursive-include atest *.xlsx

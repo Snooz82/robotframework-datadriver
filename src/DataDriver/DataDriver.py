@@ -31,7 +31,7 @@ from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
 from .AbstractReaderClass import AbstractReaderClass
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 
 
 class DataDriver:
@@ -739,7 +739,7 @@ Select Reader by File Extension:
     *** Settings ***
     Library    DataDriver    file=mydata.csv
 
-This will load the class ``csv_Reader`` from ``csv_reader.py`` from the same folder.
+This will load the class ``csv_reader`` from ``csv_reader.py`` from the same folder.
 
 |
 
@@ -767,38 +767,48 @@ To write your own reader, create a class inherited from ``AbstractReaderClass``.
 Your class will get all available configs from DataDriver as an object of ``ReaderConfig`` on ``__init__``.
 
 DataDriver will call the method ``get_data_from_source``
-This method should then load you data from your custom source and stores them into list of object of ``TestCaseData``.
+This method should then load your data from your custom source and stores them into list of object of ``TestCaseData``.
 This List of ``TestCaseData`` will be returned to DataDriver.
 
 ``AbstractReaderClass`` has also some optional helper methods that may be useful.
 
-You can either place the custom reader with the others or anywhere on the disk.
-In the first case just use it like the others:
+You can either place the custom reader with the others in DataDriver folder or anywhere on the disk.
+In the first case or if your custom reader is in python path just use it like the others by name:
 
 .. code :: robotframework
 
     *** Settings ***
     Library          DataDriver    reader_class=my_reader
 
-It is possible to use an absolute or relative path to a custom Reader.
+In case it is somewhere on the disk, it is possible to use an absolute or relative path to a custom Reader.
+Imports of custom readers follow the same rules like importing Robot Framework libraries.
 Path can be relative to ${EXECDIR} or to DataDriver/__init__.py:
 
 
 .. code :: robotframework
 
     *** Settings ***
-    Library          DataDriver    reader_class=C:/data/my_reader.py
+    Library          DataDriver    reader_class=C:/data/my_reader.py    # set custom reader
+    ...                            file_search_strategy=None            # set DataDriver to not check file
+    ...                            min=0                                # kwargs arguments for custom reader
+    ...                            max=62
 
 This `my_reader.py` should implement a class inherited from AbstractReaderClass that is named `my_reader`.
 
 .. code :: python
 
-    from DataDriver.AbstractReaderClass import AbstractReaderClass
+    from DataDriver.AbstractReaderClass import AbstractReaderClass  # inherit class from AbstractReaderClass
+    from DataDriver.ReaderConfig import TestCaseData  # return list of TestCaseData to DataDriver
+
 
     class my_reader(AbstractReaderClass):
-        def get_data_from_source(self):
-            ...
-            return self.data_table
+
+        def get_data_from_source(self):  # This method will be called from DataDriver to get the TestCaseData list.
+            test_data = []
+            for i in range(int(self.kwargs['min']), int(self.kwargs['max'])):  # Dummy code to just generate some data
+                args = {'${var_1}': str(i), '${var_2}': str(i)}  # args is a dictionary. Variable name is the key, value is value.
+                test_data.append(TestCaseData(f'test {i}', args, ['tag']))  # add a TestCaseData object to the list of tests.
+            return test_data  # return the list of TestCaseData to DataDriver
 
 
 See other readers as example.
@@ -1294,7 +1304,9 @@ Usage in Robot Framework
             self.reader_config.file = suite_path_as_data_file
         else:
             raise FileNotFoundError(
-                f'File attribute was empty. Tried to find {suite_path_as_data_file} but file does not exist.')
+                f'File attribute was empty. '
+                f'Tried to find {suite_path_as_data_file} but file does not exist. '
+                f'If no file validation is required, set file_search_strategy=None.')
 
     def _check_if_file_exists_as_path_or_in_suite(self):
         if not os.path.isfile(self.reader_config.file):

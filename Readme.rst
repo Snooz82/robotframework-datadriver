@@ -185,14 +185,18 @@ Options
 Encoding
 ^^^^^^^^
 
-``encoding`` must be set if it shall not be cp1252
+``encoding`` must be set if it shall not be cp1252.
 
-**cp1252** is the same like:
+**cp1252** is:
 
+- Code Page 1252
 - Windows-1252
-- Latin-1
-- ANSI
 - Windows Western European
+
+Most characters are same between ISO-8859-1 (Latin-1) except for the code points 128-159 (0x80-0x9F).
+These Characters are available in cp1252 which are not present in Latin-1.
+
+``€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ``
 
 See `Python Standard Encoding <https://docs.python.org/3/library/codecs.html#standard-encodings>`_ for more encodings
 
@@ -695,7 +699,7 @@ Select Reader by File Extension:
     *** Settings ***
     Library    DataDriver    file=mydata.csv
 
-This will load the class ``csv_Reader`` from ``csv_reader.py`` from the same folder.
+This will load the class ``csv_reader`` from ``csv_reader.py`` from the same folder.
 
 |
 
@@ -718,44 +722,54 @@ Recommendation:
 
 Have a look to the Source Code of existing DataReader like ``csv_reader.py`` or ``generic_csv_reader.py`` .
 
-To write you own reader, create a class inherited from ``AbstractReaderClass``.
+To write your own reader, create a class inherited from ``AbstractReaderClass``.
 
 Your class will get all available configs from DataDriver as an object of ``ReaderConfig`` on ``__init__``.
 
 DataDriver will call the method ``get_data_from_source``
-This method should then load you data from your custom source and stores them into list of object of ``TestCaseData``.
-This List of ```TestCaseData`` will be returned to DataDriver.
+This method should then load your data from your custom source and stores them into list of object of ``TestCaseData``.
+This List of ``TestCaseData`` will be returned to DataDriver.
 
 ``AbstractReaderClass`` has also some optional helper methods that may be useful.
 
-You can either place the custom reader with the others or anywhere on the disk.
-In the first case just use it like the others:
+You can either place the custom reader with the others in DataDriver folder or anywhere on the disk.
+In the first case or if your custom reader is in python path just use it like the others by name:
 
 .. code :: robotframework
 
     *** Settings ***
-    Library          DataDriver
-    ...              reader_class=my_reader.py
+    Library          DataDriver    reader_class=my_reader
 
+In case it is somewhere on the disk, it is possible to use an absolute or relative path to a custom Reader.
+Imports of custom readers follow the same rules like importing Robot Framework libraries.
+Path can be relative to ${EXECDIR} or to DataDriver/__init__.py:
 
-It is possible to pass an absolut path to a custom Reader:
 
 .. code :: robotframework
 
     *** Settings ***
-    Library          DataDriver
-    ...              reader_class=C:/data/my_reader.py
+    Library          DataDriver    reader_class=C:/data/my_reader.py    # set custom reader
+    ...                            file_search_strategy=None            # set DataDriver to not check file
+    ...                            min=0                                # kwargs arguments for custom reader
+    ...                            max=62
 
 This `my_reader.py` should implement a class inherited from AbstractReaderClass that is named `my_reader`.
 
 .. code :: python
 
-    from DataDriver.AbstractReaderClass import AbstractReaderClass
+    from DataDriver.AbstractReaderClass import AbstractReaderClass  # inherit class from AbstractReaderClass
+    from DataDriver.ReaderConfig import TestCaseData  # return list of TestCaseData to DataDriver
+
 
     class my_reader(AbstractReaderClass):
-        def get_data_from_source(self):
-            ...
-            return self.data_table
+
+        def get_data_from_source(self):  # This method will be called from DataDriver to get the TestCaseData list.
+            test_data = []
+            for i in range(int(self.kwargs['min']), int(self.kwargs['max'])):  # Dummy code to just generate some data
+                args = {'${var_1}': str(i), '${var_2}': str(i)}  # args is a dictionary. Variable name is the key, value is value.
+                test_data.append(TestCaseData(f'test {i}', args, ['tag']))  # add a TestCaseData object to the list of tests.
+            return test_data  # return the list of TestCaseData to DataDriver
+
 
 See other readers as example.
 
@@ -898,3 +912,5 @@ Example:
 
     *** Settings ***
     Library    DataDriver    include=1OR2    exclude=foo
+
+|
