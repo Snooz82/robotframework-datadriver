@@ -12,8 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .xls_reader import xls_reader
+
+from DataDriver.AbstractReaderClass import AbstractReaderClass
+from DataDriver.ReaderConfig import TestCaseData
 
 
-class xlsx_reader(xls_reader):
-    pass
+class custom_reader(AbstractReaderClass):
+
+    def get_data_from_source(self):
+        print(self.kwargs)
+        test_data = []
+        for i in range(int(self.kwargs['min']), int(self.kwargs['max'])):
+            args = {'${var_1}': str(i), '${var_2}': str(i)}
+            test_data.append(TestCaseData(f'test {i}', args, ['tag']))
+        return test_data

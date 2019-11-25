@@ -966,7 +966,8 @@ Example:
                  file_search_strategy='PATH',
                  file_regex=r'(?i)(.*?)(\.csv)',
                  include=None,
-                 exclude=None
+                 exclude=None,
+                 **kwargs
                  ):
         """**Example:**
 
@@ -1110,7 +1111,7 @@ Usage in Robot Framework
 
         """
         self.ROBOT_LIBRARY_LISTENER = self
-
+        print(kwargs)
         try:
             re.compile(file_regex)
         except re.error as e:
@@ -1137,7 +1138,8 @@ Usage in Robot Framework
             file_search_strategy=file_search_strategy.upper(),
             file_regex=file_regex,
             include=self.include,
-            exclude=self.exclude
+            exclude=self.exclude,
+            **kwargs
         )
 
         self.suite_source = None
@@ -1219,7 +1221,6 @@ Usage in Robot Framework
         reader_instance = reader_class(self.reader_config)
         if not isinstance(reader_instance, AbstractReaderClass):
             raise ImportError(f'{self.reader_config.reader_class} in no instance of AbstractDataReader!')
-
         return reader_instance
 
     def _get_data_reader_from_file_extension(self):
@@ -1228,7 +1229,7 @@ Usage in Robot Framework
         self._debug(f'[ DataDriver ] Initialized in {reader_type}-mode.')
         reader_module = importlib.import_module(f'..{reader_type}_reader', 'DataDriver.DataDriver')
         self._debug(f'[ DataDriver ] Reader Module: {reader_module}')
-        reader_class = getattr(reader_module, f'{reader_type}_Reader')
+        reader_class = getattr(reader_module, f'{reader_type}_reader')
         return reader_class
 
     def _get_data_reader_from_reader_class(self):
@@ -1241,7 +1242,11 @@ Usage in Robot Framework
             if os.path.isfile(local_file):
                 reader_class = self._get_reader_class_from_path(local_file)
             else:
-                reader_class = self._get_reader_class_from_module(reader_name)
+                try:
+                    reader_class = self._get_reader_class_from_module(reader_name)
+                except Exception as e:
+                    reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
+                    reader_class = getattr(reader_module, reader_name)
         self._debug(f'[ DataDriver ] Reader Class: {reader_class}')
         return reader_class
 

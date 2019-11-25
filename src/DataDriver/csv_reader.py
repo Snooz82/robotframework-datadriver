@@ -14,10 +14,10 @@
 
 
 import csv
-from .AbstractReaderClass import AbstractReaderClass
+from DataDriver.AbstractReaderClass import AbstractReaderClass
 
 
-class csv_Reader(AbstractReaderClass):
+class csv_reader(AbstractReaderClass):
 
     def get_data_from_source(self):
         self._register_dialects()

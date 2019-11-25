@@ -32,7 +32,8 @@ class ReaderConfig:
                  file_search_strategy='path',
                  file_regex=None,
                  include=None,
-                 exclude=None
+                 exclude=None,
+                 **kwargs
                  ):
 
         self.file = file
@@ -50,6 +51,7 @@ class ReaderConfig:
         self.file_regex = file_regex
         self.include = include
         self.exclude = exclude
+        self.kwargs = kwargs
 
 
 class TestCaseData:

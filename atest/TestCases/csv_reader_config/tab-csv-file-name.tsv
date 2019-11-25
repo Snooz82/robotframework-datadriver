@@ -1,0 +1,5 @@
+*** Test Cases ***	${var_1}	${var_2}	${var_name}	${var_doc}	${var_tags}	[Tags]	[Documentation]
+	Variable	Variable	default Variable Variable	ँ,ऑ,ड,ऱ,ु,॑,ॡ,ॱ,ঁ,ড,ু,ৡ,ৱ,ਁ,ਡ	['tag1', 'tag2']	tag1,tag2	ँ,ऑ,ड,ऱ,ु,॑,ॡ,ॱ,ঁ,ড,ু,ৡ,ৱ,ਁ,ਡ
+	'b'	b	default b b	'ÖÄ?Üß!)=§$'	['tag1']	tag1	ÖÄ?Üß!)=§$
+Name with spaces	€	€	  Name with spaces		[]		
+	'ँ,ऑ,ड,ऱ,ु,॑,ॡ,ॱ,ঁ,ড,ু,ৡ,ৱ,ਁ,ਡ\' '	'ँ,ऑ,ड,ऱ,ु,॑,ॡ,ॱ,ঁ,ড,ু,ৡ,ৱ,ਁ,ਡ\' '	'default ँ,ऑ,ड,ऱ,ु,॑,ॡ,ॱ,ঁ,ড,ু,ৡ,ৱ,ਁ,ਡ\'  ँ,ऑ,ड,ऱ,ु,॑,ॡ,ॱ,ঁ,ড,ু,ৡ,ৱ,ਁ,ਡ\' '		[]		

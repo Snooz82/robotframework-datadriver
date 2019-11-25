@@ -18,7 +18,7 @@ import os
 from .AbstractReaderClass import AbstractReaderClass
 
 
-class pict_Reader(AbstractReaderClass):
+class pict_reader(AbstractReaderClass):
 
     def get_data_from_source(self):
         self.pictout_file = f'{os.path.splitext(self.file)[0]}.pictout'

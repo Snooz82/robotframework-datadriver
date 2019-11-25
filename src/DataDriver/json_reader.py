@@ -46,5 +46,5 @@
 from .AbstractReaderClass import AbstractReaderClass
 
 
-class json_Reader(AbstractReaderClass):
+class json_reader(AbstractReaderClass):
     pass

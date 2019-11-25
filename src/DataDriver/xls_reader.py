@@ -17,7 +17,7 @@ import numpy as np
 from .AbstractReaderClass import AbstractReaderClass
 
 
-class xls_Reader(AbstractReaderClass):
+class xls_reader(AbstractReaderClass):
 
     def get_data_from_source(self):
         data_frame = pd.read_excel(self.file, sheet_name=self.sheet_name, dtype=str).replace(np.nan, '', regex=True)

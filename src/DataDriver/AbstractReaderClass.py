@@ -32,6 +32,7 @@ class AbstractReaderClass:
         self.skipinitialspace = reader_config.skipinitialspace
         self.lineterminator = reader_config.lineterminator
         self.sheet_name = reader_config.sheet_name
+        self.kwargs = reader_config.kwargs
 
         self.test_case_column_id = None
         self.arguments_column_ids = []
