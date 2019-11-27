@@ -33,6 +33,22 @@ run:
 
 ``pip install --upgrade robotframework-datadriver``
 
+|
+
+Excel Support
+~~~~~~~~~~~~~
+
+For file support of ``xls`` or ``xlsx`` file you need to install the extra XLS or the dependencies.
+It contains the dependencies of pandas, numpy and xlrd. Just add [XLS] to your installation.
+New since version 3.6.
+
+``pip install --upgrade robotframework-datadriver[XLS]``
+
+|
+
+Python 2
+~~~~~~~~
+
 or if you have Python 2 and 3 installed in parallel you may use
 
 ``pip3 install --upgrade robotframework-datadriver``
