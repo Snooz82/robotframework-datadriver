@@ -31,7 +31,7 @@ from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
 from .AbstractReaderClass import AbstractReaderClass
 
-__version__ = '0.3.5'
+__version__ = '0.3.6'
 
 
 class DataDriver:
@@ -69,6 +69,22 @@ If you already have Python >= 3.6 with pip installed, you can simply
 run:
 
 ``pip install --upgrade robotframework-datadriver``
+
+|
+
+Excel Support
+~~~~~~~~~~~~~
+
+For file support of ``xls`` or ``xlsx`` file you need to install the extra XLS or the dependencies.
+It contains the dependencies of pandas, numpy and xlrd. Just add [XLS] to your installation.
+New since version 3.6.
+
+``pip install --upgrade robotframework-datadriver[XLS]``
+
+|
+
+Python 2
+~~~~~~~~
 
 or if you have Python 2 and 3 installed in parallel you may use
 

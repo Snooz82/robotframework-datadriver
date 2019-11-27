@@ -11,9 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+try:
+    import pandas as pd
+    import numpy as np
+except ImportError:
+    raise ImportError("""Requirements (pandas, numpy) for XLS support are not installed.
+    Use 'pip install -U robotframework-datadriver[XLS]' to install XLS support.""")
 
-import pandas as pd
-import numpy as np
 from .AbstractReaderClass import AbstractReaderClass
 
 

@@ -32,9 +32,16 @@ setup(
         "Framework :: Robot Framework",
     ],
     install_requires=[
-        'numpy',
-        'pandas',
-        'xlrd',
-        'robotframework >= 3.1'],
+        'robotframework >= 3.1',
+        'docutils',
+        'Pygments'
+    ],
+    extras_require={
+            'xls':  [
+                'numpy',
+                'pandas',
+                'xlrd >= 1.0.0'
+            ]
+    },
     python_requires='>3.6'
 )
