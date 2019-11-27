@@ -31,7 +31,7 @@ from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
 from .AbstractReaderClass import AbstractReaderClass
 
-__version__ = '0.3.4'
+__version__ = '0.3.5'
 
 
 class DataDriver:
