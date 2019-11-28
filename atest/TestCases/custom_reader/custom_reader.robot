@@ -1,5 +1,5 @@
 *** Settings ***
-Library    DataDriver    reader_class=TestCases/custom_reader/custom_reader.py    min=0    file_search_strategy=None    max=62
+Library    DataDriver    reader_class=TestCases/custom_reader/custom_reader.py    min=0    file_search_strategy=None    max=58
 Test Template    check vars
 
 

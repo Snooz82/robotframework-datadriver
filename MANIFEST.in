@@ -25,3 +25,6 @@ recursive-include atest *.robot
 recursive-include atest *.tsv
 recursive-include atest *.xls
 recursive-include atest *.xlsx
+
+# added by check_manifest.py
+include *.py
