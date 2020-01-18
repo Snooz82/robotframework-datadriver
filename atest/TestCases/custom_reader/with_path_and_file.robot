@@ -1,6 +1,8 @@
 *** Settings ***
+Documentation    Validate that file is handed if both reader_class and file are
+...              specified
 Library    DataDriver    reader_class=TestCases/custom_reader/custom_reader.py
-...            min=0    max=3
+...            min=0    max=3    file=dummy.txt
 Test Template    check vars
 
 
