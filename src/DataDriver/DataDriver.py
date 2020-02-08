@@ -1298,6 +1298,8 @@ Usage in Robot Framework
 
     def _resolve_file_attribute(self):
         if self.reader_config.file_search_strategy == 'PATH':
+            if self.reader_config.reader_class and not self.reader_config.file:
+                return
             if (not self.reader_config.file) or ('' == self.reader_config.file[:self.reader_config.file.rfind('.')]):
                 self._set_data_file_to_suite_source()
             else:
