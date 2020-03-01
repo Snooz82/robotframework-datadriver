@@ -1,0 +1,7 @@
+*** Test Cases ***;${scalar};@{list};e{list_eval};&{dict};e{dict_eval};e{eval};${exp_eval};${user}[id];${user}[name][first];${user.name.last};e{user.chk}
+One;Sum List;1,2,3,4;"[""1"",""2"",""3"",""4""]";key=value;{'key': 'value'};[1,2,3,4];10;1;Pekka;Klärck;{'id': '1', 'first': 'Pekka', 'last': 'Klärck'}
+Two;Should be Equal;a,b,c,d;"[""a"",""b"",""c"",""d""]";key,value;{'key': 'value'};True;${true};2;Ed;Manlove;{'id': '2', 'first': 'Ed', 'last': 'Manlove'}
+Three;Whos your Daddy;"!,"",',$";"[""!"",'""',""'"",""$""]";z,value,a,value2;{'a': 'value2', 'z': 'value'};{'Daddy' : 'René'};René;3;Tatu;Aalto;{'id': '3', 'first': 'Tatu', 'last': 'Aalto'}
+4;Should be Equal;1;"[""1""]";key=value;{'key': 'value'};1;${1};4;Jani;Mikkonen;{'id': '4', 'first': 'Jani', 'last': 'Mikkonen'}
+5;Should be Equal;;[];a=${2};{'a':2};"""string""";string;5;Mikko;Korpela;{'id': '5', 'first': 'Mikko', 'last': 'Korpela'}
+6;Should be Equal;[1,2];"[""[1"",""2]""]";key=value,key2=value2;{'key': 'value', 'key2': 'value2'};None;${none};6;Ismo;Aro;{'id': '6', 'first': 'Ismo', 'last': 'Aro'}
