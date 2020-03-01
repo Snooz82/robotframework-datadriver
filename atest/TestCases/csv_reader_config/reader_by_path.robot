@@ -1,5 +1,5 @@
 *** Settings ***
-Library    DataDriver    reader_class=../src/DataDriver\\csv_reader.py  
+Library    DataDriver    reader_class=../src/DataDriver/csv_reader.py  
 ...    file=tab-csv-file-name.tsv
 ...    encoding=utf-8    
 ...    dialect=UserDefined    

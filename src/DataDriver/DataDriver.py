@@ -31,7 +31,7 @@ from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
 from .AbstractReaderClass import AbstractReaderClass
 
-__version__ = '0.3.6'
+__version__ = '0.4.0a1'
 
 
 class DataDriver:
@@ -993,6 +993,7 @@ Example:
                  file_regex=r'(?i)(.*?)(\.csv)',
                  include=None,
                  exclude=None,
+                 listseperator=',',
                  **kwargs
                  ):
         """**Example:**
@@ -1165,6 +1166,7 @@ Usage in Robot Framework
             file_regex=file_regex,
             include=self.include,
             exclude=self.exclude,
+            list_separator=listseperator,
             **kwargs
         )
 
@@ -1368,7 +1370,8 @@ Usage in Robot Framework
     def _replace_test_case_name(self):
         if self.test_case_data.test_case_name == '':
             for variable_name in self.test_case_data.arguments:
-                self.test.name = self.test.name.replace(variable_name, self.test_case_data.arguments[variable_name])
+                self.test.name = self.test.name.replace(variable_name,
+                                                        str(self.test_case_data.arguments[variable_name]))
         else:
             self.test.name = self.test_case_data.test_case_name
 
@@ -1388,7 +1391,6 @@ Usage in Robot Framework
         for arg in self.template_keyword.args:
             if arg in self.test_case_data.arguments:
                 return_arguments.append(self.test_case_data.arguments[arg])
-                # Todo: here i have to handle the dictionaries stuff
             else:
                 return_arguments.append(arg)
         return return_arguments

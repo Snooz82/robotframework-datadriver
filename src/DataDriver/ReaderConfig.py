@@ -33,6 +33,7 @@ class ReaderConfig:
                  file_regex=None,
                  include=None,
                  exclude=None,
+                 list_separator=',',
                  **kwargs
                  ):
 
@@ -51,6 +52,7 @@ class ReaderConfig:
         self.file_regex = file_regex
         self.include = include
         self.exclude = exclude
+        self.list_separator = list_separator
         self.kwargs = kwargs
 
 

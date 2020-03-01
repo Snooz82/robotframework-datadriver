@@ -1,0 +1,4 @@
+*** Test Cases ***;${scalar};e{dict};@{list};&{dotdict};${user.nr};${user}[name][first];${user.name.last};e{user.dict};${user.pwd};[Tags]
+One;DataDriven;"{""name"" : [1,2,3,4], 'password': 'secret'}";{'test':'name'},two,three,four,5,6;key=value,key2=value;1;rene;rohner;{'test':'name'};123;critical
+Two;DataDriven;"{""name"" : [1,2,3,4], 'password': 'secret'}";1,2,3,4,5,6,Hallo Welt,0;key,rene,key2,rohner;2;jasmin;dohr;{'test':[1,2,3,4]};321;noncritical
+Three;DataDriven;"{""name"" : [1,2,3,4], 'password': 'secret'}";test,two,three,four,5,6;key=,key2=;3;admin;müller;{'test':1024};123456;critical
