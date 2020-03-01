@@ -28,3 +28,7 @@ recursive-include atest *.xlsx
 
 # added by check_manifest.py
 include *.py
+
+# added by check_manifest.py
+recursive-include atest *.sh
+recursive-include atest *.txt
