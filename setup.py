@@ -44,5 +44,5 @@ setup(
                 'xlrd >= 1.0.0'
             ]
     },
-    python_requires='>3.6'
+    python_requires='>=3.6'
 )

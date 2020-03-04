@@ -21,7 +21,7 @@ Test
 
 Sum List
     [Arguments]    ${inputs}    ${expected}
-    Set Local Variable    ${sum}    ${0}
+    ${sum}=    Set Variable    ${0}
     FOR    ${item}    IN    @{inputs}
         ${sum}=    Evaluate    int($item) + int($sum)
     END

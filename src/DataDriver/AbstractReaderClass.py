@@ -19,7 +19,7 @@ from .search import search_variable
 
 from abc import ABC
 from ast import literal_eval
-from re import match, fullmatch
+from re import compile, match, fullmatch
 from robot.libraries.BuiltIn import BuiltIn
 from robot.utils import DotDict
 
@@ -50,28 +50,29 @@ class AbstractReaderClass(ABC):
         self.data_table = []
 
         self.TESTCASE_TABLE_NAME = ReaderConfig.TEST_CASE_TABLE_NAME
-        self.TEST_CASE_TABLE_PATTERN = r'(?i)^(\*+\s*test ?cases?[\s*].*)'
-        self.TASK_TABLE_PATTERN = r'(?i)^(\*+\s*tasks?[\s*].*)'
-        self.VARIABLE_PATTERN = r'([$@&e]{1}\{)(.*?)(\})'
-        self.TAGS_PATTERN = r'(?i)(\[)(tags)(\])'
-        self.DOCUMENTATION_PATTERN = r'(?i)(\[)(documentation)(\])'
+        self.TEST_CASE_TABLE_PATTERN = compile(r'(?i)^(\*+\s*test ?cases?[\s*].*)')
+        self.TASK_TABLE_PATTERN = compile(r'(?i)^(\*+\s*tasks?[\s*].*)')
+        self.VARIABLE_PATTERN = compile(r'([$@&e]\{)(.*?)(\})')
+        self.TAGS_PATTERN = compile(r'(?i)(\[)(tags)(\])')
+        self.DOCUMENTATION_PATTERN = compile(r'(?i)(\[)(documentation)(\])')
+        self.LIT_EVAL_PATTERN = compile(r'e\{(.+)\}')
 
     def get_data_from_source(self):
         raise NotImplementedError("This method should be implemented and return self.data_table to DataDriver...")
 
     def _is_test_case_header(self, header_string: str):
-        is_test = fullmatch(self.TEST_CASE_TABLE_PATTERN, header_string)
-        is_task = fullmatch(self.TASK_TABLE_PATTERN, header_string)
+        is_test = self.TEST_CASE_TABLE_PATTERN.fullmatch(header_string)
+        is_task = self.TASK_TABLE_PATTERN.fullmatch(header_string)
         return is_task or is_test
 
     def _is_variable(self, header_string: str):
-        return match(self.VARIABLE_PATTERN, header_string)
+        return self.VARIABLE_PATTERN.match(header_string)
 
     def _is_tags(self, header_string: str):
-        return match(self.TAGS_PATTERN, header_string)
+        return self.TAGS_PATTERN.match(header_string)
 
     def _is_documentation(self, header_string: str):
-        return match(self.DOCUMENTATION_PATTERN, header_string)
+        return self.DOCUMENTATION_PATTERN.match(header_string)
 
     def _analyse_header(self, header_cells):
         self.header = header_cells
@@ -91,7 +92,7 @@ class AbstractReaderClass(ABC):
         for arguments_column_id in self.arguments_column_ids:
             variable_string = self.header[arguments_column_id]
             variable_value = row[arguments_column_id]
-            if fullmatch(r'e\{(.+)\}', variable_string):
+            if self.LIT_EVAL_PATTERN.fullmatch(variable_string):
                 variable_string = f'${variable_string[1:]}'
                 variable_value = literal_eval(variable_value)
             variable_match = search_variable(variable_string)

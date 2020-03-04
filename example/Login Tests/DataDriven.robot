@@ -3,19 +3,24 @@ Library           DataDriver
 Resource          login_resources.robot
 
 Suite Setup       Open my Browser
-Suite Teardown    Close Browsers
 Test Setup        Open Login Page
 Test Template     Invalid Login
+Suite Teardown    Close Browsers
+
 Force Tags        1    2
 
+*** Variables ***
+${default}    name=Default    password=UserData
+
 *** Test Cases ***
-Login with user '${username}' and password '${password}'    Default    UserData
+Login with user '${user.name}' and password '${user.password}'    ${default}
 
 *** Keywords ***
 Invalid login
-    [Arguments]    ${username}     ${password}
+    [Arguments]    ${user}
     [Tags]    FLAT
-    Input username    ${username}
-    Input pwd    ${password}
+    Set Selenium Speed    500ms
+    Input username    ${user.name}
+    Input pwd    ${user.password}
     click login button
     Error page should be visible
