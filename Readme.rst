@@ -23,6 +23,9 @@ Source Windows tool for data combination testing. Pict is able to
 generate data combinations based on textual model definitions.
 https://github.com/Microsoft/pict
 
+It is also possible to implement own DataReaders in Python to read
+your test data from some other sources, like databases or json files.
+
 |
 
 Installation
@@ -53,7 +56,7 @@ or if you have Python 2 and 3 installed in parallel you may use
 
 ``pip3 install --upgrade robotframework-datadriver``
 
-DataDriver in compatible with Python 2.7 only in Version 0.2.7.
+DataDriver is compatible with Python 2.7 only in Version 0.2.7.
 
 ``pip install --upgrade robotframework-datadriver==0.2.7``
 
@@ -86,6 +89,21 @@ share the same test sequence (keywords) and differ in the test data.
 Because these tests are created on runtime only the template has to be
 specified within the robot test specification and the used data are
 specified in an external data file.
+
+|
+
+RoboCon 2020 Talk
+~~~~~~~~~~~~~~~~~
+
+.. image:: https://img.youtube.com/vi/RtEUr1i4x3s/0.jpg
+   :target: https://www.youtube.com/watch?v=RtEUr1i4x3s
+
+Brief overview what DataDriver is and how it works at the RoboCon 2020 in Helsiki.
+
+|
+
+Alternative approach
+~~~~~~~~~~~~~~~~~~~~
 
 DataDriver gives an alternative to the build in data driven approach
 like:
@@ -121,10 +139,10 @@ like:
         click login button
         Error page should be visible
 
-This inbuild approach is fine for a hand full of data and a hand full of
+This inbuilt approach is fine for a hand full of data and a hand full of
 test cases. If you have generated or calculated data and specially if
 you have a variable amount of test case / combinations these robot files
-becom quite a pain. With datadriver you may write the same test case
+become quite a pain. With DataDriver you may write the same test case
 syntax but only once and deliver the data from en external data file.
 
 One of the rare reasons when Microsoft® Excel or LibreOffice Calc may be
@@ -334,8 +352,10 @@ Log.
 Variable types
 ^^^^^^^^^^^^^^
 
-In this early Version of DataDriver, only scalar variables are
-supported. Lists and dictionaries may be added in the next releases.
+In earlier Versiovs of DataDriver, only scalar variables are
+supported. Lists, dictionaries and python literal evaluations has been
+added in version 0.4.0.
+Documentation is comming later ;-)
 
 |
 
