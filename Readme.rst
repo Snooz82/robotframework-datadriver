@@ -162,10 +162,13 @@ the test suite starts. It uses the Listener Interface Version 3 of Robot
 Framework to read and modify the test specification objects. After
 activation it searches for the ``Test Template`` -Keyword to analyze the
 ``[Arguments]`` it has. As a second step, it loads the data from the
-specified CSV file. Based on the ``Test Template`` -Keyword, DataDriver
-creates as much test cases as lines are in the CSV file. As values for
-the arguments of the ``Test Template`` -Keyword it reads values from the
-column of the CSV file with the matching name of the ``[Arguments]``.
+specified data source. Based on the ``Test Template`` -Keyword, DataDriver
+creates as much test cases as data sets are in the data source.
+
+In the case that data source is csv (Default)
+As values for the arguments of the ``Test Template`` -Keyword, DataDriver
+reads values from the column of the CSV file with the matching name of the
+``[Arguments]``.
 For each line of the CSV data table, one test case will be created. It
 is also possible to specify test case names, tags and documentation for
 each test case in the specific test suite related CSV file.
@@ -175,10 +178,9 @@ each test case in the specific test suite related CSV file.
 Usage
 -----
 
-Data Driver is a "Listener" but should not be set as a global listener
-as command line option of robot. Because Data Driver is a listener and a
-library at the same time it sets itself as a listener when this library
-is imported into a test suite.
+Data Driver is a "Library Listener" but does not provide keywords.
+Because Data Driver is a listener and a library at the same time it
+sets itself as a listener when this library is imported into a test suite.
 
 To use it, just use it as Library in your suite. You may use the first
 argument (option) which may set the file name or path to the data file.
@@ -193,201 +195,6 @@ and path like the test suite .robot .
 
     *** Settings ***
     Library    DataDriver
-
-Options
-~~~~~~~
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver
-    ...    file=${None}
-    ...    encoding=cp1252
-    ...    dialect=Excel-EU
-    ...    delimiter=;
-    ...    quotechar="
-    ...    escapechar=\\\\
-    ...    doublequote=True
-    ...    skipinitialspace=False
-    ...    lineterminator=\\r\\n
-    ...    sheet_name=0
-    ...    reader_class=${None}
-    ...    file_search_strategy=PATH
-    ...    file_regex=(?i)(.*?)(\\.csv)
-    ...    include=${None}
-    ...    exclude=${None}
-
-|
-
-Encoding
-^^^^^^^^
-
-``encoding`` must be set if it shall not be cp1252.
-
-**cp1252** is:
-
-- Code Page 1252
-- Windows-1252
-- Windows Western European
-
-Most characters are same between ISO-8859-1 (Latin-1) except for the code points 128-159 (0x80-0x9F).
-These Characters are available in cp1252 which are not present in Latin-1.
-
-``€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ``
-
-See `Python Standard Encoding <https://docs.python.org/3/library/codecs.html#standard-encodings>`_ for more encodings
-
-|
-
-Example Excel (US / comma seperated)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Dialect Defaults:
-
-.. code :: python
-
-    delimiter = ','
-    quotechar = '"'
-    doublequote = True
-    skipinitialspace = False
-    lineterminator = '\\r\\n'
-    quoting = QUOTE_MINIMAL
-
-Usage in Robot Framework
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver    my_data_file.csv    dialect=excel    encoding=${None}
-
-|
-
-Example Excel Tab (\\\\t seperated)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Dialect Defaults:
-
-.. code :: python
-
-    delimiter = '\\t'
-    quotechar = '"'
-    doublequote = True
-    skipinitialspace = False
-    lineterminator = '\\r\\n'
-    quoting = QUOTE_MINIMAL
-
-Usage in Robot Framework
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver    my_data_file.csv    dialect=excel_tab
-
-|
-
-Example Unix Dialect
-^^^^^^^^^^^^^^^^^^^^
-
-Dialect Defaults:
-
-.. code :: python
-
-    delimiter = ','
-    quotechar = '"'
-    doublequote = True
-    skipinitialspace = False
-    lineterminator = '\\n'
-    quoting = QUOTE_ALL
-
-Usage in Robot Framework
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver    my_data_file.csv    dialect=unix_dialect
-
-|
-
-Example User Defined
-^^^^^^^^^^^^^^^^^^^^
-
-User may define the format completely free.
-If an option is not set, the default values are used.
-To register a userdefined format user have to set the
-option ``dialect`` to ``UserDefined``
-
-
-Usage in Robot Framework
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver    my_data_file.csv
-    ...    dialect=UserDefined
-    ...    delimiter=.
-    ...    lineterminator=\\n
-
-
-|
-
-Limitation
-~~~~~~~~~~
-
-|
-
-Eclipse plug-in RED
-^^^^^^^^^^^^^^^^^^^
-
-There are known issues if the Eclipse plug-in RED is used. Because the
-debugging Listener of this tool pre-calculates the number of test cases
-before the creation of test cases by the Data Driver. This leads to the
-situation that the RED listener throws exceptions because it is called
-for each test step but the RED GUI already stopped debugging so that the
-listener cannot send Information to the GUI. This does not influence the
-execution in any way but produces a lot of unwanted exceptions in the
-Log.
-
-|
-
-Variable types
-^^^^^^^^^^^^^^
-
-In earlier Versiovs of DataDriver, only scalar variables are
-supported. Lists, dictionaries and python literal evaluations has been
-added in version 0.4.0.
-Documentation is comming later ;-)
-
-|
-
-MS Excel and typed cells
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Microsoft Excel xls or xlsx file have the possibility to type thair data
-cells. Numbers are typically of the type float. If these data are not
-explicitly defined as text in Excel, pandas will read it as the type
-that is has in excel. Because we have to work with strings in Robot
-Framework these data are converted to string. This leads to the
-situation that a European time value like "04.02.2019" (4th January
-2019) is handed over to Robot Framework in Iso time "2019-01-04
-00:00:00". This may cause unwanted behavior. To mitigate this risk you
-should define Excel based files explicitly as text within Excel.
-
-|
-
-How to activate the Data Driver
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To activate the DataDriver for a test suite (one specific \*.robot file)
-just import it as a library. You may also specify some options if the
-default parameters do not fit your needs.
-
-**Example**:
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library          DataDriver
-    Test Template    Invalid Logins
 
 |
 
@@ -485,62 +292,60 @@ optional columns
 Example Data file
 ~~~~~~~~~~~~~~~~~
 
-+-------------+-------------+-------------+-------------+-------------+
-| \**\* Test  | ${username} | ${password} | [Tags]      | [Documentat |
-| Cases \**\* |             |             |             | ion]        |
-|             |             |             |             |             |
-+=============+=============+=============+=============+=============+
-| Right user  | demo        | ${EMPTY}    | 1           | This is a   |
-| empty pass  |             |             |             | test case   |
-|             |             |             |             | documentati |
-|             |             |             |             | on          |
-|             |             |             |             | of the      |
-|             |             |             |             | first one.  |
-+-------------+-------------+-------------+-------------+-------------+
-| Right user  | demo        | FooBar      | 2           |             |
-| wrong pass  |             |             |             |             |
-+-------------+-------------+-------------+-------------+-------------+
-| empty user  | ${EMPTY}    | mode        | 1,2,3,4     | This test   |
-| mode pass   |             |             |             | case has    |
-|             |             |             |             | the Tags    |
-|             |             |             |             | 1,2,3 and 4 |
-|             |             |             |             | assigned.   |
-+-------------+-------------+-------------+-------------+-------------+
-|             | ${EMPTY}    | ${EMPTY}    |             | This test   |
-|             |             |             |             | case has a  |
-|             |             |             |             | generated   |
-|             |             |             |             | name based  |
-|             |             |             |             | on template |
-|             |             |             |             | name.       |
-+-------------+-------------+-------------+-------------+-------------+
-|             | ${EMPTY}    | FooBar      |             | This test   |
-|             |             |             |             | case has a  |
-|             |             |             |             | generated   |
-|             |             |             |             | name based  |
-|             |             |             |             | on template |
-|             |             |             |             | name.       |
-+-------------+-------------+-------------+-------------+-------------+
-|             | FooBar      | mode        |             | This test   |
-|             |             |             |             | case has a  |
-|             |             |             |             | generated   |
-|             |             |             |             | name based  |
-|             |             |             |             | on template |
-|             |             |             |             | name.       |
-+-------------+-------------+-------------+-------------+-------------+
-|             | FooBar      | ${EMPTY}    |             | This test   |
-|             |             |             |             | case has a  |
-|             |             |             |             | generated   |
-|             |             |             |             | name based  |
-|             |             |             |             | on template |
-|             |             |             |             | name.       |
-+-------------+-------------+-------------+-------------+-------------+
-|             | FooBar      | FooBar      |             | This test   |
-|             |             |             |             | case has a  |
-|             |             |             |             | generated   |
-|             |             |             |             | name based  |
-|             |             |             |             | on template |
-|             |             |             |             | name.       |
-+-------------+-------------+-------------+-------------+-------------+
++-------------+-------------+-------------+-------------+------------------+
+| \**\* Test  | ${username} | ${password} | [Tags]      | [Documentation]  |
+| Cases \**\* |             |             |             |                  |
+|             |             |             |             |                  |
++=============+=============+=============+=============+==================+
+| Right user  | demo        | ${EMPTY}    | 1           | This is a test   |
+| empty pass  |             |             |             | case             |
+|             |             |             |             | documentation of |
+|             |             |             |             | the first one.   |
++-------------+-------------+-------------+-------------+------------------+
+| Right user  | demo        | FooBar      | 2           |                  |
+| wrong pass  |             |             |             |                  |
++-------------+-------------+-------------+-------------+------------------+
+| empty user  | ${EMPTY}    | mode        | 1,2,3,4     | This test        |
+| mode pass   |             |             |             | case has         |
+|             |             |             |             | the Tags         |
+|             |             |             |             | 1,2,3 and 4      |
+|             |             |             |             | assigned.        |
++-------------+-------------+-------------+-------------+------------------+
+|             | ${EMPTY}    | ${EMPTY}    |             | This test        |
+|             |             |             |             | case has a       |
+|             |             |             |             | generated        |
+|             |             |             |             | name based       |
+|             |             |             |             | on template      |
+|             |             |             |             | name.            |
++-------------+-------------+-------------+-------------+------------------+
+|             | ${EMPTY}    | FooBar      |             | This test        |
+|             |             |             |             | case has a       |
+|             |             |             |             | generated        |
+|             |             |             |             | name based       |
+|             |             |             |             | on template      |
+|             |             |             |             | name.            |
++-------------+-------------+-------------+-------------+------------------+
+|             | FooBar      | mode        |             | This test        |
+|             |             |             |             | case has a       |
+|             |             |             |             | generated        |
+|             |             |             |             | name based       |
+|             |             |             |             | on template      |
+|             |             |             |             | name.            |
++-------------+-------------+-------------+-------------+------------------+
+|             | FooBar      | ${EMPTY}    |             | This test        |
+|             |             |             |             | case has a       |
+|             |             |             |             | generated        |
+|             |             |             |             | name based       |
+|             |             |             |             | on template      |
+|             |             |             |             | name.            |
++-------------+-------------+-------------+-------------+------------------+
+|             | FooBar      | FooBar      |             | This test        |
+|             |             |             |             | case has a       |
+|             |             |             |             | generated        |
+|             |             |             |             | name based       |
+|             |             |             |             | on template      |
+|             |             |             |             | name.            |
++-------------+-------------+-------------+-------------+------------------+
 
 In this data file, eight test cases are defined. Each line specifies one
 test case. The first two test cases have specific names. The other six
@@ -951,6 +756,181 @@ Example:
 
     *** Settings ***
     Library    DataDriver    include=1OR2    exclude=foo
+
+|
+
+Options
+~~~~~~~
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver
+    ...    file=${None}
+    ...    encoding=cp1252
+    ...    dialect=Excel-EU
+    ...    delimiter=;
+    ...    quotechar="
+    ...    escapechar=\\\\
+    ...    doublequote=True
+    ...    skipinitialspace=False
+    ...    lineterminator=\\r\\n
+    ...    sheet_name=0
+    ...    reader_class=${None}
+    ...    file_search_strategy=PATH
+    ...    file_regex=(?i)(.*?)(\\.csv)
+    ...    include=${None}
+    ...    exclude=${None}
+
+|
+
+Encoding
+^^^^^^^^
+
+``encoding`` must be set if it shall not be cp1252.
+
+**cp1252** is:
+
+- Code Page 1252
+- Windows-1252
+- Windows Western European
+
+Most characters are same between ISO-8859-1 (Latin-1) except for the code points 128-159 (0x80-0x9F).
+These Characters are available in cp1252 which are not present in Latin-1.
+
+``€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ``
+
+See `Python Standard Encoding <https://docs.python.org/3/library/codecs.html#standard-encodings>`_ for more encodings
+
+|
+
+Example Excel (US / comma seperated)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Dialect Defaults:
+
+.. code :: python
+
+    delimiter = ','
+    quotechar = '"'
+    doublequote = True
+    skipinitialspace = False
+    lineterminator = '\\r\\n'
+    quoting = QUOTE_MINIMAL
+
+Usage in Robot Framework
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    my_data_file.csv    dialect=excel    encoding=${None}
+
+|
+
+Example Excel Tab (\\\\t seperated)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Dialect Defaults:
+
+.. code :: python
+
+    delimiter = '\\t'
+    quotechar = '"'
+    doublequote = True
+    skipinitialspace = False
+    lineterminator = '\\r\\n'
+    quoting = QUOTE_MINIMAL
+
+Usage in Robot Framework
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    my_data_file.csv    dialect=excel_tab
+
+|
+
+Example Unix Dialect
+^^^^^^^^^^^^^^^^^^^^
+
+Dialect Defaults:
+
+.. code :: python
+
+    delimiter = ','
+    quotechar = '"'
+    doublequote = True
+    skipinitialspace = False
+    lineterminator = '\\n'
+    quoting = QUOTE_ALL
+
+Usage in Robot Framework
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    my_data_file.csv    dialect=unix_dialect
+
+|
+
+Example User Defined
+^^^^^^^^^^^^^^^^^^^^
+
+User may define the format completely free.
+If an option is not set, the default values are used.
+To register a userdefined format user have to set the
+option ``dialect`` to ``UserDefined``
+
+
+Usage in Robot Framework
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    my_data_file.csv
+    ...    dialect=UserDefined
+    ...    delimiter=.
+    ...    lineterminator=\\n
+
+
+|
+
+Limitation
+~~~~~~~~~~
+
+|
+
+MS Excel and typed cells
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Microsoft Excel xls or xlsx file have the possibility to type thair data
+cells. Numbers are typically of the type float. If these data are not
+explicitly defined as text in Excel, pandas will read it as the type
+that is has in excel. Because we have to work with strings in Robot
+Framework these data are converted to string. This leads to the
+situation that a European time value like "04.02.2019" (4th January
+2019) is handed over to Robot Framework in Iso time "2019-01-04
+00:00:00". This may cause unwanted behavior. To mitigate this risk you
+should define Excel based files explicitly as text within Excel.
+
+|
+
+How to activate the Data Driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To activate the DataDriver for a test suite (one specific \*.robot file)
+just import it as a library. You may also specify some options if the
+default parameters do not fit your needs.
+
+**Example**:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library          DataDriver
+    Test Template    Invalid Logins
+
+|
 
 |
 
