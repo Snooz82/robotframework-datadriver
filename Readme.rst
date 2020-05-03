@@ -98,7 +98,7 @@ RoboCon 2020 Talk
 .. image:: https://img.youtube.com/vi/RtEUr1i4x3s/0.jpg
    :target: https://www.youtube.com/watch?v=RtEUr1i4x3s
 
-Brief overview what DataDriver is and how it works at the RoboCon 2020 in Helsiki.
+Brief overview what DataDriver is and how it works at the RoboCon 2020 in Helsinki.
 
 |
 
