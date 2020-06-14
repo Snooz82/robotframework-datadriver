@@ -973,7 +973,7 @@ default parameters do not fit your needs.
 
     """
     ROBOT_LIBRARY_DOC_FORMAT = 'reST'
-
+    ROBOT_LIBRARY_VERSION = __version__
     ROBOT_LISTENER_API_VERSION = 3
     ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
 
