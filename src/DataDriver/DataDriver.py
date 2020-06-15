@@ -18,20 +18,22 @@ import os
 import os.path
 import re
 import sys
+
 from copy import deepcopy
 
-from robot.libraries.BuiltIn import BuiltIn
 from robot.api import logger
+from robot.libraries.BuiltIn import BuiltIn
 from robot.model.tags import Tags
 from robot.run import USAGE
 from robot.utils.argumentparser import ArgumentParser
+from robot.utils.dotdict import DotDict
 from robot.utils.importer import Importer
 
+from .AbstractReaderClass import AbstractReaderClass
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
-from .AbstractReaderClass import AbstractReaderClass
 
-__version__ = '0.4.0b1'
+__version__ = '0.4.0b2'
 
 
 class DataDriver:
@@ -994,6 +996,7 @@ default parameters do not fit your needs.
                  include=None,
                  exclude=None,
                  listseperator=',',
+                 config_keyword=None,
                  **kwargs
                  ):
         """**Example:**
@@ -1150,7 +1153,7 @@ Usage in Robot Framework
         self.include = options['include'] if not include else include
         self.exclude = options['exclude'] if not exclude else exclude
 
-        self.reader_config = ReaderConfig(
+        self.config_dict = DotDict(
             file=file,
             encoding=encoding,
             dialect=dialect,
@@ -1167,9 +1170,11 @@ Usage in Robot Framework
             include=self.include,
             exclude=self.exclude,
             list_separator=listseperator,
+            config_keyword=config_keyword,
             **kwargs
         )
 
+        self.reader_config = ReaderConfig(**self.config_dict)
         self.suite_source = None
         self.template_test = None
         self.template_keyword = None
@@ -1183,6 +1188,7 @@ Usage in Robot Framework
         :param suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
         :param result: NOT USED
         """
+        self.update_config()
         log_level = BuiltIn().get_variable_value('${LOG LEVEL}')
         self.DEBUG = log_level in ['DEBUG', 'TRACE']
         self.suite_source = suite.source
@@ -1191,6 +1197,13 @@ Usage in Robot Framework
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
         suite.tests = self._get_filtered_test_list()
+
+    def update_config(self):
+        if self.config_dict.config_keyword:
+            config_keyword = self.config_dict.config_keyword
+            config = self.config_dict
+            config_update = BuiltIn().run_keyword(config_keyword, config)
+            self.reader_config = ReaderConfig(**{**config, **config_update})
 
     def _get_filtered_test_list(self):
         temp_test_list = list()

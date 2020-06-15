@@ -1,6 +1,6 @@
 *** Settings ***
 Library    DataDriver    reader_class=TestCases/custom_reader/custom_reader.py
-...            min=0    max=17
+...            min=0    max=10
 Test Template    check vars
 
 

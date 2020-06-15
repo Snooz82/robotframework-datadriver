@@ -12,12 +12,11 @@ information about installation, support, and more, please visit the
 
 For more information about Robot Framework, see http://robotframework.org.
 
-DataDriver is used as Library but does not provide keywords
+DataDriver is used/imported as Library but does not provide keywords
 which can be used in a test. DataDriver uses the Listener Interface
 Version 3 to manipulate the test cases and creates new test cases based
-on an external data source that contains the data for Data-Driven Testing.
-These data source may be .csv , .xls or .xlsx files or any other source like
-databases.
+on a Data-File that contains the data for Data-Driven Testing. These
+data file may be .csv , .xls or .xlsx files.
 
 Data Driver is also able to cooperate with Microsoft PICT. An Open
 Source Windows tool for data combination testing. Pict is able to
@@ -62,8 +61,6 @@ DataDriver is compatible with Python 2.7 only in Version 0.2.7.
 ``pip install --upgrade robotframework-datadriver==0.2.7``
 
 Because Python 2.7 is deprecated, there are no new feature to python 2.7 compatible version.
-This Version of DataDriver has super limited features and does not support filtering by Tags or dictionaries.
-I really strongly recomment to update to Python 3.6 or newer.
 
 |
 
@@ -71,11 +68,10 @@ Table of contents
 -----------------
 
 -  `What DataDriver does`_
--  `RoboCon 2020 Talk`_
 -  `How DataDriver works`_
 -  `Usage`_
 -  `Structure of test suite`_
--  `Structure of data source`_
+-  `Structure of data file`_
 -  `Data Sources`_
 -  `File Encoding and CSV Dialect`_
 -  `Custom DataReader Classes`_
@@ -88,16 +84,10 @@ What DataDriver does
 
 DataDriver is an alternative approach to create Data-Driven Tests with
 Robot Framework. DataDriver creates multiple test cases based on a test
-template and external data sources.
-
-These data sources can be any source of structured data. DataDriver provides
-a plugin API that allowes the user to write custom DataReader.
-DataDriver has some DataReaders already implemented to read data from csv
-or Excel files.
-
-All created tests share the same test sequence (keywords) and differ in
-the test data. Because these tests are created on runtime only the template
-has to be specified within the robot test specification and the used data are
+template and data content of a csv or Excel file. All created tests
+share the same test sequence (keywords) and differ in the test data.
+Because these tests are created on runtime only the template has to be
+specified within the robot test specification and the used data are
 specified in an external data file.
 
 |
@@ -175,11 +165,12 @@ activation it searches for the ``Test Template`` -Keyword to analyze the
 specified data source. Based on the ``Test Template`` -Keyword, DataDriver
 creates as much test cases as data sets are in the data source.
 
-In the case that the data source is csv (Default) each row in the csv
-will be one generated test case. For each argument of the ``Test Template``
--Keyword, DataDriver reads values from the column of the CSV file with the
-matching name of the ``[Arguments]``.
-It is also possible to specify test case names, tags and documentation for
+In the case that data source is csv (Default)
+As values for the arguments of the ``Test Template`` -Keyword, DataDriver
+reads values from the column of the CSV file with the matching name of the
+``[Arguments]``.
+For each line of the CSV data table, one test case will be created. It
+is also possible to specify test case names, tags and documentation for
 each test case in the specific test suite related CSV file.
 
 |
@@ -191,21 +182,14 @@ Data Driver is a "Library Listener" but does not provide keywords.
 Because Data Driver is a listener and a library at the same time it
 sets itself as a listener when this library is imported into a test suite.
 
-To use it, just use it as Library in your suite.
+To use it, just use it as Library in your suite. You may use the first
+argument (option) which may set the file name or path to the data file.
 
 Without any options set, it loads a .csv file which has the same name
-and path as the test suite .robot itself.
+and path like the test suite .robot .
 
 
 **Example:**
-
-.. code ::
-
-  folder
-    mySuite.csv
-    mySuite.robot
-
-|
 
 .. code :: robotframework
 
@@ -219,22 +203,42 @@ Structure of test suite
 
 |
 
+Requirements
+~~~~~~~~~~~~
+
+In the Moment there are some requirements how a test
+suite must be structured so that the DataDriver can get all the
+information it needs.
+
+ - only the first test case will be used as a template. All other test
+   cases will be deleted.
+ - Test cases have to be defined with a
+   ``Test Template``. Reason for this is, that the DataDriver needs to
+   know the names of the test case arguments. Test cases do not have
+   named arguments. Keywords do.
+ - The keyword which is used as
+   ``Test Template`` must be defined within the test suite (in the same
+   \*.robot file). If the keyword which is used as ``Test Template`` is
+   defined in a ``Resource`` the DataDriver has no access to its
+   arguments names.
+
+|
+
 Example Test Suite
 ~~~~~~~~~~~~~~~~~~
 
 .. code :: robotframework
 
     ***Settings***
-    Library           DataDriver    # Activation of DataDriver
+    Library           DataDriver
     Resource          login_resources.robot
     Suite Setup       Open my Browser
-    Test Setup        Open Login Page
-    Test Template     Invalid Login    # Template that will be used by all test cases
     Suite Teardown    Close Browsers
-
+    Test Setup        Open Login Page
+    Test Template     Invalid Login
 
     *** Test Case ***
-    Login with user ${username} and password ${password}    Default    UserData    # Template test case will be deleted
+    Login with user ${username} and password ${password}    Default    UserData
 
     ***** *Keywords* *****
     Invalid login
@@ -250,62 +254,28 @@ As ``Test Template`` the keyword ``Invalid Login`` is used. This
 keyword has two arguments. Argument names are ``${username}`` and
 ``${password}``. These names have to be in the CSV file as column
 header. The test case has two variable names included in its name,
-which does not have any functionality in Robot Framework. However,
-DataDriver will use the test case name as a template name and
-replaces the variables with the specific value of each generated
-test case if no test case name is defined if the data source.
+which does not have any functionality in Robot Framework. However, the
+Data Driver will use the test case name as a template name and
+replaces the variables with the specific value of the single generated
+test case.
 This template test will only be used as a template. The specified data
 ``Default`` and ``UserData`` would only be used if no CSV file has
 been found.
 
 |
 
-Requirements
-~~~~~~~~~~~~
-
-In the Moment there are some requirements how a test
-suite must be structured so that the DataDriver can get all the
-information it needs.
-
- - only the first test case will be used as a template. All other test
-   cases will be deleted. So it is not possible to mix Data-Driven Tests
-   with others in the same file.
- - Test cases have to be defined with a
-   ``Test Template``. Reason for this is, that DataDriver needs to
-   know the names of the test case arguments. Test cases do not have
-   named arguments. Keywords do.
- - The keyword which is used as
-   ``Test Template`` must be defined within the test suite (in the same
-   \*.robot file). If the keyword which is used as ``Test Template`` is
-   defined in a ``Resource`` the DataDriver has no access to its
-   arguments names.
-
-|
-
-Structure of data source
-------------------------
-
-The structure of the data is defined by each DataReader.
-DataDriver bring four implemented DataReders. Default is CSV.
-It also brings a "generic_csv_reader", "xls_reader", "xlsx_reader" and
-a reader for combinatory testing with PICT "pict_reader".
-
-The following explaination works for csv, xls and xlsx.
-
-The data tables for these readers have a specific syntax.
+Structure of data file
+----------------------
 
 |
 
 min. required columns
 ~~~~~~~~~~~~~~~~~~~~~
 
--  ``*** Test Cases ***`` column has to be the first column.
+-  ``*** Test Cases ***`` column has to be the first one.
 -  *Argument columns:* For each argument of the ``Test Template``
    keyword one column must be existing in the data file as data source.
    The name of this column must match the variable name and syntax.
-   It is possible to use lists and dictionaries as variables.
-
-   `See Lists and Dictionaries <#example-csv>`__
 
 |
 
@@ -387,9 +357,6 @@ irrelevant except the first column, ``*** Test Cases ***``
 
 Data Sources
 ------------
-
-These DataReaders do come with DataDriver.
-Custom DataReaders can be implemented.
 
 |
 
@@ -947,6 +914,24 @@ situation that a European time value like "04.02.2019" (4th January
 should define Excel based files explicitly as text within Excel.
 
 |
+
+How to activate the Data Driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To activate the DataDriver for a test suite (one specific \*.robot file)
+just import it as a library. You may also specify some options if the
+default parameters do not fit your needs.
+
+**Example**:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library          DataDriver
+    Test Template    Invalid Logins
+
+|
+
 |
 
     

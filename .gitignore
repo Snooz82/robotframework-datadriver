@@ -126,3 +126,4 @@ output.xml
 report.html
 example/.vscode/DataDriver.code-workspace
 example/.vscode/tasks.json
+lsp
