@@ -40,7 +40,6 @@ setup(
     extras_require={
             'xls':  [
                 'numpy',
-                'pandas',
                 'xlrd >= 1.0.0'
             ]
     },
