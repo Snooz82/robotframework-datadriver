@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 try:
-    import pandas as pd
+    import xlrd
     import numpy as np
 except ImportError:
-    raise ImportError("""Requirements (pandas, numpy) for XLS support are not installed.
+    raise ImportError("""Requirements (xlrd, numpy) for XLS support are not installed.
     Use 'pip install -U robotframework-datadriver[XLS]' to install XLS support.""")
 
 from .AbstractReaderClass import AbstractReaderClass
@@ -24,8 +24,22 @@ from .AbstractReaderClass import AbstractReaderClass
 class xls_reader(AbstractReaderClass):
 
     def get_data_from_source(self):
-        data_frame = pd.read_excel(self.file, sheet_name=self.sheet_name, dtype=str).replace(np.nan, '', regex=True)
-        self._analyse_header(list(data_frame))
-        for row in data_frame.values.tolist():
+        work_book = xlrd.open_workbook(self.file)
+        work_sheet = work_book.sheet_by_name(self.sheet_name)
+        num_rows = work_sheet.nrows
+        num_cols = work_sheet.ncols
+        headers = []
+        for i in range(num_cols):
+            headers.append(work_sheet.cell(0, i).value)
+        self._analyse_header(headers)
+
+        row_values = []
+        for i in range(1, num_rows):
+            row = []
+            for j in range(num_cols):
+                row.append(work_sheet.cell(i, j).value)
+            row_values.append(row)
+
+        for row in row_values:
             self._read_data_from_table(row)
         return self.data_table
