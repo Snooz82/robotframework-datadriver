@@ -17,21 +17,19 @@ import inspect
 import os
 import os.path
 import re
-import sys
 
 from copy import deepcopy
 
 from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
 from robot.model.tags import Tags
-from robot.run import USAGE
-from robot.utils.argumentparser import ArgumentParser
 from robot.utils.dotdict import DotDict
 from robot.utils.importer import Importer
 
 from .AbstractReaderClass import AbstractReaderClass
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
+from .argument_utils import robot_options
 
 __version__ = '0.4.0b2'
 
@@ -1149,7 +1147,7 @@ Usage in Robot Framework
             logger.console(f'[ DataDriver ] invalid Regex! used {file_regex} instead.')
             logger.console(e)
 
-        options = self._robot_options()
+        options = robot_options()
         self.include = options['include'] if not include else include
         self.exclude = options['exclude'] if not exclude else exclude
 
@@ -1423,40 +1421,6 @@ Usage in Robot Framework
 
     def _replace_test_case_doc(self):
         self.test.doc = self.test_case_data.documentation
-
-    def _robot_options(self):
-        arg_parser = ArgumentParser(USAGE, auto_pythonpath=False, auto_argumentfile=True, env_options='ROBOT_OPTIONS')
-        valid_args = self._filter_args(arg_parser)
-        return arg_parser.parse_args(valid_args)[0]
-
-    def _filter_args(self, arg_parser):
-        arg_state = 0
-        valid_robot_args = list()
-        for arg in sys.argv[1:]:
-            if arg_state == 0:
-                arg_state = self._get_argument_state(arg, arg_parser)
-            if arg_state > 0:
-                valid_robot_args.append(arg)
-                arg_state -= 1
-        return valid_robot_args
-
-    @staticmethod
-    def _get_argument_state(arg, arg_parser):
-        short_opts = arg_parser._short_opts
-        long_opts = arg_parser._long_opts
-        param_opt = [l_opt[:-1] for l_opt in long_opts if l_opt[-1:] == '=']
-        arg_state = 0
-        if len(arg) == 2 and arg[0] == '-':
-            if arg[1] in '.?hTX':
-                arg_state = 1
-            elif arg[1] in short_opts:
-                arg_state = 2
-        elif len(arg) > 2 and arg[:2] == '--':
-            if arg[2:] in param_opt:
-                arg_state = 2
-            elif arg[2:] in long_opts:
-                arg_state = 1
-        return arg_state
 
     def _debug(self, msg, newline=True, stream='stdout'):
         if self.DEBUG:
