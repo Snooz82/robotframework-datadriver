@@ -20,8 +20,9 @@ import re
 
 from copy import deepcopy
 
-from robot.api import logger
+from robot.api.logger import console
 from robot.libraries.BuiltIn import BuiltIn
+from robot.model.testsuite import TestSuite
 from robot.model.tags import Tags
 from robot.utils.dotdict import DotDict
 from robot.utils.importer import Importer
@@ -30,8 +31,16 @@ from .AbstractReaderClass import AbstractReaderClass
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
 from .argument_utils import robot_options
+from .utils import (
+    is_same_keyword,
+    get_filter_dynamic_test_names,
+    get_variable_value,
+    is_pabot_dry_run,
+    debug,
+    warn,
+)
 
-__version__ = '0.4.0b2'
+__version__ = "0.4.0b2"
 
 
 class DataDriver:
@@ -972,31 +981,33 @@ default parameters do not fit your needs.
 |
 
     """
-    ROBOT_LIBRARY_DOC_FORMAT = 'reST'
+
+    ROBOT_LIBRARY_DOC_FORMAT = "reST"
     ROBOT_LIBRARY_VERSION = __version__
     ROBOT_LISTENER_API_VERSION = 3
-    ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
+    ROBOT_LIBRARY_SCOPE = "TEST SUITE"
 
-    def __init__(self,
-                 file=None,
-                 encoding='cp1252',
-                 dialect='Excel-EU',
-                 delimiter=';',
-                 quotechar='"',
-                 escapechar='\\',
-                 doublequote=True,
-                 skipinitialspace=False,
-                 lineterminator='\r\n',
-                 sheet_name=0,
-                 reader_class=None,
-                 file_search_strategy='PATH',
-                 file_regex=r'(?i)(.*?)(\.csv)',
-                 include=None,
-                 exclude=None,
-                 listseperator=',',
-                 config_keyword=None,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        file=None,
+        encoding="cp1252",
+        dialect="Excel-EU",
+        delimiter=";",
+        quotechar='"',
+        escapechar="\\",
+        doublequote=True,
+        skipinitialspace=False,
+        lineterminator="\r\n",
+        sheet_name=0,
+        reader_class=None,
+        file_search_strategy="PATH",
+        file_regex=r"(?i)(.*?)(\.csv)",
+        include=None,
+        exclude=None,
+        listseperator=",",
+        config_keyword=None,
+        **kwargs,
+    ):
         """**Example:**
 
 .. code :: robotframework
@@ -1143,13 +1154,13 @@ Usage in Robot Framework
         try:
             re.compile(file_regex)
         except re.error as e:
-            file_regex = r'(?i)(.*?)(\.csv)'
-            logger.console(f'[ DataDriver ] invalid Regex! used {file_regex} instead.')
-            logger.console(e)
+            file_regex = r"(?i)(.*?)(\.csv)"
+            console(f"[ DataDriver ] invalid Regex! used {file_regex} instead.")
+            console(e)
 
         options = robot_options()
-        self.include = options['include'] if not include else include
-        self.exclude = options['exclude'] if not exclude else exclude
+        self.include = options["include"] if not include else include
+        self.exclude = options["exclude"] if not exclude else exclude
 
         self.config_dict = DotDict(
             file=file,
@@ -1169,32 +1180,36 @@ Usage in Robot Framework
             exclude=self.exclude,
             list_separator=listseperator,
             config_keyword=config_keyword,
-            **kwargs
+            **kwargs,
         )
 
         self.reader_config = ReaderConfig(**self.config_dict)
+        self.suite_name = None
         self.suite_source = None
         self.template_test = None
         self.template_keyword = None
         self.data_table = None
         self.test_case_data = TestCaseData()
 
-    def _start_suite(self, suite, result):
+    def _start_suite(self, suite: TestSuite, result):
         """Called when a test suite starts.
         Data and result are model objects representing the executed test suite and its execution results, respectively.
 
         :param suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
         :param result: NOT USED
         """
+        self.suite_name = suite.longname
         self.update_config()
-        log_level = BuiltIn().get_variable_value('${LOG LEVEL}')
-        self.DEBUG = log_level in ['DEBUG', 'TRACE']
         self.suite_source = suite.source
         self._create_data_table()
-        self._debug('[ DataDriver ] data Table created')
+        debug("[ DataDriver ] data Table created")
         self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
-        suite.tests = self._get_filtered_test_list()
+        test_list = self._get_filtered_test_list()
+        if self._handle_pabot(test_list):
+            suite.tests = []
+        else:
+            suite.tests = test_list
 
     def update_config(self):
         if self.config_dict.config_keyword:
@@ -1205,27 +1220,17 @@ Usage in Robot Framework
 
     def _get_filtered_test_list(self):
         temp_test_list = list()
-        dynamic_test_list = self._get_filter_dynamic_test_names()
-        for self.test_case_data in self.data_table:
+        dynamic_test_list = get_filter_dynamic_test_names()
+        for index, self.test_case_data in enumerate(self.data_table):
             if self._included_by_tags() and self._not_excluded_by_tags():
                 self._create_test_from_template()
-                if not dynamic_test_list \
-                        or f'{self.test.parent.name}.{self.test.name}' \
-                        in dynamic_test_list:
+                if (
+                    not dynamic_test_list
+                    or f"{self.test.parent.name}.{self.test.name}" in dynamic_test_list
+                    or self.test.longname in dynamic_test_list
+                ):
                     temp_test_list.append(self.test)
         return temp_test_list
-
-    @staticmethod
-    def _get_filter_dynamic_test_names():
-        dynamic_test_list = BuiltIn().get_variable_value('${DYNAMICTESTS}')
-        if isinstance(dynamic_test_list, str):
-            return dynamic_test_list.split('|')
-        elif isinstance(dynamic_test_list, list):
-            return dynamic_test_list
-        else:
-            dynamic_test_name = BuiltIn().get_variable_value('${DYNAMICTEST}')
-            if dynamic_test_name:
-                return [dynamic_test_name]
 
     def _included_by_tags(self):
         if self.include and isinstance(self.test_case_data.tags, list):
@@ -1249,8 +1254,8 @@ Usage in Robot Framework
         """
         self._resolve_file_attribute()
         self.data_table = self._data_reader().get_data_from_source()
-        self._debug(f"[ DataDriver ] Opening file '{self.reader_config.file}'")
-        self._debug(f'[ DataDriver ] {len(self.data_table)} Test Cases loaded...')
+        debug(f"[ DataDriver ] Opening file '{self.reader_config.file}'")
+        debug(f"[ DataDriver ] {len(self.data_table)} Test Cases loaded...")
 
     def _data_reader(self):
         if not self.reader_config.reader_class:
@@ -1259,26 +1264,30 @@ Usage in Robot Framework
             reader_class = self._get_data_reader_from_reader_class()
         reader_instance = reader_class(self.reader_config)
         if not isinstance(reader_instance, AbstractReaderClass):
-            raise ImportError(f'{self.reader_config.reader_class} in no instance of AbstractDataReader!')
+            raise ImportError(
+                f"{self.reader_config.reader_class} in no instance of AbstractDataReader!"
+            )
         return reader_instance
 
     def _get_data_reader_from_file_extension(self):
         file_extension = os.path.splitext(self.reader_config.file)[1]
         reader_type = file_extension.lower()[1:]
-        self._debug(f'[ DataDriver ] Initialized in {reader_type}-mode.')
-        reader_module = importlib.import_module(f'..{reader_type}_reader', 'DataDriver.DataDriver')
-        self._debug(f'[ DataDriver ] Reader Module: {reader_module}')
-        reader_class = getattr(reader_module, f'{reader_type}_reader')
+        debug(f"[ DataDriver ] Initialized in {reader_type}-mode.")
+        reader_module = importlib.import_module(f"..{reader_type}_reader", "DataDriver.DataDriver")
+        debug(f"[ DataDriver ] Reader Module: {reader_module}")
+        reader_class = getattr(reader_module, f"{reader_type}_reader")
         return reader_class
 
     def _get_data_reader_from_reader_class(self):
         reader_name = self.reader_config.reader_class
-        self._debug(f'[ DataDriver ] Initializes  {reader_name}')
+        debug(f"[ DataDriver ] Initializes  {reader_name}")
         if os.path.isfile(reader_name):
             reader_class = self._get_reader_class_from_path(reader_name)
         else:
             local_file = os.path.join(os.path.split(os.path.realpath(__file__))[0], reader_name)
-            relative_file = os.path.join(os.path.realpath(os.path.split(self.suite_source)[0]), reader_name)
+            relative_file = os.path.join(
+                os.path.realpath(os.path.split(self.suite_source)[0]), reader_name
+            )
             if os.path.isfile(local_file):
                 reader_class = self._get_reader_class_from_path(local_file)
             elif os.path.isfile(relative_file):
@@ -1287,16 +1296,18 @@ Usage in Robot Framework
                 try:
                     reader_class = self._get_reader_class_from_module(reader_name)
                 except Exception as e:
-                    reader_module = importlib.import_module(f'..{reader_name}', 'DataDriver.DataDriver')
+                    reader_module = importlib.import_module(
+                        f"..{reader_name}", "DataDriver.DataDriver"
+                    )
                     reader_class = getattr(reader_module, reader_name)
-        self._debug(f'[ DataDriver ] Reader Class: {reader_class}')
+        debug(f"[ DataDriver ] Reader Class: {reader_class}")
         return reader_class
 
     def _get_reader_class_from_path(self, file_name):
-        self._debug(f'[ DataDriver ] Loading Reader from file {file_name}')
+        debug(f"[ DataDriver ] Loading Reader from file {file_name}")
         abs_path = os.path.abspath(file_name)
-        importer = Importer('DataReader')
-        self._debug(f'[ DataDriver ] Reader path: {abs_path}')
+        importer = Importer("DataReader")
+        debug(f"[ DataDriver ] Reader path: {abs_path}")
         reader = importer.import_class_or_module_by_path(abs_path)
         if not inspect.isclass(reader):
             message = f"Importing custom DataReader class from {abs_path} failed."
@@ -1304,8 +1315,8 @@ Usage in Robot Framework
         return reader
 
     def _get_reader_class_from_module(self, reader_name):
-        importer = Importer('DataReader')
-        self._debug(f'[ DataDriver ] Reader Module: {reader_name}')
+        importer = Importer("DataReader")
+        debug(f"[ DataDriver ] Reader Module: {reader_name}")
         reader = importer.import_class_or_module(reader_name)
         if not inspect.isclass(reader):
             message = f"Importing custom DataReader class {reader_name} failed."
@@ -1313,34 +1324,39 @@ Usage in Robot Framework
         return reader
 
     def _resolve_file_attribute(self):
-        if self.reader_config.file_search_strategy == 'PATH':
+        if self.reader_config.file_search_strategy == "PATH":
             if self.reader_config.reader_class and not self.reader_config.file:
                 return
-            if (not self.reader_config.file) or ('' == self.reader_config.file[:self.reader_config.file.rfind('.')]):
+            if (not self.reader_config.file) or (
+                "" == self.reader_config.file[: self.reader_config.file.rfind(".")]
+            ):
                 self._set_data_file_to_suite_source()
             else:
                 self._check_if_file_exists_as_path_or_in_suite()
-        elif self.reader_config.file_search_strategy == 'REGEX':
+        elif self.reader_config.file_search_strategy == "REGEX":
             self._search_file_from_regex()
-        elif self.reader_config.file_search_strategy == 'NONE':
+        elif self.reader_config.file_search_strategy == "NONE":
             pass  # If file_search_strategy is None, no validation of the input file is done. Use i.e. for SQL sources.
         else:
-            raise ValueError(f'file_search_strategy={self.reader_config.file_search_strategy} is not a valid value!')
+            raise ValueError(
+                f"file_search_strategy={self.reader_config.file_search_strategy} is not a valid value!"
+            )
 
     def _set_data_file_to_suite_source(self):
         if not self.reader_config.file:
             suite_path_as_data_file = f'{self.suite_source[:self.suite_source.rfind(".")]}.csv'
         else:
-            suite_path = self.suite_source[:self.suite_source.rfind(".")]
-            file_extension = self.reader_config.file[self.reader_config.file.rfind("."):]
-            suite_path_as_data_file = f'{suite_path}{file_extension}'
+            suite_path = self.suite_source[: self.suite_source.rfind(".")]
+            file_extension = self.reader_config.file[self.reader_config.file.rfind(".") :]
+            suite_path_as_data_file = f"{suite_path}{file_extension}"
         if os.path.isfile(suite_path_as_data_file):
             self.reader_config.file = suite_path_as_data_file
         else:
             raise FileNotFoundError(
-                f'File attribute was empty. '
-                f'Tried to find {suite_path_as_data_file} but file does not exist. '
-                f'If no file validation is required, set file_search_strategy=None.')
+                f"File attribute was empty. "
+                f"Tried to find {suite_path_as_data_file} but file does not exist. "
+                f"If no file validation is required, set file_search_strategy=None."
+            )
 
     def _check_if_file_exists_as_path_or_in_suite(self):
         if not os.path.isfile(self.reader_config.file):
@@ -1350,7 +1366,8 @@ Usage in Robot Framework
                 self.reader_config.file = file_in_suite_dir
             else:
                 raise FileNotFoundError(
-                    f'File attribute was not a full path. Tried to find {file_in_suite_dir} but file does not exist.')
+                    f"File attribute was not a full path. Tried to find {file_in_suite_dir} but file does not exist."
+                )
 
     def _search_file_from_regex(self):
         if os.path.isdir(self.reader_config.file):
@@ -1359,20 +1376,46 @@ Usage in Robot Framework
                     self.reader_config.file = os.path.join(self.reader_config.file, filename)
                     break
 
+    def _handle_pabot(self, test_list):
+        if get_variable_value("${DYNAMICTEST}") or get_variable_value("${DYNAMICTESTS}"):
+            return
+        queue_index = get_variable_value("${PABOTQUEUEINDEX}")
+        if not queue_index:
+            return
+        pabot_process_count = get_variable_value("${PABOTNUMBEROFPROCESSES}")
+        if not pabot_process_count:
+            warn("You are using an old version of pabot! Please considert to update.")
+        try:
+            from pabot.pabotlib import Remote
+
+            pabotlib_url = get_variable_value("${PABOTLIBURI}")
+            if not pabotlib_url:
+                raise ConnectionError("Pabot is in use but PabotLib is not active!")
+            pabotlib = Remote(pabotlib_url)
+            if not pabotlib:
+                raise ConnectionError(f"Unable to connect to PabotLib via '{pabotlib_url}' !")
+
+            for test in test_list:
+                pabotlib.run_keyword(
+                    "add_suite_to_execution_queue",
+                    [self.suite_name, [f"DYNAMICTEST:{self.suite_name}.{test.name}"]],
+                    {},
+                )
+                debug(f"[Pabot] Adding :{self.suite_name},  {test.name}")
+            pabotlib.run_keyword("ignore_execution", [get_variable_value("${CALLER_ID}")], {})
+            return True
+
+        except ImportError as e:
+            debug(e)
+            return
+
     def _get_template_keyword(self, suite):
         template = self.template_test.template
         if template:
             for keyword in suite.resource.keywords:
-                if self._is_same_keyword(keyword.name, template):
+                if is_same_keyword(keyword.name, template):
                     return keyword
         raise AttributeError('No "Test Template" keyword found for first test case.')
-
-    def _is_same_keyword(self, first, second):
-        return self._get_normalized_keyword(first) == self._get_normalized_keyword(second)
-
-    @staticmethod
-    def _get_normalized_keyword(keyword):
-        return keyword.lower().replace(' ', '').replace('_', '')
 
     def _create_test_from_template(self):
         self.test = deepcopy(self.template_test)
@@ -1382,23 +1425,31 @@ Usage in Robot Framework
         self._replace_test_case_doc()
 
     def _replace_test_case_name(self):
-        if self.test_case_data.test_case_name == '':
+        if self.test_case_data.test_case_name == "":
             for variable_name in self.test_case_data.arguments:
-                self.test.name = self.test.name.replace(variable_name,
-                                                        str(self.test_case_data.arguments[variable_name]))
+                self.test.name = self.test.name.replace(
+                    variable_name, str(self.test_case_data.arguments[variable_name])
+                )
         else:
             self.test.name = self.test_case_data.test_case_name
 
     def _replace_test_case_keywords(self):
         self.test.keywords.clear()
         if self.template_test.keywords.setup is not None:
-            self.test.keywords.create(name=self.template_test.keywords.setup.name, type='setup',
-                                      args=self.template_test.keywords.setup.args)
-        self.test.keywords.create(name=self.template_keyword.name,
-                                  args=self._get_template_arguments())
+            self.test.keywords.create(
+                name=self.template_test.keywords.setup.name,
+                type="setup",
+                args=self.template_test.keywords.setup.args,
+            )
+        self.test.keywords.create(
+            name=self.template_keyword.name, args=self._get_template_arguments()
+        )
         if self.template_test.keywords.teardown is not None:
-            self.test.keywords.create(name=self.template_test.keywords.teardown.name, type='teardown',
-                                      args=self.template_test.keywords.teardown.args)
+            self.test.keywords.create(
+                name=self.template_test.keywords.teardown.name,
+                type="teardown",
+                args=self.template_test.keywords.teardown.args,
+            )
 
     def _get_template_arguments(self):
         return_arguments = []
@@ -1416,12 +1467,8 @@ Usage in Robot Framework
         self._add_tag_if_pabot_dryrun()
 
     def _add_tag_if_pabot_dryrun(self):
-        if BuiltIn().get_variable_value('${PABOTQUEUEINDEX}') == '-1':
-            self.test.tags.add('pabot:dynamictest')
+        if is_pabot_dry_run():
+            self.test.tags.add("pabot:dynamictest")
 
     def _replace_test_case_doc(self):
         self.test.doc = self.test_case_data.documentation
-
-    def _debug(self, msg, newline=True, stream='stdout'):
-        if self.DEBUG:
-            logger.console(msg, newline, stream)

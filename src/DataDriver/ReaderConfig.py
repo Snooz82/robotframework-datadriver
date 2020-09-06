@@ -15,27 +15,28 @@
 
 class ReaderConfig:
 
-    TEST_CASE_TABLE_NAME = '*** Test Cases ***'
+    TEST_CASE_TABLE_NAME = "*** Test Cases ***"
 
-    def __init__(self,
-                 file=None,
-                 encoding=None,
-                 dialect=None,
-                 delimiter=None,
-                 quotechar=None,
-                 escapechar=None,
-                 doublequote=None,
-                 skipinitialspace=None,
-                 lineterminator=None,
-                 sheet_name=None,
-                 reader_class=None,
-                 file_search_strategy='path',
-                 file_regex=None,
-                 include=None,
-                 exclude=None,
-                 list_separator=',',
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        file=None,
+        encoding=None,
+        dialect=None,
+        delimiter=None,
+        quotechar=None,
+        escapechar=None,
+        doublequote=None,
+        skipinitialspace=None,
+        lineterminator=None,
+        sheet_name=None,
+        reader_class=None,
+        file_search_strategy="path",
+        file_regex=None,
+        include=None,
+        exclude=None,
+        list_separator=",",
+        **kwargs
+    ):
 
         self.file = file
         self.encoding = encoding
@@ -57,13 +58,7 @@ class ReaderConfig:
 
 
 class TestCaseData:
-
-    def __init__(self,
-                 test_case_name='',
-                 arguments=None,
-                 tags=None,
-                 documentation=''
-                 ):
+    def __init__(self, test_case_name="", arguments=None, tags=None, documentation=""):
 
         self.test_case_name = test_case_name
         self.arguments = arguments if arguments else {}

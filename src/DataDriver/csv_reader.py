@@ -18,34 +18,37 @@ from DataDriver.AbstractReaderClass import AbstractReaderClass
 
 
 class csv_reader(AbstractReaderClass):
-
     def get_data_from_source(self):
         self._register_dialects()
         self._read_file_to_data_table()
         return self.data_table
 
     def _register_dialects(self):
-        if self.csv_dialect.lower() == 'userdefined':
-            csv.register_dialect(self.csv_dialect,
-                                 delimiter=self.delimiter,
-                                 quotechar=self.quotechar,
-                                 escapechar=self.escapechar,
-                                 doublequote=self.doublequote,
-                                 skipinitialspace=self.skipinitialspace,
-                                 lineterminator=self.lineterminator,
-                                 quoting=csv.QUOTE_ALL)
-        elif self.csv_dialect == 'Excel-EU':
-            csv.register_dialect(self.csv_dialect,
-                                 delimiter=';',
-                                 quotechar='"',
-                                 escapechar='\\',
-                                 doublequote=True,
-                                 skipinitialspace=False,
-                                 lineterminator='\r\n',
-                                 quoting=csv.QUOTE_ALL)
+        if self.csv_dialect.lower() == "userdefined":
+            csv.register_dialect(
+                self.csv_dialect,
+                delimiter=self.delimiter,
+                quotechar=self.quotechar,
+                escapechar=self.escapechar,
+                doublequote=self.doublequote,
+                skipinitialspace=self.skipinitialspace,
+                lineterminator=self.lineterminator,
+                quoting=csv.QUOTE_ALL,
+            )
+        elif self.csv_dialect == "Excel-EU":
+            csv.register_dialect(
+                self.csv_dialect,
+                delimiter=";",
+                quotechar='"',
+                escapechar="\\",
+                doublequote=True,
+                skipinitialspace=False,
+                lineterminator="\r\n",
+                quoting=csv.QUOTE_ALL,
+            )
 
     def _read_file_to_data_table(self):
-        with open(self.file, 'r', encoding=self.csv_encoding) as csvfile:
+        with open(self.file, "r", encoding=self.csv_encoding) as csvfile:
             reader = csv.reader(csvfile, self.csv_dialect)
             for row_index, row in enumerate(reader):
                 if row_index == 0:
