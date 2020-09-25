@@ -1344,7 +1344,7 @@ Usage in Robot Framework
 
     def _set_data_file_to_suite_source(self):
         if not self.reader_config.file:
-            suite_path_as_data_file = f'{self.suite_source[:self.suite_source.rfind(".")]}.csv'
+            suite_path_as_data_file = f"{self.suite_source[:self.suite_source.rfind('.')]}.csv"
         else:
             suite_path = self.suite_source[: self.suite_source.rfind(".")]
             file_extension = self.reader_config.file[self.reader_config.file.rfind(".") :]
