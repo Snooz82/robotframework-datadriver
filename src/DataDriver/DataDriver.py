@@ -20,7 +20,7 @@ import re
 
 from copy import deepcopy
 
-from robot.api.logger import console
+from robot.api.logger import console, info
 from robot.libraries.BuiltIn import BuiltIn
 from robot.model.testsuite import TestSuite
 from robot.model.tags import Tags
@@ -36,6 +36,7 @@ from .utils import (
     get_filter_dynamic_test_names,
     get_variable_value,
     is_pabot_dry_run,
+    is_pabot_testlevelsplit,
     debug,
     warn,
 )
@@ -1158,9 +1159,9 @@ Usage in Robot Framework
             console(f"[ DataDriver ] invalid Regex! used {file_regex} instead.")
             console(e)
 
-        options = robot_options()
-        self.include = options["include"] if not include else include
-        self.exclude = options["exclude"] if not exclude else exclude
+        self.robot_options = robot_options()
+        self.include = self.robot_options["include"] if not include else include
+        self.exclude = self.robot_options["exclude"] if not exclude else exclude
 
         self.config_dict = DotDict(
             file=file,
@@ -1198,6 +1199,7 @@ Usage in Robot Framework
         :param suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
         :param result: NOT USED
         """
+        debug(self.robot_options)
         self.suite_name = suite.longname
         self.update_config()
         self.suite_source = suite.source
@@ -1303,7 +1305,8 @@ Usage in Robot Framework
         debug(f"[ DataDriver ] Reader Class: {reader_class}")
         return reader_class
 
-    def _get_reader_class_from_path(self, file_name):
+    @staticmethod
+    def _get_reader_class_from_path(file_name):
         debug(f"[ DataDriver ] Loading Reader from file {file_name}")
         abs_path = os.path.abspath(file_name)
         importer = Importer("DataReader")
@@ -1314,7 +1317,8 @@ Usage in Robot Framework
             raise ImportError(message)
         return reader
 
-    def _get_reader_class_from_module(self, reader_name):
+    @staticmethod
+    def _get_reader_class_from_module(reader_name):
         importer = Importer("DataReader")
         debug(f"[ DataDriver ] Reader Module: {reader_name}")
         reader = importer.import_class_or_module(reader_name)
@@ -1377,7 +1381,11 @@ Usage in Robot Framework
                     break
 
     def _handle_pabot(self, test_list):
-        if get_variable_value("${DYNAMICTEST}") or get_variable_value("${DYNAMICTESTS}"):
+        if (
+            get_variable_value("${DYNAMICTEST}")
+            or get_variable_value("${DYNAMICTESTS}")
+            or not self.robot_options["test"]
+        ):
             return
         queue_index = get_variable_value("${PABOTQUEUEINDEX}")
         if not queue_index:

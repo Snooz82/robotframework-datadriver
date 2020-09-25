@@ -25,7 +25,7 @@ def robot_options():
 def filter_args(arg_parser):
     short_opts = arg_parser._short_opts
     long_opts = arg_parser._long_opts
-    arg_state = 0
+    arg_state = ArgumentState.ANALYZE_NEXT
     valid_robot_args = list()
     for arg in sys.argv[1:]:
         if arg_state == ArgumentState.ANALYZE_NEXT:
