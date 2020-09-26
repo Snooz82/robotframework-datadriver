@@ -15,8 +15,8 @@
 
 import re
 
-from robot.errors import VariableError
-from robot.utils import py2to3
+from robot.errors import VariableError  # type: ignore
+from robot.utils import py2to3  # type: ignore
 
 
 def search_variable(string, identifiers="$@&%*", ignore_errors=False):

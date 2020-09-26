@@ -20,8 +20,10 @@ from .search import search_variable
 from abc import ABC
 from ast import literal_eval
 from re import compile, match, fullmatch
-from robot.libraries.BuiltIn import BuiltIn
-from robot.utils import DotDict
+from robot.libraries.BuiltIn import BuiltIn  # type: ignore
+from robot.utils import DotDict  # type: ignore
+
+from typing import List
 
 
 class AbstractReaderClass(ABC):
@@ -42,11 +44,11 @@ class AbstractReaderClass(ABC):
         self.kwargs = reader_config.kwargs
 
         self.test_case_column_id = None
-        self.arguments_column_ids = []
+        self.arguments_column_ids: List = list()
         self.tags_column_id = None
         self.documentation_column_id = None
-        self.header = []
-        self.data_table = []
+        self.header: List = list()
+        self.data_table: List = list()
 
         self.TESTCASE_TABLE_NAME = ReaderConfig.TEST_CASE_TABLE_NAME
         self.TEST_CASE_TABLE_PATTERN = compile(r"(?i)^(\*+\s*test ?cases?[\s*].*)")

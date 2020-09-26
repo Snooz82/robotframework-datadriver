@@ -2,8 +2,8 @@ import sys
 
 from enum import IntEnum
 
-from robot.run import USAGE
-from robot.utils.argumentparser import ArgumentParser
+from robot.run import USAGE  # type: ignore
+from robot.utils.argumentparser import ArgumentParser  # type: ignore
 
 SINGLE_ARG_CHARACTERS = ".?hTX"
 

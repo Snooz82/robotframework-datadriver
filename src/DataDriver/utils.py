@@ -1,8 +1,8 @@
 import math
 
 from enum import Enum, auto
-from robot.libraries.BuiltIn import BuiltIn
-from robot.api import logger
+from robot.libraries.BuiltIn import BuiltIn  # type: ignore
+from robot.api import logger  # type: ignore
 from typing import List, Any
 
 from .argument_utils import is_pabot_testlevelsplit
@@ -59,7 +59,7 @@ def _get_normalized_keyword(keyword: str):
 def binary_partition_test_list(test_list: List, process_count: int):
     fractions = equally_partition_test_list(test_list, process_count)
     return_list = list()
-    for i in range(int(math.sqrt(len(test_list)//process_count))):
+    for i in range(int(math.sqrt(len(test_list) // process_count))):
         first, second = _partition_second_half(fractions)
         return_list.extend(first)
         fractions = second
@@ -68,9 +68,9 @@ def binary_partition_test_list(test_list: List, process_count: int):
 
 
 def _partition_second_half(fractions):
-    first = fractions[:len(fractions) // 2]
+    first = fractions[: len(fractions) // 2]
     second = list()
-    for sub_list in fractions[len(fractions) // 2:]:
+    for sub_list in fractions[len(fractions) // 2 :]:
         sub_sub_list = equally_partition_test_list(sub_list, 2)
         second.extend(sub_sub_list)
     return first, second
@@ -79,6 +79,6 @@ def _partition_second_half(fractions):
 def equally_partition_test_list(test_list: List, fraction_count: int):
     quotient, remainder = divmod(len(test_list), fraction_count)
     return [
-        test_list[i * quotient + min(i, remainder): (i + 1) * quotient + min(i + 1, remainder)]
+        test_list[i * quotient + min(i, remainder) : (i + 1) * quotient + min(i + 1, remainder)]
         for i in range(fraction_count)
     ]
