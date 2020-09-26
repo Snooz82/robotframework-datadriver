@@ -45,7 +45,7 @@ from .utils import (  # type: ignore
     binary_partition_test_list,
 )
 
-__version__ = "1.0rc1"
+__version__ = "1.0rc2"
 
 
 class DataDriver:
