@@ -987,7 +987,7 @@ This can be set by ``optimize_pabot`` in Library import.
 
 Binary creates with 40 test cases and 8 threads something like that:
 
-.. code
+.. code ::
 
     P01: 01,02,03,04,05
     P02: 06,07,08,09,10
