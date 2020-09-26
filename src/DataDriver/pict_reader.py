@@ -14,37 +14,44 @@
 
 
 import csv
+import time
 import os
-from .AbstractReaderClass import AbstractReaderClass
+from .AbstractReaderClass import AbstractReaderClass, ReaderConfig
 
 
 class pict_reader(AbstractReaderClass):
+    def __init__(self, reader_config: ReaderConfig):
+        super().__init__(reader_config)
+        self.pictout_file = f"{os.path.splitext(self.file)[0]}{time.time()}.pictout"
 
     def get_data_from_source(self):
-        self.pictout_file = f'{os.path.splitext(self.file)[0]}.pictout'
         self._register_dialect()
         self._create_gemerated_file_from_model_file()
         self._read_generated_file_to_dictionaries()
         return self.data_table
 
-    def _register_dialect(self):
-        csv.register_dialect('PICT',
-                             delimiter='\t',
-                             skipinitialspace=False,
-                             lineterminator='\r\n',
-                             quoting=csv.QUOTE_NONE)
+    @staticmethod
+    def _register_dialect():
+        csv.register_dialect(
+            "PICT",
+            delimiter="\t",
+            skipinitialspace=False,
+            lineterminator="\r\n",
+            quoting=csv.QUOTE_NONE,
+        )
 
     def _create_gemerated_file_from_model_file(self):
         os.system(f'pict "{self.file}" > "{self.pictout_file}"')
 
     def _read_generated_file_to_dictionaries(self):
-        with open(self.pictout_file, 'r', encoding='utf_8') as csvfile:
-            reader = csv.reader(csvfile, 'PICT')
+        with open(self.pictout_file, "r", encoding="utf_8") as csvfile:
+            reader = csv.reader(csvfile, "PICT")
             for row_index, row in enumerate(reader):
                 if row_index == 0:
                     row_of_variables = []
                     for cell in row:
-                        row_of_variables.append(f'${{{cell}}}')
+                        row_of_variables.append(f"${{{cell}}}")
                     self._analyse_header(row_of_variables)
                 else:
                     self._read_data_from_table(row)
+        os.remove(self.pictout_file)

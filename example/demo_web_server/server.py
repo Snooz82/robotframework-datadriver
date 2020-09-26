@@ -19,7 +19,7 @@ from socketserver import TCPServer
 from http.server import SimpleHTTPRequestHandler
 
 
-ROOT = join(dirname(abspath(__file__)), 'html')
+ROOT = join(dirname(abspath(__file__)), "html")
 PORT = 7272
 
 
@@ -27,20 +27,21 @@ class DemoServer(TCPServer):
     allow_reuse_address = True
 
     def __init__(self, port=PORT):
-        TCPServer.__init__(self, ('localhost', int(port )), SimpleHTTPRequestHandler)
+        TCPServer.__init__(self, ("localhost", int(port)), SimpleHTTPRequestHandler)
 
     def serve(self, directory=ROOT):
         chdir(directory)
-        print('Demo server starting on port %d.' % self.server_address[1])
+        print("Demo server starting on port %d." % self.server_address[1])
         try:
             server.serve_forever()
         except KeyboardInterrupt:
             server.server_close()
-        print('Demo server stopped.')
+        print("Demo server stopped.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     try:
         server = DemoServer(*sys.argv[1:])
     except (TypeError, ValueError):

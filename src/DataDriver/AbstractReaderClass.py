@@ -20,12 +20,13 @@ from .search import search_variable
 from abc import ABC
 from ast import literal_eval
 from re import compile, match, fullmatch
-from robot.libraries.BuiltIn import BuiltIn
-from robot.utils import DotDict
+from robot.libraries.BuiltIn import BuiltIn  # type: ignore
+from robot.utils import DotDict  # type: ignore
+
+from typing import List
 
 
 class AbstractReaderClass(ABC):
-
     def __init__(self, reader_config: ReaderConfig):
 
         self.reader_config = reader_config
@@ -43,22 +44,24 @@ class AbstractReaderClass(ABC):
         self.kwargs = reader_config.kwargs
 
         self.test_case_column_id = None
-        self.arguments_column_ids = []
+        self.arguments_column_ids: List = list()
         self.tags_column_id = None
         self.documentation_column_id = None
-        self.header = []
-        self.data_table = []
+        self.header: List = list()
+        self.data_table: List = list()
 
         self.TESTCASE_TABLE_NAME = ReaderConfig.TEST_CASE_TABLE_NAME
-        self.TEST_CASE_TABLE_PATTERN = compile(r'(?i)^(\*+\s*test ?cases?[\s*].*)')
-        self.TASK_TABLE_PATTERN = compile(r'(?i)^(\*+\s*tasks?[\s*].*)')
-        self.VARIABLE_PATTERN = compile(r'([$@&e]\{)(.*?)(\})')
-        self.TAGS_PATTERN = compile(r'(?i)(\[)(tags)(\])')
-        self.DOCUMENTATION_PATTERN = compile(r'(?i)(\[)(documentation)(\])')
-        self.LIT_EVAL_PATTERN = compile(r'e\{(.+)\}')
+        self.TEST_CASE_TABLE_PATTERN = compile(r"(?i)^(\*+\s*test ?cases?[\s*].*)")
+        self.TASK_TABLE_PATTERN = compile(r"(?i)^(\*+\s*tasks?[\s*].*)")
+        self.VARIABLE_PATTERN = compile(r"([$@&e]\{)(.*?)(\})")
+        self.TAGS_PATTERN = compile(r"(?i)(\[)(tags)(\])")
+        self.DOCUMENTATION_PATTERN = compile(r"(?i)(\[)(documentation)(\])")
+        self.LIT_EVAL_PATTERN = compile(r"e\{(.+)\}")
 
     def get_data_from_source(self):
-        raise NotImplementedError("This method should be implemented and return self.data_table to DataDriver...")
+        raise NotImplementedError(
+            "This method should be implemented and return self.data_table to DataDriver..."
+        )
 
     def _is_test_case_header(self, header_string: str):
         is_test = self.TEST_CASE_TABLE_PATTERN.fullmatch(header_string)
@@ -87,19 +90,27 @@ class AbstractReaderClass(ABC):
                 self.documentation_column_id = cell_index
 
     def _read_data_from_table(self, row):
-        test_case_name = row[self.test_case_column_id] if self.test_case_column_id is not None else ''
+        test_case_name = (
+            row[self.test_case_column_id] if self.test_case_column_id is not None else ""
+        )
         arguments = {}
         for arguments_column_id in self.arguments_column_ids:
             variable_string = self.header[arguments_column_id]
             variable_value = row[arguments_column_id]
             if self.LIT_EVAL_PATTERN.fullmatch(variable_string):
-                variable_string = f'${variable_string[1:]}'
+                variable_string = f"${variable_string[1:]}"
                 variable_value = literal_eval(variable_value)
             variable_match = search_variable(variable_string)
             if variable_match.is_variable:
-                arguments.update(self._get_arguments_entry(variable_match, variable_value, arguments))
-        tags = [t.strip() for t in row[self.tags_column_id].split(',')] if self.tags_column_id else None
-        documentation = row[self.documentation_column_id] if self.documentation_column_id else ''
+                arguments.update(
+                    self._get_arguments_entry(variable_match, variable_value, arguments)
+                )
+        tags = (
+            [t.strip() for t in row[self.tags_column_id].split(",")]
+            if self.tags_column_id
+            else None
+        )
+        documentation = row[self.documentation_column_id] if self.documentation_column_id else ""
 
         self.data_table.append(TestCaseData(test_case_name, arguments, tags, documentation))
 
@@ -109,11 +120,13 @@ class AbstractReaderClass(ABC):
         if variable_match.is_list_variable:
             variable_value = str(variable_value).split(self.list_separator)
         elif variable_match.is_dict_variable:
-            variable_value = BuiltIn().create_dictionary(*(str(variable_value).split(self.list_separator)))
-        elif '.' in base: # is dot notated advanced variable dictionary ${dict.key.subkey}
-            base, *items = base.split('.')
+            variable_value = BuiltIn().create_dictionary(
+                *(str(variable_value).split(self.list_separator))
+            )
+        elif "." in base:  # is dot notated advanced variable dictionary ${dict.key.subkey}
+            base, *items = base.split(".")
             variable_value = self._update_argument_dict(arguments, base, items, variable_value)
-        elif items: # is dictionary syntax ${dict}[key][subkey]
+        elif items:  # is dictionary syntax ${dict}[key][subkey]
             variable_value = self._update_argument_dict(arguments, base, items, variable_value)
 
         return {self._as_var(base): variable_value}
@@ -133,7 +146,7 @@ class AbstractReaderClass(ABC):
             selected_key[items[-1]] = value
             return argument
         else:
-            raise TypeError(f'{self._as_var(base)} is defined with a wrong type. Not defaultdict.')
+            raise TypeError(f"{self._as_var(base)} is defined with a wrong type. Not defaultdict.")
 
     def _as_var(self, base):
-        return f'${{{base}}}'
+        return f"${{{base}}}"

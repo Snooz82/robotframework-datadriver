@@ -15,16 +15,19 @@ try:
     import pandas as pd
     import numpy as np
 except ImportError:
-    raise ImportError("""Requirements (pandas, numpy) for XLS support are not installed.
-    Use 'pip install -U robotframework-datadriver[XLS]' to install XLS support.""")
+    raise ImportError(
+        """Requirements (pandas, numpy) for XLS support are not installed.
+    Use 'pip install -U robotframework-datadriver[XLS]' to install XLS support."""
+    )
 
 from .AbstractReaderClass import AbstractReaderClass
 
 
 class xls_reader(AbstractReaderClass):
-
     def get_data_from_source(self):
-        data_frame = pd.read_excel(self.file, sheet_name=self.sheet_name, dtype=str).replace(np.nan, '', regex=True)
+        data_frame = pd.read_excel(self.file, sheet_name=self.sheet_name, dtype=str).replace(
+            np.nan, "", regex=True
+        )
         self._analyse_header(list(data_frame))
         for row in data_frame.values.tolist():
             self._read_data_from_table(row)

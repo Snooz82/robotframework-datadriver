@@ -34,6 +34,6 @@ Whos Your Daddy
 Validate User
     [Arguments]    ${user}
     Should Be Equal    ${user}[id]            ${user}[chk][id]
-    Should Be Equal    ${user.name.first}     ${user}[chk][first]
-    Should Be Equal    ${user}[name][last]    ${user}[chk][last]
+    Should Be Equal    ${user.name.first}     ${user}[chk][name][first]
+    Should Be Equal    ${user}[name][last]    ${user}[chk][name][last]
     
