@@ -118,12 +118,14 @@ class AbstractReaderClass(ABC):
         base = variable_match.base
         items = variable_match.items
         if variable_match.is_list_variable:
-            variable_value = str(variable_value).split(self.list_separator)
+            variable_value = BuiltIn().create_list(
+                *([BuiltIn().replace_variables(var) for var in (str(variable_value).split(self.list_separator))])
+            )
         elif variable_match.is_dict_variable:
             variable_value = BuiltIn().create_dictionary(
                 *(str(variable_value).split(self.list_separator))
             )
-        elif "." in base:  # is dot notated advanced variable dictionary ${dict.key.subkey}
+        if "." in base:  # is dot notated advanced variable dictionary ${dict.key.subkey}
             base, *items = base.split(".")
             variable_value = self._update_argument_dict(arguments, base, items, variable_value)
         elif items:  # is dictionary syntax ${dict}[key][subkey]
