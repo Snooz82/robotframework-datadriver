@@ -71,6 +71,7 @@ Table of contents
 -  `File Encoding and CSV Dialect`_
 -  `Custom DataReader Classes`_
 -  `Selection of Test Cases to execute`_
+-  `Configure DataDriver by Pre-Run Keyword`_
 -  `Pabot and DataDriver`_
 
 
@@ -180,12 +181,18 @@ Without any options set, it loads a .csv file which has the same name
 and path like the test suite .robot .
 
 
+
 **Example:**
 
 .. code :: robotframework
 
     *** Settings ***
     Library    DataDriver
+    Test Template    Invalid Logins
+
+    *** Keywords ***
+    Invalid Logins
+        ...
 
 
 Structure of test suite
@@ -202,9 +209,9 @@ information it needs.
  - only the first test case will be used as a template. All other test
    cases will be deleted.
  - Test cases have to be defined with a
-   ``Test Template``. Reason for this is, that the DataDriver needs to
-   know the names of the test case arguments. Test cases do not have
-   named arguments. Keywords do.
+   ``Test Template`` in Settings secion. Reason for this is,
+   that the DataDriver needs to know the names of the test case arguments.
+   Test cases do not have named arguments. Keywords do.
  - The keyword which is used as
    ``Test Template`` must be defined within the test suite (in the same
    \*.robot file). If the keyword which is used as ``Test Template`` is
@@ -449,6 +456,20 @@ or:
     Library    DataDriver    file=my_data_source.xlsx    sheet_name=2nd Sheet
 
 
+MS Excel and typed cells
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Microsoft Excel xls or xlsx file have the possibility to type thair data
+cells. Numbers are typically of the type float. If these data are not
+explicitly defined as text in Excel, pandas will read it as the type
+that is has in excel. Because we have to work with strings in Robot
+Framework these data are converted to string. This leads to the
+situation that a European time value like "04.02.2019" (4th January
+2019) is handed over to Robot Framework in Iso time "2019-01-04
+00:00:00". This may cause unwanted behavior. To mitigate this risk you
+should define Excel based files explicitly as text within Excel.
+
+
 PICT (Pairwise Independent Combinatorial Testing)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -514,20 +535,49 @@ file=
 encoding=
 ~~~~~~~~~
 
-may set the encoding of the CSV file. i.e.
-``cp1252, ascii, iso-8859-1, latin-1, utf_8, utf_16, utf_16_be, utf_16_le``,
-etc… https://docs.python.org/3.7/library/codecs.html#standard-encodings
+``encoding=`` must be set if it shall not be cp1252.
+
+**Examples**:
+
+``cp1252, ascii, iso-8859-1, latin-1, utf_8, utf_16, utf_16_be, utf_16_le``
+
+**cp1252** is:
+
+- Code Page 1252
+- Windows-1252
+- Windows Western European
+
+Most characters are same between ISO-8859-1 (Latin-1) except for the code points 128-159 (0x80-0x9F).
+These Characters are available in cp1252 which are not present in Latin-1.
+
+``€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ``
+
+See `Python Standard Encoding <https://docs.python.org/3/library/codecs.html#standard-encodings>`_ for more encodings
 
 
 dialect=
 ~~~~~~~~
 
-You may change the CSV Dialect here. If the Dialect is set to
-‘UserDefined’ the following options are used. Otherwise, they are
-ignored.
+You may change the CSV Dialect here.
+The dialect option can be one of the following:
+- Excel-EU
+- excel
+- excel-tab
+- unix
+- UserDefined
+
 supported Dialects are:
 
 .. code:: python
+
+    "Excel-EU"
+        delimiter=';',
+        quotechar='"',
+        escapechar='\\',
+        doublequote=True,
+        skipinitialspace=False,
+        lineterminator="\\r\\n",
+        quoting=csv.QUOTE_ALL
 
     "excel"
         delimiter = ','
@@ -539,6 +589,11 @@ supported Dialects are:
 
     "excel-tab"
         delimiter = '\\t'
+        quotechar = '"'
+        doublequote = True
+        skipinitialspace = False
+        lineterminator = '\\r\\n'
+        quoting = QUOTE_MINIMAL
 
     "unix"
         delimiter = ','
@@ -547,6 +602,53 @@ supported Dialects are:
         skipinitialspace = False
         lineterminator = '\\n'
         quoting = QUOTE_ALL
+
+
+
+
+Usage in Robot Framework
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    my_data_file.csv    dialect=excel
+
+
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    my_data_file.csv    dialect=excel_tab
+
+
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    my_data_file.csv    dialect=unix_dialect
+
+
+
+Example User Defined
+^^^^^^^^^^^^^^^^^^^^
+
+User may define the format completely free.
+If an option is not set, the default values are used.
+To register a userdefined format user have to set the
+option ``dialect`` to ``UserDefined``
+
+
+Usage in Robot Framework
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    my_data_file.csv
+    ...    dialect=UserDefined
+    ...    delimiter=.
+    ...    lineterminator=\\n
+
+
 
 
 Defaults:
@@ -793,168 +895,46 @@ Example:
     Library    DataDriver    include=1OR2    exclude=foo
 
 
-Options
-~~~~~~~
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver
-    ...    file=${None}
-    ...    encoding=cp1252
-    ...    dialect=Excel-EU
-    ...    delimiter=;
-    ...    quotechar="
-    ...    escapechar=\\\\
-    ...    doublequote=True
-    ...    skipinitialspace=False
-    ...    lineterminator=\\r\\n
-    ...    sheet_name=0
-    ...    reader_class=${None}
-    ...    file_search_strategy=PATH
-    ...    file_regex=(?i)(.*?)(\\.csv)
-    ...    include=${None}
-    ...    exclude=${None}
 
 
-Encoding
-^^^^^^^^
+Configure DataDriver by Pre-Run Keyword
+---------------------------------------
 
-``encoding`` must be set if it shall not be cp1252.
+With ``config_keyword=`` it's possible to name a keyword that will be called from Data Driver before it starts the actual processing of the ``data file``.
+One possible usage is if the ``data file`` itself shall be created by another keyword dynamically during the execution of the Data Driver test suite.
+The ``config_keyword=`` can be used to call that keyword and return the updated arguments (e.g. ``file``) back to the Data Driver Library. 
 
-**cp1252** is:
+The ``config keyword``
 
-- Code Page 1252
-- Windows-1252
-- Windows Western European
-
-Most characters are same between ISO-8859-1 (Latin-1) except for the code points 128-159 (0x80-0x9F).
-These Characters are available in cp1252 which are not present in Latin-1.
-
-``€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ``
-
-See `Python Standard Encoding <https://docs.python.org/3/library/codecs.html#standard-encodings>`_ for more encodings
-
-
-Example Excel (US / comma seperated)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Dialect Defaults:
-
-.. code :: python
-
-    delimiter = ','
-    quotechar = '"'
-    doublequote = True
-    skipinitialspace = False
-    lineterminator = '\\r\\n'
-    quoting = QUOTE_MINIMAL
+- May be defined globally or inside each testsuite individually
+- Gets all the arguments, that Data Driver gets from Library import, as a Robot Dictionary
+- Shall return the (updated) Data Driver arguments as a Robot Dictionary
 
 Usage in Robot Framework
 
 .. code :: robotframework
 
     *** Settings ***
-    Library    DataDriver    my_data_file.csv    dialect=excel    encoding=${None}
+    Library           OperatingSystem
+    Library           DataDriver    dialect=excel    encoding=utf_8   config_keyword=Config
+    Test Template     The Keyword
 
+    *** Test Cases ***
+    Test    aaa
 
-Example Excel Tab (\\\\t seperated)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    *** Keywords ***
+    The Keyword
+        [Arguments]    ${var}
+        Log To Console    ${var}
 
-Dialect Defaults:
+    Config
+        [Arguments]    ${original_config}
+        Log To Console    ${original_config.dialect}                # just a log of the original
+        Create File    ${CURDIR}/test321.csv
+        ...    *** Test Cases ***,\\${var},\\n123,111,\\n321,222,      # generating file
+        ${new_config}=    Create Dictionary    file=test321.csv     # set file attribute in a dictionary
+        [Return]    ${new_config}                                   # returns {'file': 'test321.csv'}
 
-.. code :: python
-
-    delimiter = '\\t'
-    quotechar = '"'
-    doublequote = True
-    skipinitialspace = False
-    lineterminator = '\\r\\n'
-    quoting = QUOTE_MINIMAL
-
-Usage in Robot Framework
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver    my_data_file.csv    dialect=excel_tab
-
-
-Example Unix Dialect
-^^^^^^^^^^^^^^^^^^^^
-
-Dialect Defaults:
-
-.. code :: python
-
-    delimiter = ','
-    quotechar = '"'
-    doublequote = True
-    skipinitialspace = False
-    lineterminator = '\\n'
-    quoting = QUOTE_ALL
-
-Usage in Robot Framework
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver    my_data_file.csv    dialect=unix_dialect
-
-
-Example User Defined
-^^^^^^^^^^^^^^^^^^^^
-
-User may define the format completely free.
-If an option is not set, the default values are used.
-To register a userdefined format user have to set the
-option ``dialect`` to ``UserDefined``
-
-
-Usage in Robot Framework
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library    DataDriver    my_data_file.csv
-    ...    dialect=UserDefined
-    ...    delimiter=.
-    ...    lineterminator=\\n
-
-
-
-Limitation
-~~~~~~~~~~
-
-
-MS Excel and typed cells
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Microsoft Excel xls or xlsx file have the possibility to type thair data
-cells. Numbers are typically of the type float. If these data are not
-explicitly defined as text in Excel, pandas will read it as the type
-that is has in excel. Because we have to work with strings in Robot
-Framework these data are converted to string. This leads to the
-situation that a European time value like "04.02.2019" (4th January
-2019) is handed over to Robot Framework in Iso time "2019-01-04
-00:00:00". This may cause unwanted behavior. To mitigate this risk you
-should define Excel based files explicitly as text within Excel.
-
-
-How to activate the Data Driver
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To activate the DataDriver for a test suite (one specific \*.robot file)
-just import it as a library. You may also specify some options if the
-default parameters do not fit your needs.
-
-**Example**:
-
-.. code :: robotframework
-
-    *** Settings ***
-    Library          DataDriver
-    Test Template    Invalid Logins
 
 
 Pabot and DataDriver
