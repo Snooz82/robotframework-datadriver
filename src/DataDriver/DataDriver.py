@@ -1222,6 +1222,8 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         test_list = self._get_filtered_test_list()
         if self._handle_pabot(test_list):
             suite.tests = []
+            suite.keywords.setup = None
+            suite.keywords.teardown = None
         else:
             suite.tests = test_list
         debug(f"[ DataDriver ] {len(test_list)} tests added.")

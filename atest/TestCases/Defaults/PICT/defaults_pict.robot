@@ -1,5 +1,7 @@
 *** Settings ***
 Library    DataDriver    .pict
+Suite Setup       Log To Console     Setup
+Suite Teardown     Log To Console     Teardown
 Test Template    Check Variables
 
 
