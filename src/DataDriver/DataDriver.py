@@ -866,6 +866,8 @@ Options
     ...    file_regex=(?i)(.*?)(\\.csv)
     ...    include=${None}
     ...    exclude=${None}
+    ...    config_keyword=${None}
+
 
 
 Encoding
@@ -972,6 +974,44 @@ Usage in Robot Framework
     ...    delimiter=.
     ...    lineterminator=\\n
 
+
+Config Keyword
+^^^^^^^^^^^^^^
+
+With ``config_keyword=`` it's possible to name a keyword that will be called from Data Driver before it starts the actual processing of the ``data file``.
+One possible usage is if the ``data file`` itself shall be created by another keyword dynamically during the execution of the Data Driver test suite.
+The ``config_keyword=`` can be used to call that keyword and return the updated arguments (e.g. ``file``) back to the Data Driver Library. 
+
+The ``config keyword``
+
+- May be defined globally or inside each testsuite individually
+- Gets all the arguments, that Data Driver gets from Library import, as a Robot Dictionary
+- Shall return the (updated) Data Driver arguments as a Robot Dictionary
+
+Usage in Robot Framework
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library           OperatingSystem
+    Library           DataDriver    dialect=excel    encoding=utf_8   config_keyword=Config
+    Test Template     The Keyword
+
+    *** Test Cases ***
+    Test    aaa
+
+    *** Keywords ***
+    The Keyword
+        [Arguments]    ${var}
+        Log To Console    ${var}
+
+    Config
+        [Arguments]    ${original_config}
+        Log To Console    ${original_config.dialect}                # just a log of the original
+        Create File    ${CURDIR}/test321.csv
+        ...    *** Test Cases ***,\${var},\\n123,111,\\n321,222,      # generating file
+        ${new_config}=    Create Dictionary    file=test321.csv     # set file attribute in a dictionary
+        [Return]    ${new_config}                                   # returns {'file': 'test321.csv'}
 
 
 Limitation
@@ -1116,6 +1156,7 @@ Options
     ...    file_regex=(?i)(.*?)(\\.csv)
     ...    include=None
     ...    exclude=None
+    ...    config_keyword=None
 
 
 Encoding
@@ -1221,6 +1262,46 @@ Usage in Robot Framework
     ...    dialect=UserDefined
     ...    delimiter=.
     ...    lineterminator=\\n
+
+
+Config Keyword
+^^^^^^^^^^^^^^
+
+With ``config_keyword=`` it's possible to name a keyword that will be called from Data Driver before it starts the actual processing of the ``data file``.
+One possible usage is if the ``data file`` itself shall be created by another keyword dynamically during the execution of the Data Driver test suite.
+The ``config_keyword=`` can be used to call that keyword and return the updated arguments (e.g. ``file``) back to the Data Driver Library. 
+
+The ``config keyword``
+
+- May be defined globally or inside each testsuite individually
+- Gets all the arguments, that Data Driver gets from Library import, as a Robot Dictionary
+- Shall return the (updated) Data Driver arguments as a Robot Dictionary
+
+Usage in Robot Framework
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library           OperatingSystem
+    Library           DataDriver    dialect=excel    encoding=utf_8   config_keyword=Config
+    Test Template     The Keyword
+
+    *** Test Cases ***
+    Test    aaa
+
+    *** Keywords ***
+    The Keyword
+        [Arguments]    ${var}
+        Log To Console    ${var}
+
+    Config
+        [Arguments]    ${original_config}
+        Log To Console    ${original_config.dialect}                # just a log of the original
+        Create File    ${CURDIR}/test321.csv
+        ...    *** Test Cases ***,\${var},\\n123,111,\\n321,222,      # generating file
+        ${new_config}=    Create Dictionary    file=test321.csv     # set file attribute in a dictionary
+        [Return]    ${new_config}                                   # returns {'file': 'test321.csv'}
+
 
         """
         self.ROBOT_LIBRARY_LISTENER = self
