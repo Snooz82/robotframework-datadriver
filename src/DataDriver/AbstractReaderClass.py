@@ -119,7 +119,12 @@ class AbstractReaderClass(ABC):
         items = variable_match.items
         if variable_match.is_list_variable:
             variable_value = BuiltIn().create_list(
-                *([BuiltIn().replace_variables(var) for var in (str(variable_value).split(self.list_separator))])
+                *(
+                    [
+                        BuiltIn().replace_variables(var)
+                        for var in (str(variable_value).split(self.list_separator))
+                    ]
+                )
             )
         elif variable_match.is_dict_variable:
             variable_value = BuiltIn().create_dictionary(

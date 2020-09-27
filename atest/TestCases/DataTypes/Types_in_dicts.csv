@@ -1,0 +1,4 @@
+*** Test Cases ***;&{dict.dict};@{dict.list};e{exp.dict};e{exp.list}
+One;key=value;1,2,3,4;{'key':'value'};["1","2","3","4"]
+Two;key,${1.9};${1},${2},${3},${4};{'key':1.9};[1,2,3,4]
+Three;key=value,key2=value2;${TRUE},${EMPTY},${1.9},${None};{'key':'value', 'key2':'value2'};[True,"",1.9,None]
