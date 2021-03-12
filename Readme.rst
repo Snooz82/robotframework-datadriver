@@ -963,7 +963,7 @@ This can be set by ``optimize_pabot`` in Library import.
 .. code :: robotframework
 
     *** Settings ***
-    Library          DataDriver    optimize_pabot=binary
+    Library          DataDriver    optimize_pabot=Binary
 
 Binary creates with 40 test cases and 8 threads something like that:
 

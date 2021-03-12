@@ -18,11 +18,10 @@ import os
 import os.path
 import re
 
-from copy import deepcopy
-
 from robot.api.logger import console  # type: ignore
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 from robot.model.testsuite import TestSuite  # type: ignore
+from robot.running.model import TestCase
 from robot.model.tags import Tags  # type: ignore
 from robot.utils.dotdict import DotDict  # type: ignore
 from robot.utils.importer import Importer  # type: ignore
@@ -34,6 +33,7 @@ from .ReaderConfig import TestCaseData
 from .argument_utils import robot_options  # type: ignore
 from .utils import (  # type: ignore
     PabotOpt,
+    DummyStatusReporter,
     is_same_keyword,
     get_filter_dynamic_test_names,
     get_variable_value,
@@ -45,7 +45,7 @@ from .utils import (  # type: ignore
     binary_partition_test_list,
 )
 
-__version__ = "1.0rc3"
+__version__ = "1.1a1"
 
 
 class DataDriver:
@@ -953,7 +953,7 @@ Configure DataDriver by Pre-Run Keyword
 
 With ``config_keyword=`` it's possible to name a keyword that will be called from Data Driver before it starts the actual processing of the ``data file``.
 One possible usage is if the ``data file`` itself shall be created by another keyword dynamically during the execution of the Data Driver test suite.
-The ``config_keyword=`` can be used to call that keyword and return the updated arguments (e.g. ``file``) back to the Data Driver Library. 
+The ``config_keyword=`` can be used to call that keyword and return the updated arguments (e.g. ``file``) back to the Data Driver Library.
 
 The ``config keyword``
 
@@ -1014,7 +1014,7 @@ This can be set by ``optimize_pabot`` in Library import.
 .. code :: robotframework
 
     *** Settings ***
-    Library          DataDriver    optimize_pabot=binary
+    Library          DataDriver    optimize_pabot=Binary
 
 Binary creates with 40 test cases and 8 threads something like that:
 
@@ -1045,27 +1045,27 @@ Binary creates with 40 test cases and 8 threads something like that:
     ROBOT_LIBRARY_SCOPE = "TEST SUITE"
 
     def __init__(
-        self,
-        file: Optional[str] = None,
-        encoding: str = "cp1252",
-        dialect: str = "Excel-EU",
-        delimiter: str = ";",
-        quotechar: str = '"',
-        escapechar: str = "\\",
-        doublequote: bool = True,
-        skipinitialspace: bool = False,
-        lineterminator: str = "\r\n",
-        *,
-        sheet_name=0,
-        reader_class: Optional[str] = None,
-        file_search_strategy: str = "PATH",
-        file_regex: str = r"(?i)(.*?)(\.csv)",
-        include: Optional[str] = None,
-        exclude: Optional[str] = None,
-        listseperator: str = ",",
-        config_keyword: Optional[str] = None,
-        optimize_pabot: PabotOpt = PabotOpt.Equal,
-        **kwargs,
+            self,
+            file: Optional[str] = None,
+            encoding: str = "cp1252",
+            dialect: str = "Excel-EU",
+            delimiter: str = ";",
+            quotechar: str = '"',
+            escapechar: str = "\\",
+            doublequote: bool = True,
+            skipinitialspace: bool = False,
+            lineterminator: str = "\r\n",
+            *,
+            sheet_name=0,
+            reader_class: Optional[str] = None,
+            file_search_strategy: str = "PATH",
+            file_regex: str = r"(?i)(.*?)(\.csv)",
+            include: Optional[str] = None,
+            exclude: Optional[str] = None,
+            listseperator: str = ",",
+            config_keyword: Optional[str] = None,
+            optimize_pabot: PabotOpt = PabotOpt.Equal,
+            **kwargs,
     ):
         """**Example:**
 
@@ -1213,12 +1213,13 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         :param result: NOT USED
         """
         self.suite_name = suite.longname
+        self.template_test = suite.tests[0]
         self._update_config()
         self.suite_source = suite.source
         self._create_data_table()
         debug("[ DataDriver ] data Table created")
-        self.template_test = suite.tests[0]
         self.template_keyword = self._get_template_keyword(suite)
+        self._clean_template_test()
         test_list = self._get_filtered_test_list()
         if self._handle_pabot(test_list):
             suite.tests = []
@@ -1228,12 +1229,37 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             suite.tests = test_list
         debug(f"[ DataDriver ] {len(test_list)} tests added.")
 
+    def _clean_template_test(self):
+        if self._is_new_model():
+            self.template_test.body = None
+        else:
+            setup = self.template_test.keywords.setup
+            teardown = self.template_test.keywords.teardown
+            self.template_test.keywords.clear()
+            self.template_test.keywords.setup = setup
+            self.template_test.keywords.teardown = teardown
+
     def _update_config(self):
         if self.config_dict.config_keyword:
-            config_keyword = self.config_dict.config_keyword
             config = self.config_dict
-            config_update = BuiltIn().run_keyword(config_keyword, config)
+            config_update = self._run_silent_keyword(self.config_dict.config_keyword, config)
             self.reader_config = ReaderConfig(**{**config, **config_update})
+
+    def _run_silent_keyword(self, name, args):
+        if self._is_new_model():
+            from robot.running.statusreporter import StatusReporter
+            org__init__ = StatusReporter.__init__
+            org__enter__ = StatusReporter.__enter__
+            org__exit__ = StatusReporter.__exit__
+            StatusReporter.__init__ = DummyStatusReporter.__init__
+            StatusReporter.__enter__ = DummyStatusReporter.__enter__
+            StatusReporter.__exit__ = DummyStatusReporter.__exit__
+        result = BuiltIn().run_keyword(name, args)
+        if self._is_new_model():
+            StatusReporter.__init__ = org__init__
+            StatusReporter.__enter__ = org__enter__
+            StatusReporter.__exit__ = org__exit__
+        return result
 
     def _get_filtered_test_list(self):
         temp_test_list = list()
@@ -1242,9 +1268,9 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             if self._included_by_tags() and self._not_excluded_by_tags():
                 self._create_test_from_template()
                 if (
-                    not dynamic_test_list
-                    or f"{self.test.parent.name}.{self.test.name}" in dynamic_test_list
-                    or self.test.longname in dynamic_test_list
+                        not dynamic_test_list
+                        or f"{self.test.parent.name}.{self.test.name}" in dynamic_test_list
+                        or self.test.longname in dynamic_test_list
                 ):
                     temp_test_list.append(self.test)
         return temp_test_list
@@ -1347,7 +1373,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             if self.reader_config.reader_class and not self.reader_config.file:
                 return
             if (not self.reader_config.file) or (
-                "" == self.reader_config.file[: self.reader_config.file.rfind(".")]
+                    "" == self.reader_config.file[: self.reader_config.file.rfind(".")]
             ):
                 self._set_data_file_to_suite_source()
             else:
@@ -1366,7 +1392,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             suite_path_as_data_file = f"{self.suite_source[:self.suite_source.rfind('.')]}.csv"
         else:
             suite_path = self.suite_source[: self.suite_source.rfind(".")]
-            file_extension = self.reader_config.file[self.reader_config.file.rfind(".") :]
+            file_extension = self.reader_config.file[self.reader_config.file.rfind("."):]
             suite_path_as_data_file = f"{suite_path}{file_extension}"
         if os.path.isfile(suite_path_as_data_file):
             self.reader_config.file = suite_path_as_data_file
@@ -1397,10 +1423,10 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _handle_pabot(self, test_list):
         if (
-            get_variable_value("${DYNAMICTEST}")
-            or get_variable_value("${DYNAMICTESTS}")
-            or not self.robot_options["test"]
-            or not get_variable_value("${PABOTQUEUEINDEX}")
+                get_variable_value("${DYNAMICTEST}")
+                or get_variable_value("${DYNAMICTESTS}")
+                or not self.robot_options["test"]
+                or not get_variable_value("${PABOTQUEUEINDEX}")
         ):
             return
         pabot_process_count = int(get_variable_value("${PABOTNUMBEROFPROCESSES}"))
@@ -1469,7 +1495,11 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         raise AttributeError('No "Test Template" keyword found for first test case.')
 
     def _create_test_from_template(self):
-        self.test = deepcopy(self.template_test)
+        self.test = TestCase(name=self.template_test.name,
+                             doc=self.template_test.doc,
+                             tags=self.template_test.tags,
+                             template=self.template_test.template,
+                             lineno=self.template_test.lineno)
         self._replace_test_case_name()
         self._replace_test_case_keywords()
         self._add_test_case_tags()
@@ -1485,22 +1515,16 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             self.test.name = self.test_case_data.test_case_name
 
     def _replace_test_case_keywords(self):
-        self.test.keywords.clear()
-        if self.template_test.keywords.setup is not None:
-            self.test.keywords.create(
-                name=self.template_test.keywords.setup.name,
-                type="setup",
-                args=self.template_test.keywords.setup.args,
-            )
-        self.test.keywords.create(
-            name=self.template_keyword.name, args=self._get_template_arguments()
-        )
-        if self.template_test.keywords.teardown is not None:
-            self.test.keywords.create(
-                name=self.template_test.keywords.teardown.name,
-                type="teardown",
-                args=self.template_test.keywords.teardown.args,
-            )
+        if self._is_new_model():
+            self.test.setup = self.template_test.setup
+            self.test.teardown = self.template_test.teardown
+            create_body = self.test.body.create_keyword
+        else:
+            self.test.keywords.setup = self.template_test.keywords.setup
+            self.test.keywords.teardown = self.template_test.keywords.teardown
+            create_body = self.test.keywords.create
+        create_body(name=self.template_keyword.name, args=self._get_template_arguments())
+
 
     def _get_template_arguments(self):
         return_arguments = []
@@ -1523,3 +1547,6 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _replace_test_case_doc(self):
         self.test.doc = self.test_case_data.documentation
+
+    def _is_new_model(self):
+        return hasattr(self.template_test, "body")

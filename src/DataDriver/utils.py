@@ -14,6 +14,18 @@ class PabotOpt(Enum):
     Atomic = auto()
 
 
+class DummyStatusReporter:
+
+    def __init__(self, data, result, context, run=True):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 def debug(msg: Any, newline: bool = True, stream: str = "stdout"):
     if get_variable_value("${LOG LEVEL}") in ["DEBUG", "TRACE"]:
         logger.console(msg, newline, stream)

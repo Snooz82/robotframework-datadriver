@@ -2,6 +2,8 @@
 Library    Collections
 Library    DataDriver    config_keyword=Config Reader
 Test Template    check vars
+Test Setup    Log  Hi i am a Setup
+Test Teardown    Log    I am a Teardown
 
 
 *** Test Cases ***
