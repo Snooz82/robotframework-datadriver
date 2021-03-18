@@ -902,7 +902,7 @@ Configure DataDriver by Pre-Run Keyword
 
 With ``config_keyword=`` it's possible to name a keyword that will be called from Data Driver before it starts the actual processing of the ``data file``.
 One possible usage is if the ``data file`` itself shall be created by another keyword dynamically during the execution of the Data Driver test suite.
-The ``config_keyword=`` can be used to call that keyword and return the updated arguments (e.g. ``file``) back to the Data Driver Library. 
+The ``config_keyword=`` can be used to call that keyword and return the updated arguments (e.g. ``file``) back to the Data Driver Library.
 
 The ``config keyword``
 
