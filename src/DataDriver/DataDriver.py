@@ -17,6 +17,7 @@ import inspect
 import os
 import os.path
 import re
+from glob import glob
 
 from robot.api.logger import console  # type: ignore
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
@@ -551,6 +552,29 @@ Except the file option all other options of the library will be ignored.
 
     *** Settings ***
     Library    DataDriver    my_model_file.pict
+
+
+Glob File Pattern
+~~~~~~~~~~~~~~~~~
+
+This module implements a robotframework-datadriver DataReader to turn a glob pattern of files into a csv interface
+
+Example .robot file template:
+
+*** Settings ***
+Library         DataDriver  file=/path/to/my/files/**.json  reader_class=DataDriver.GlobDataReader  file_search_strategy=None  arg_name=\${file_name}
+Test Template   My Test Template
+
+*** Test Cases ***
+
+DataDriver Test  NO_FILE
+
+*** Keywords ***
+
+My Test Template
+    [Arguments]  ${file_name}
+    My Test Keyword  ${file_name}
+
 
 
 File Encoding and CSV Dialect
@@ -1372,6 +1396,8 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         if self.reader_config.file_search_strategy == "PATH":
             if self.reader_config.reader_class and not self.reader_config.file:
                 return
+            if self._check_valid_glob():
+                return
             if (not self.reader_config.file) or (
                     "" == self.reader_config.file[: self.reader_config.file.rfind(".")]
             ):
@@ -1413,6 +1439,15 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
                 raise FileNotFoundError(
                     f"File attribute was not a full path. Tried to find {file_in_suite_dir} but file does not exist."
                 )
+
+    def _check_valid_glob(self):
+        if not self.reader_config.reader_class == "glob_reader":
+            return
+        if not glob(self.reader_config.file):
+            raise FileNotFoundError(
+                f"Glob pattern did not find a file or folder. Glob pattern was: {self.reader_config.file}"
+            )
+        return True
 
     def _search_file_from_regex(self):
         if os.path.isdir(self.reader_config.file):
