@@ -11,9 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+try:
+    import pandas as pd
+    from math import nan
+except ImportError:
+    raise ImportError(
+        """Requirements (pandas, openpyxl) for XLSX support are not installed.
+    Use 'pip install -U robotframework-datadriver[XLS]' to install XLSX support."""
+    )
 
-from .xls_reader import xls_reader
+from .AbstractReaderClass import AbstractReaderClass
 
 
-class xlsx_reader(xls_reader):
-    pass
+class xlsx_reader(AbstractReaderClass):
+    def get_data_from_source(self):
+        data_frame = pd.read_excel(self.file, sheet_name=self.sheet_name, dtype=str, engine="openpyxl").replace(
+            nan, "", regex=True
+        )
+        self._analyse_header(list(data_frame))
+        for row in data_frame.values.tolist():
+            self._read_data_from_table(row)
+        return self.data_table
