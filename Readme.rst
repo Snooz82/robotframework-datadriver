@@ -502,6 +502,56 @@ Except the file option all other options of the library will be ignored.
     Library    DataDriver    my_model_file.pict
 
 
+Glob File Pattern
+~~~~~~~~~~~~~~~~~
+
+This module implements a reader class that creates a test case for each file or folder that matches the given glob pattern.
+
+With an optional argument "arg_name" you can modify the argument that will be set. See folder example.
+
+Example with json files:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library           DataDriver    file=${CURDIR}/DataFiles/*_File.json    reader_class=glob_reader
+    Library           OperatingSystem
+    Test Template     Test all Files
+
+
+    *** Test Cases ***
+    Glob_Reader_Test    Wrong_File.NoJson
+
+
+    *** Keywords ***
+    Test all Files
+        [Arguments]    ${file_name}
+        ${file_content}=    Get File    ${file_name}
+        ${content}=    Evaluate    json.loads($file_content)["test_case"]
+        Should Be Equal    ${TEST_NAME}    ${content}
+
+
+Example with folders:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library           DataDriver    file=${CURDIR}/FoldersToFind/*/    reader_class=glob_reader    arg_name=\\${folder_name}
+    Library           OperatingSystem
+    Test Template     Test all Files
+
+
+    *** Test Cases ***
+    Glob_Reader_Test    Wrong_File.NoJson
+
+
+    *** Keywords ***
+    Test all Files
+        [Arguments]    ${folder_name}
+        ${content}=    Get File    ${folder_name}/verify.txt
+        Should Be Equal    ${TEST_NAME}    ${content}
+
+
 File Encoding and CSV Dialect
 -----------------------------
 

@@ -46,7 +46,7 @@ from .utils import (  # type: ignore
     binary_partition_test_list,
 )
 
-__version__ = "1.1a1"
+__version__ = "1.1b1"
 
 
 class DataDriver:
@@ -557,24 +557,51 @@ Except the file option all other options of the library will be ignored.
 Glob File Pattern
 ~~~~~~~~~~~~~~~~~
 
-This module implements a robotframework-datadriver DataReader to turn a glob pattern of files into a csv interface
+This module implements a reader class that creates a test case for each file or folder that matches the given glob pattern.
 
-Example .robot file template:
+With an optional argument "arg_name" you can modify the argument that will be set. See folder example.
 
-*** Settings ***
-Library         DataDriver  file=/path/to/my/files/**.json  reader_class=DataDriver.GlobDataReader  file_search_strategy=None  arg_name=\${file_name}
-Test Template   My Test Template
+Example with json files:
 
-*** Test Cases ***
+.. code :: robotframework
 
-DataDriver Test  NO_FILE
+    *** Settings ***
+    Library           DataDriver    file=${CURDIR}/DataFiles/*_File.json    reader_class=glob_reader
+    Library           OperatingSystem
+    Test Template     Test all Files
 
-*** Keywords ***
 
-My Test Template
-    [Arguments]  ${file_name}
-    My Test Keyword  ${file_name}
+    *** Test Cases ***
+    Glob_Reader_Test    Wrong_File.NoJson
 
+
+    *** Keywords ***
+    Test all Files
+        [Arguments]    ${file_name}
+        ${file_content}=    Get File    ${file_name}
+        ${content}=    Evaluate    json.loads($file_content)["test_case"]
+        Should Be Equal    ${TEST_NAME}    ${content}
+
+
+Example with folders:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library           DataDriver    file=${CURDIR}/FoldersToFind/*/    reader_class=glob_reader    arg_name=\${folder_name}
+    Library           OperatingSystem
+    Test Template     Test all Files
+
+
+    *** Test Cases ***
+    Glob_Reader_Test    Wrong_File.NoJson
+
+
+    *** Keywords ***
+    Test all Files
+        [Arguments]    ${folder_name}
+        ${content}=    Get File    ${folder_name}/verify.txt
+        Should Be Equal    ${TEST_NAME}    ${content}
 
 
 File Encoding and CSV Dialect
