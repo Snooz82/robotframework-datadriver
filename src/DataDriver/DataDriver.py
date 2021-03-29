@@ -46,7 +46,7 @@ from .utils import (  # type: ignore
     binary_partition_test_list,
 )
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 
 class DataDriver:
@@ -1562,6 +1562,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
                              tags=self.template_test.tags,
                              template=self.template_test.template,
                              lineno=self.template_test.lineno)
+        self.test.parent = self.template_test.parent
         self._replace_test_case_name()
         self._replace_test_case_keywords()
         self._add_test_case_tags()
