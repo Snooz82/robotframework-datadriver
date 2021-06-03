@@ -15,7 +15,6 @@ class PabotOpt(Enum):
 
 
 class DummyStatusReporter:
-
     def __init__(self, data, result, context, run=True):
         pass
 

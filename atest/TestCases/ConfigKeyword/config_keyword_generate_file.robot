@@ -1,6 +1,7 @@
 *** Settings ***
 Library           OperatingSystem
 Library           DataDriver    dialect=excel    encoding=utf_8   config_keyword=Config
+Suite Setup       Suite Setup Keyword
 Test Template     The Test Keyword
 Suite Teardown    Remove File    ${CURDIR}/test321.csv
 
@@ -8,6 +9,9 @@ Suite Teardown    Remove File    ${CURDIR}/test321.csv
 Test    aaa
 
 *** Keywords ***
+Suite Setup Keyword
+    Log   This is the single Suite Setup
+
 The Test Keyword
     [Arguments]    ${var}
     Log To Console    ${var}
