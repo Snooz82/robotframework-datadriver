@@ -46,7 +46,7 @@ from .utils import (  # type: ignore
     binary_partition_test_list,
 )
 
-__version__ = "1.1.3"
+__version__ = "1.2.0"
 
 
 class DataDriver:
@@ -1584,12 +1584,12 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         if self._is_new_model():
             self.test.setup = self.template_test.setup
             self.test.teardown = self.template_test.teardown
-            create_body = self.test.body.create_keyword
+            self.test.body.create_keyword(name=self.template_keyword.name, args=self._get_template_arguments())
         else:
             self.test.keywords.setup = self.template_test.keywords.setup
+            self.test.keywords.create(name=self.template_keyword.name, args=self._get_template_arguments())
             self.test.keywords.teardown = self.template_test.keywords.teardown
-            create_body = self.test.keywords.create
-        create_body(name=self.template_keyword.name, args=self._get_template_arguments())
+
 
     def _get_template_arguments(self):
         return_arguments = []
