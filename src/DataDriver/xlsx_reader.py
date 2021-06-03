@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 try:
-    import pandas as pd
-    from math import nan
+    import pandas as pd  # type: ignore
+    from math import nan  # type: ignore
 except ImportError:
     raise ImportError(
         """Requirements (pandas, openpyxl) for XLSX support are not installed.

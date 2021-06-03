@@ -22,15 +22,15 @@ from glob import glob
 from robot.api.logger import console  # type: ignore
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 from robot.model.testsuite import TestSuite  # type: ignore
-from robot.running.model import TestCase
+from robot.running.model import TestCase  # type: ignore
 from robot.model.tags import Tags  # type: ignore
 from robot.utils.dotdict import DotDict  # type: ignore
 from robot.utils.importer import Importer  # type: ignore
-from typing import Optional
+from typing import Optional  # type: ignore
 
 from .AbstractReaderClass import AbstractReaderClass  # type: ignore
 from .ReaderConfig import ReaderConfig  # type: ignore
-from .ReaderConfig import TestCaseData
+from .ReaderConfig import TestCaseData  # type: ignore
 from .argument_utils import robot_options  # type: ignore
 from .utils import (  # type: ignore
     PabotOpt,
@@ -1298,7 +1298,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _run_silent_keyword(self, name, args):
         if self._is_new_model():
-            from robot.running.statusreporter import StatusReporter
+            from robot.running.statusreporter import StatusReporter  # type: ignore
             org__init__ = StatusReporter.__init__
             org__enter__ = StatusReporter.__enter__
             org__exit__ = StatusReporter.__exit__
@@ -1319,7 +1319,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             if self._included_by_tags() and self._not_excluded_by_tags():
                 self._create_test_from_template()
                 if (
-                        not dynamic_test_list
+                        dynamic_test_list is None
                         or f"{self.test.parent.name}.{self.test.name}" in dynamic_test_list
                         or self.test.longname in dynamic_test_list
                 ):

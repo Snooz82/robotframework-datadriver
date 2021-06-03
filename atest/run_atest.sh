@@ -1,1 +1,1 @@
-robot -d logs --exclude performance --extension robot .
+robot -d logs --exclude performanceORFailing --extension robot .

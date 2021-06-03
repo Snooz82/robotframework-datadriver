@@ -1,0 +1,11 @@
+*** Test Cases ***;${value};${expected}
+Pass1;Pass;Pass
+Pass2;Pass;Pass
+Pass3;Pass;Pass
+Pass4;Pass;Pass
+Fail5;Pass;Pass
+Pass6;Pass;Pass
+Fail7;Pass;Pass
+Pass8;Pass;Pass
+Pass9;Pass;Pass
+Pass10;Pass;Pass

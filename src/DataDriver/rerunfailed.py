@@ -2,9 +2,10 @@
 """
 
 import os
+import re
 
-from robot.api import ExecutionResult, ResultVisitor, SuiteVisitor
-from robot.running.model import Variable
+from robot.api import ExecutionResult, ResultVisitor, SuiteVisitor  # type: ignore
+from robot.running.model import Variable  # type: ignore
 
 
 class rerunfailed(SuiteVisitor):
@@ -18,6 +19,9 @@ class rerunfailed(SuiteVisitor):
 
     def start_suite(self, suite):
         """Remove tests that match the given pattern."""
+        if self.has_no_tests(suite.name):
+            suite.tests.clear()
+            return None
         if self._suite_is_data_driven(suite):
             dynamic_tests = Variable("@{DYNAMICTESTS}", self._failed_tests, suite.source)
             suite.resource.variables.append(dynamic_tests)
@@ -25,6 +29,10 @@ class rerunfailed(SuiteVisitor):
             suite.tests = [
                 t for t in suite.tests if f"{t.parent.name}.{t.name}" in self._failed_tests
             ]
+
+    def has_no_tests(self, name):
+        r = re.compile(f'^{re.escape(f"{name}.")}.*$')
+        return not bool(list(filter(r.match, self._failed_tests)))
 
     def _suite_is_data_driven(self, suite):
         for resource in suite.resource.imports:

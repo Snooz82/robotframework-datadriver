@@ -22,7 +22,8 @@ from .AbstractReaderClass import AbstractReaderClass, ReaderConfig
 class pict_reader(AbstractReaderClass):
     def __init__(self, reader_config: ReaderConfig):
         super().__init__(reader_config)
-        self.pictout_file = f"{os.path.splitext(self.file)[0]}{time.time()}.pictout"
+        file = self.file or ""
+        self.pictout_file = f"{os.path.splitext(file)[0]}{time.time()}.pictout"
 
     def get_data_from_source(self):
         self._register_dialect()
