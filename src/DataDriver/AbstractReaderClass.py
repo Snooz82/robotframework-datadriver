@@ -97,6 +97,7 @@ class AbstractReaderClass(ABC):
         for arguments_column_id in self.arguments_column_ids:
             variable_string = self.header[arguments_column_id]
             variable_value = row[arguments_column_id]
+            variable_value = BuiltIn().replace_variables(variable_value)
             if self.LIT_EVAL_PATTERN.fullmatch(variable_string):
                 variable_string = f"${variable_string[1:]}"
                 variable_value = literal_eval(variable_value)

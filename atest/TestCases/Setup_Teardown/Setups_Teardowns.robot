@@ -5,6 +5,7 @@ Test Setup        Start
 Test Template     DataDriver demo
 Test Teardown     End
 Suite Teardown    Suite End
+Force Tags        NoPabot
 
 *** Test Cases ***
 Datadriver execution: ${number}

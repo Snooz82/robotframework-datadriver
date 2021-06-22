@@ -1590,7 +1590,6 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             self.test.keywords.create(name=self.template_keyword.name, args=self._get_template_arguments())
             self.test.keywords.teardown = self.template_test.keywords.teardown
 
-
     def _get_template_arguments(self):
         return_arguments = []
         for arg in self.template_keyword.args:
