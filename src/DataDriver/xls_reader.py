@@ -29,6 +29,10 @@ class xls_reader(AbstractReaderClass):
             nan, "", regex=True
         )
         self._analyse_header(list(data_frame))
-        for row in data_frame.values.tolist():
-            self._read_data_from_table(row)
+        for row_index, row in enumerate(data_frame.values.tolist()):
+            try:
+                self._read_data_from_table(row)
+            except Exception as e:
+                e.row = row_index + 1
+                raise e
         return self.data_table

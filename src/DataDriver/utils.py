@@ -30,6 +30,10 @@ def debug(msg: Any, newline: bool = True, stream: str = "stdout"):
         logger.console(msg, newline, stream)
 
 
+def console(msg: Any, newline: bool = True, stream: str = "stdout"):
+    logger.console(msg, newline, stream)
+
+
 def warn(msg: Any, html: bool = False):
     logger.warn(msg, html)
 

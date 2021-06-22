@@ -17,6 +17,7 @@ import inspect
 import os
 import os.path
 import re
+import traceback
 from glob import glob
 
 from robot.api.logger import console  # type: ignore
@@ -47,6 +48,7 @@ from .utils import (  # type: ignore
 )
 
 __version__ = "1.2.0"
+__version__ = "1.3.0"
 
 
 class DataDriver:
@@ -1263,22 +1265,31 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         :param suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
         :param result: NOT USED
         """
-        self.suite_name = suite.longname
-        self.template_test = suite.tests[0]
-        self._update_config()
-        self.suite_source = suite.source
-        self._create_data_table()
-        debug("[ DataDriver ] data Table created")
-        self.template_keyword = self._get_template_keyword(suite)
-        self._clean_template_test()
-        test_list = self._get_filtered_test_list()
-        if self._handle_pabot(test_list):
-            suite.tests = []
-            suite.keywords.setup = None
-            suite.keywords.teardown = None
-        else:
-            suite.tests = test_list
-        debug(f"[ DataDriver ] {len(test_list)} tests added.")
+        try:
+            self.suite_name = suite.longname
+            self.template_test = suite.tests[0]
+            self._update_config()
+            self.suite_source = suite.source
+            self._create_data_table()
+            debug("[ DataDriver ] data Table created")
+            self.template_keyword = self._get_template_keyword(suite)
+            self._clean_template_test()
+            test_list = self._get_filtered_test_list()
+            if self._handle_pabot(test_list):
+                suite.tests = []
+                suite.keywords.setup = None
+                suite.keywords.teardown = None
+            else:
+                suite.tests = test_list
+            debug(f"[ DataDriver ] {len(test_list)} tests added.")
+        except Exception as e:
+            error(f"[ DataDriver ] Error in robot file:\n"
+                  f'  File "{suite.source}", line 0')
+            if self.reader_config.file:
+                error(f'In source file:\n'
+                      f'  File "{self.reader_config.file}", line {e.row if hasattr(e, "row") else "0"}')
+            debug(traceback.format_exc())
+            raise e
 
     def _clean_template_test(self):
         if self._is_new_model():
@@ -1584,10 +1595,14 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         if self._is_new_model():
             self.test.setup = self.template_test.setup
             self.test.teardown = self.template_test.teardown
-            self.test.body.create_keyword(name=self.template_keyword.name, args=self._get_template_arguments())
+            self.test.body.create_keyword(
+                name=self.template_keyword.name, args=self._get_template_arguments()
+            )
         else:
             self.test.keywords.setup = self.template_test.keywords.setup
-            self.test.keywords.create(name=self.template_keyword.name, args=self._get_template_arguments())
+            self.test.keywords.create(
+                name=self.template_keyword.name, args=self._get_template_arguments()
+            )
             self.test.keywords.teardown = self.template_test.keywords.teardown
 
     def _get_template_arguments(self):

@@ -51,7 +51,11 @@ class csv_reader(AbstractReaderClass):
         with open(self.file, "r", encoding=self.csv_encoding) as csvfile:
             reader = csv.reader(csvfile, self.csv_dialect)
             for row_index, row in enumerate(reader):
-                if row_index == 0:
-                    self._analyse_header(row)
-                else:
-                    self._read_data_from_table(row)
+                try:
+                    if row_index == 0:
+                        self._analyse_header(row)
+                    else:
+                        self._read_data_from_table(row)
+                except Exception as e:
+                    e.row = row_index + 1
+                    raise e

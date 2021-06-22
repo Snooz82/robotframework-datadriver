@@ -12,18 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from abc import ABC
+from re import compile
+from typing import List
 
 from .ReaderConfig import ReaderConfig
 from .ReaderConfig import TestCaseData
 from .search import search_variable
 
-from abc import ABC
-from ast import literal_eval
-from re import compile, match, fullmatch
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 from robot.utils import DotDict  # type: ignore
 
-from typing import List
+
+
+built_in = BuiltIn()
 
 
 class AbstractReaderClass(ABC):
@@ -97,10 +99,10 @@ class AbstractReaderClass(ABC):
         for arguments_column_id in self.arguments_column_ids:
             variable_string = self.header[arguments_column_id]
             variable_value = row[arguments_column_id]
-            variable_value = BuiltIn().replace_variables(variable_value)
             if self.LIT_EVAL_PATTERN.fullmatch(variable_string):
                 variable_string = f"${variable_string[1:]}"
-                variable_value = literal_eval(variable_value)
+                variable_value = built_in.replace_variables(variable_value)
+                variable_value = built_in.evaluate(variable_value)
             variable_match = search_variable(variable_string)
             if variable_match.is_variable:
                 arguments.update(
@@ -119,16 +121,12 @@ class AbstractReaderClass(ABC):
         base = variable_match.base
         items = variable_match.items
         if variable_match.is_list_variable:
-            variable_value = BuiltIn().create_list(
-                *(
-                    [
-                        BuiltIn().replace_variables(var)
-                        for var in (str(variable_value).split(self.list_separator))
-                    ]
-                )
-            )
+            variable_value = [
+                built_in.replace_variables(var)
+                for var in (str(variable_value).split(self.list_separator))
+            ]
         elif variable_match.is_dict_variable:
-            variable_value = BuiltIn().create_dictionary(
+            variable_value = built_in.create_dictionary(
                 *(str(variable_value).split(self.list_separator))
             )
         if "." in base:  # is dot notated advanced variable dictionary ${dict.key.subkey}
@@ -141,7 +139,7 @@ class AbstractReaderClass(ABC):
 
     def _update_argument_dict(self, arguments, base, items, value):
         if self._as_var(base) not in arguments:
-            arguments[self._as_var(base)] = BuiltIn().create_dictionary()
+            arguments[self._as_var(base)] = built_in.create_dictionary()
         argument = arguments[self._as_var(base)]
 
         if isinstance(argument, DotDict):
@@ -149,9 +147,9 @@ class AbstractReaderClass(ABC):
             for key in items:
                 if key != items[-1]:
                     if key not in selected_key or not isinstance(selected_key[key], DotDict):
-                        selected_key[key] = BuiltIn().create_dictionary()
+                        selected_key[key] = built_in.create_dictionary()
                     selected_key = selected_key[key]
-            selected_key[items[-1]] = value
+            selected_key[items[-1]] = built_in.replace_variables(value)
             return argument
         else:
             raise TypeError(f"{self._as_var(base)} is defined with a wrong type. Not defaultdict.")
