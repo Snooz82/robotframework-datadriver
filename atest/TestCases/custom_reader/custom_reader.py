@@ -20,13 +20,11 @@ from DataDriver.ReaderConfig import TestCaseData  # return list of TestCaseData 
 
 
 class custom_reader(AbstractReaderClass):
-    def get_data_from_source(
-        self,
-    ):  # This method will be called from DataDriver to get the TestCaseData list.
+
+    # This method will be called from DataDriver to get the TestCaseData list.
+    def get_data_from_source(self):
         test_data = []
-        for i in range(
-            int(self.kwargs["min"]), int(self.kwargs["max"])
-        ):  # Dummy code to just generate some data
+        for i in range(int(self.min), int(self.max)):  # Dummy code to just generate some data
             args = {
                 "${var_1}": str(i),
                 "${var_2}": str(i),

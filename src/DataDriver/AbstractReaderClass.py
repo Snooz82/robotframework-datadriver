@@ -24,7 +24,6 @@ from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 from robot.utils import DotDict  # type: ignore
 
 
-
 built_in = BuiltIn()
 
 
@@ -44,6 +43,8 @@ class AbstractReaderClass(ABC):
         self.sheet_name = reader_config.sheet_name
         self.list_separator = reader_config.list_separator
         self.kwargs = reader_config.kwargs
+        for key, value in reader_config.kwargs.items():
+            setattr(self, key, value)
 
         self.test_case_column_id = None
         self.arguments_column_ids: List = list()

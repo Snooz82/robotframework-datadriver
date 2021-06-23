@@ -14,6 +14,8 @@
 
 from typing import Optional, Any, Dict, List
 
+from robot.utils import DotDict
+
 from .utils import PabotOpt
 
 
@@ -65,14 +67,15 @@ class ReaderConfig:
         self.kwargs = kwargs
 
 
-class TestCaseData:
+class TestCaseData(DotDict):
     def __init__(
         self,
         test_case_name: str = "",
-        arguments: Dict = None,
-        tags: List = None,
+        arguments: Optional[Dict] = None,
+        tags: Optional[List] = None,
         documentation: str = "",
     ):
+        super().__init__()
         self.test_case_name = test_case_name
         self.arguments = arguments if arguments else {}
         self.tags = tags

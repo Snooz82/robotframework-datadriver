@@ -1,5 +1,5 @@
 *** Settings ***
-Library    DataDriver    encoding=utf-8
+Library    DataDriver    encoding=utf8
 Test Template   Test
 
 *** Test Cases ***

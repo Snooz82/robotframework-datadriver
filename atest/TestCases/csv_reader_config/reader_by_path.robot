@@ -1,7 +1,7 @@
 *** Settings ***
 Library    DataDriver    reader_class=../src/DataDriver/csv_reader.py  
 ...    file=tab-csv-file-name.tsv
-...    encoding=utf-8    
+...    encoding=UTF8
 ...    dialect=UserDefined    
 ...    delimiter=\t    
 ...    quotechar='    
