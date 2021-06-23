@@ -122,10 +122,13 @@ class AbstractReaderClass(ABC):
         base = variable_match.base
         items = variable_match.items
         if variable_match.is_list_variable:
-            variable_value = [
-                built_in.replace_variables(var)
-                for var in (str(variable_value).split(self.list_separator))
-            ]
+            if not variable_value:
+                variable_value = []
+            else:
+                variable_value = [
+                    built_in.replace_variables(var)
+                    for var in (str(variable_value).split(self.list_separator))
+                ]
         elif variable_match.is_dict_variable:
             variable_value = built_in.create_dictionary(
                 *(str(variable_value).split(self.list_separator))

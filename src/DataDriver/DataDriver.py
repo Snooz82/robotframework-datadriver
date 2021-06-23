@@ -47,7 +47,7 @@ from .utils import (  # type: ignore
     Encodings,
 )
 
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 
 
 class DataDriver:
@@ -416,6 +416,7 @@ List Variables
 Lists can be created with the prefix ``@`` as comma (``,``) separated list.
 See example table: ``@{list}``
 
+Be aware that a list with an empty string has to be the cell content `${Empty}`.
 
 Python Literals
 ^^^^^^^^^^^^^^^
