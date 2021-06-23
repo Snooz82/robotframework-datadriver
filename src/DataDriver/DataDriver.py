@@ -43,7 +43,8 @@ from .utils import (  # type: ignore
     warn,
     error,
     equally_partition_test_list,
-    binary_partition_test_list, Encodings,
+    binary_partition_test_list,
+    Encodings,
 )
 
 __version__ = "1.4.0"
@@ -449,12 +450,12 @@ Accessing Test Data From Robot Variables
 If neccesary it is possible to access the fetched data tables directly from a Robot Framework® variable.
 This could be helpfull in Test Setup or in Suite Setup.
 
-There are two Variables available within the Data-Driven Suite:
+There are three variables available within the Data-Driven Suite:
 
 @{DataDriver_DATA_LIST}
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-A list containing a robot dictionary for each test case that is selected for execution.
+A list as suite variable containing a robot dictionary for each test case that is selected for execution.
 
 .. code :: json
 
@@ -565,7 +566,7 @@ This can be accessed as usual in Robot Framework®.
 &{DataDriver_DATA_DICT}
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-A dictionary that contains the same data as the list, with the test names as keys.
+A dictionary as suite variable that contains the same data as the list, with the test names as keys.
 
 .. code :: json
 
@@ -667,6 +668,28 @@ A dictionary that contains the same data as the list, with the test names as key
       }
     }
 
+&{DataDriver_TEST_DATA}
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A dictionary as test variable that contains the test data of the current test case.
+This dictionary does also contain arguments that are not used in the ``Test Template`` keyword.
+This can be used in Test Setup and within a test case.
+
+.. code :: json
+
+    {
+      "test_case_name": "Right user wrong pass",
+      "arguments": {
+        "${username}": "demo",
+        "${password}": "FooBar"
+      },
+      "tags": [
+        "2",
+        "3",
+        "foo"
+      ],
+      "documentation": "This test case has the Tags 2,3 and foo"
+    }
 
 
 Data Sources
@@ -1454,6 +1477,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         self.template_test = None
         self.template_keyword = None
         self.data_table = None
+        self.data_table_dict = None
         self.test_case_data = TestCaseData()
 
     def _start_suite(self, suite: TestSuite, result):
@@ -1492,12 +1516,16 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             debug(traceback.format_exc())
             raise e
 
+    def _start_test(self, test: TestCase, result):
+        BuiltIn().set_test_variable(
+            '${DataDriver_TEST_DATA}',
+            self.data_table_dict.get(test.name, {"ERROR": "Test Case not found..."}),
+        )
+
     def _set_date_table_to_robot_variable(self):
         BuiltIn().set_suite_variable('${DataDriver_DATA_LIST}', self.data_table)
-        BuiltIn().set_suite_variable(
-            '${DataDriver_DATA_DICT}',
-            DotDict([(item.test_case_name, item) for item in self.data_table]),
-        )
+        self.data_table_dict = DotDict([(item.test_case_name, item) for item in self.data_table])
+        BuiltIn().set_suite_variable('${DataDriver_DATA_DICT}', self.data_table_dict)
 
     def _clean_template_test(self):
         if self._is_new_model():

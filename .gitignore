@@ -130,3 +130,4 @@ lsp
 atest/logs
 .pabotsuitenames
 .vscode
+example/Login Tests/logs

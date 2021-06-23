@@ -397,12 +397,12 @@ Accessing Test Data From Robot Variables
 If neccesary it is possible to access the fetched data tables directly from a Robot Framework® variable.
 This could be helpfull in Test Setup or in Suite Setup.
 
-There are two Variables available within the Data-Driven Suite:
+There are three variables available within the Data-Driven Suite:
 
 @{DataDriver_DATA_LIST}
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-A list containing a robot dictionary for each test case that is selected for execution.
+A list as suite variable containing a robot dictionary for each test case that is selected for execution.
 
 .. code :: json
 
@@ -513,7 +513,7 @@ This can be accessed as usual in Robot Framework®.
 &{DataDriver_DATA_DICT}
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-A dictionary that contains the same data as the list, with the test names as keys.
+A dictionary as suite variable that contains the same data as the list, with the test names as keys.
 
 .. code :: json
 
@@ -615,6 +615,28 @@ A dictionary that contains the same data as the list, with the test names as key
       }
     }
 
+&{DataDriver_TEST_DATA}
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A dictionary as test variable that contains the test data of the current test case.
+This dictionary does also contain arguments that are not used in the ``Test Template`` keyword.
+This can be used in Test Setup and within a test case.
+
+.. code :: json
+
+    {
+      "test_case_name": "Right user wrong pass",
+      "arguments": {
+        "${username}": "demo",
+        "${password}": "FooBar"
+      },
+      "tags": [
+        "2",
+        "3",
+        "foo"
+      ],
+      "documentation": "This test case has the Tags 2,3 and foo"
+    }
 
 
 Data Sources
