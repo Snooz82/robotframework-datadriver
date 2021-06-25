@@ -33,6 +33,16 @@ setup(
         "Framework :: Robot Framework",
     ],
     install_requires=["robotframework >= 3.1", "docutils", "Pygments"],
-    extras_require={"xls": ["pandas", "xlrd >= 1.2.0", "openpyxl"]},
+    extras_require={
+        "xls": ["pandas", "xlrd >= 1.2.0", "openpyxl"],
+        "openapi": [
+            "requests",
+            "jsonref",
+            "jsonschema",
+            "openapi_core",
+            "openapi_spec_validator",
+            "ruamel.yaml",
+        ]
+    },
     python_requires=">=3.6",
 )
