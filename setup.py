@@ -38,6 +38,8 @@ setup(
         "openapi": [
             "requests",
             "prance",
+            "jsonschema",
+            "openapi_spec_validator",
         ]
     },
     python_requires=">=3.6",

@@ -18,7 +18,7 @@ from requests.auth import HTTPBasicAuth
 from robot.api.deco import keyword, library
 from urllib3.exceptions import InsecureRequestWarning
 
-from datadriver_openapi.dto_base import (
+from openapi.dto_base import (
     Dto,
     IdDependency,
     PropertyValueConstraint,
@@ -64,7 +64,7 @@ class OpenapiExecutors:
                 logger.debug(f"IN_USE_MAPPING was not imported: {exception}")
                 IN_USE_MAPPING = {}
             finally:
-                from datadriver_openapi.dto_utils import add_dto_mixin, get_dto_class
+                from openapi.dto_utils import add_dto_mixin, get_dto_class
                 self.in_use_mapping: Dict[str, Any] = IN_USE_MAPPING
                 self.add_dto_mixin = add_dto_mixin
                 self.get_dto_class = get_dto_class

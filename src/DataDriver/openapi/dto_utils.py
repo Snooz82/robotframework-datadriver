@@ -2,10 +2,11 @@ from logging import getLogger
 from typing import Any, Dict, Type
 from uuid import uuid4
 
-from datadriver_openapi.dto_base import Dto
+from openapi.dto_base import Dto
 
 logger = getLogger(__name__)
 
+#TODO: must be refactored: change get_dto_class to callable class
 try:
     from mappings import DTO_MAPPING
 except ImportError as exception:
@@ -57,6 +58,7 @@ def add_dto_mixin(dto: Dto) -> ExtendedDto:
     dto.__class__ = type(base_cls_name, (base_cls, DtoMixin),{})
     return dto
 
+#TODO: change to callable class, init with mappings module passed in from openapi_executors
 def get_dto_class(endpoint: str, method: str) -> Type[Dto]:
     try:
         return DTO_MAPPING[(endpoint, method)]
