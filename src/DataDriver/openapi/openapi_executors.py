@@ -1,51 +1,74 @@
 import json as _json
 import random
+import sys
 from dataclasses import asdict, make_dataclass
 from itertools import zip_longest
 from logging import getLogger
+from pathlib import Path
 from random import choice, randint
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from uuid import uuid4
+from warnings import simplefilter
 
 import jsonschema
-import openapi_core
-from openapi_core.spec.paths import SpecPath
 from openapi_spec_validator import openapi_v3_spec_validator, validate_spec
+from prance import ResolvingParser
 from requests import Response, Session
 from requests.auth import HTTPBasicAuth
 from robot.api.deco import keyword, library
+from urllib3.exceptions import InsecureRequestWarning
 
-from .dto_base import (
+from datadriver_openapi.dto_base import (
+    Dto,
     IdDependency,
     PropertyValueConstraint,
     UniquePropertyValueConstraint,
 )
-from .dto_utils import Dto, add_dto_mixin, get_dto_class
 
 
 logger = getLogger(__name__)
-
-
-#TODO: does not belong here, how to handle user-provided business logic?
-IN_USE_MAPPING = {
-    "deviceGroups": "/roles/{roleId}/deviceGroups",
-    "users": "/roles/{roleId}/users",
-    "roles": "/roles/{roleId}/deviceGroups",
-}
+# Suppress certificate verification warning for self-signed certificate
+simplefilter("ignore", category=InsecureRequestWarning)
 
 
 @library(scope="GLOBAL")
-class openapi_runner:
-    """
-    Module providing some keywords that can be used in test templates using
-    test case data generated from the openapi_reader.
-    """
-    def __init__(self, openapi_doc: Dict[str, Any], base_url: str, user: str = "", password: str = "") -> None:
-        self.openapi_doc = openapi_doc  #TODO: should be set by openapi_reader
+class OpenapiExecutors:
+    def __init__(
+            self,
+            source: str,
+            origin: str = "",
+            base_path: str = "",
+            user: str = "",
+            password: str = "",
+            mappings_path: Union[str, Path] = "",
+        ) -> None:
+        parser = ResolvingParser(source)
+        self.openapi_doc: Dict[str, Any] = parser.specification
         self.session = Session()
-        self.base_url = base_url
+        self.origin = origin
+        self.base_url = f"{self.origin}{base_path}"
         self.auth = HTTPBasicAuth(user, password)
-        self.spec: SpecPath = openapi_core.create_spec(self.openapi_doc)
+        if mappings_path:
+            mappings_path = Path(mappings_path)
+            if not mappings_path.is_file():
+                logger.warning(
+                    f"mappings_path '{mappings_path}' is not a Python module."
+                )
+            # intermediate variable to ensure path.append is possible so we'll never
+            # path.pop a location that we didn't append
+            mappings_folder = str(mappings_path.parent)
+            sys.path.append(mappings_folder)
+            try:
+                from mappings_path.stem import IN_USE_MAPPING
+            except ImportError as exception:
+                logger.debug(f"IN_USE_MAPPING was not imported: {exception}")
+                IN_USE_MAPPING = {}
+            finally:
+                from datadriver_openapi.dto_utils import add_dto_mixin, get_dto_class
+                self.in_use_mapping: Dict[str, Any] = IN_USE_MAPPING
+                self.add_dto_mixin = add_dto_mixin
+                self.get_dto_class = get_dto_class
+                sys.path.pop()
 
     @keyword
     def validate_openapi_document(self) -> None:
@@ -73,7 +96,7 @@ class openapi_runner:
         url = self.get_valid_url(method=method, endpoint=endpoint)
         dto, schema = self.get_dto_and_schema(method=method, endpoint=endpoint)
         if dto:
-            dto = add_dto_mixin(dto=dto)
+            dto = self.add_dto_mixin(dto=dto)
             json_data = asdict(dto)
             if status_code == 409 and dto:
                 json_data = self.ensure_conflict(url=url, dto=dto, method=method)
@@ -188,7 +211,7 @@ class openapi_runner:
             raise NotImplementedError(f"content_type '{content_type}' not supported")
         content_schema = body_spec["content"][content_type]["schema"]
         resolved_schema: Dict[str, Any] = self.resolve_schema(content_schema)
-        dto_class = get_dto_class(endpoint=spec_endpoint, method=method)
+        dto_class = self.get_dto_class(endpoint=spec_endpoint, method=method)
         dto_data = self.get_dto_data(
             schema=resolved_schema,
             dto=dto_class,
@@ -257,32 +280,49 @@ class openapi_runner:
             if constrained_values := get_constrained_values(property_name):
                 json_data[property_name] = choice(constrained_values)
                 continue
+            #TODO: ${itemId} or id
             if property_name == "id":
                 if dependent_id := get_dependent_id(operation_id):
                     json_data[property_name] = dependent_id
                     continue
-            if property_type == "string":
-                json_data[property_name] = uuid4().hex
-                continue
-            if property_type == "integer":
-                minimum = schema["properties"][property_name].get("minimum")
-                maximum = schema["properties"][property_name].get("maximum")
-                value = self.get_random_int(minimum=minimum, maximum=maximum)
-                json_data[property_name] = value
-                continue
             if property_type == "boolean":
                 json_data[property_name] = bool(random.getrandbits(1))
                 continue
+            # Use int32 integers if "format" does not specify int64
+            if property_type == "integer":
+                property_format = schema["properties"][property_name].get("format", "int32")
+                if property_format == "int64":
+                    min_int = -9223372036854775808
+                    max_int = 9223372036854775807
+                else:
+                    min_int = -2147483648
+                    max_int = 2147483647
+                #TODO: add support for exclusiveMinimum and exclusiveMaximum
+                minimum = schema["properties"][property_name].get("minimum", min_int)
+                maximum = schema["properties"][property_name].get("maximum", max_int)
+                value = randint(minimum, maximum)
+                json_data[property_name] = value
+                continue
+            # Python floats are already double precision, so no check for "format"
+            if property_type == "number":
+                minimum = schema["properties"][property_name].get("minimum", 0.0)
+                maximum = schema["properties"][property_name].get("maximum", 1.0)
+                value = random.uniform(minimum, maximum)
+                json_data[property_name] = value
+                continue
+            #TODO: byte, binary, date, date-time based on "format"
+            if property_type == "string":
+                minimum = schema["properties"][property_name].get("minLength", 0)
+                maximum = schema["properties"][property_name].get("maxLength", 36)
+                value = uuid4().hex
+                while len(value) < minimum:
+                    value = value + uuid4().hex
+                if len(value) > maximum:
+                    value = value[:maximum]
+                json_data[property_name] = value
+                continue
             raise NotImplementedError(f"{property_type}")
         return json_data
-
-    @staticmethod
-    def get_random_int(minimum: Optional[int], maximum: Optional[int]) -> int:
-        if minimum is None:
-            minimum = 0
-        if maximum is None:
-            maximum = uuid4().int
-        return randint(minimum, maximum)
 
     @staticmethod
     def invalidate_url(valid_url: str) -> str:
@@ -297,7 +337,8 @@ class openapi_runner:
         url_parts = url.split("/")
         resource_type = url_parts[-2]
         resource_id = url_parts[-1]
-        post_endpoint = IN_USE_MAPPING[resource_type]
+        # post_endpoint = IN_USE_MAPPING[resource_type]
+        post_endpoint = self.in_use_mapping[resource_type]
         dto, _ = self.get_dto_and_schema(method="POST", endpoint=post_endpoint)
         json_data = asdict(dto)
         if resource_type != "roles":
@@ -402,7 +443,7 @@ class openapi_runner:
         json_response = response.json()
         # ensure the href is valid
         if "href" in json_response:
-            url = f"{self.url_base}{json_response['href']}"
+            url = f"{self.origin}{json_response['href']}"
             get_response = self.authorized_request(method="GET", url=url)
             assert get_response.json() == json_response, (
                 f"{get_response.json()} not equal to original {json_response}"
@@ -496,9 +537,6 @@ class openapi_runner:
         spec = {**self.openapi_doc}["paths"][endpoint][method]["responses"][status]
         return spec
 
-    def get_openapi_doc(self) -> Dict[str, Any]:
-        return self.openapi_doc
-
     def authorized_request(
             self,
             method: str,
@@ -514,3 +552,7 @@ class openapi_runner:
             verify=False,
         )
         return response
+
+
+# Support Robot Framework import mechanism
+openapi_executors = OpenapiExecutors    # pylint: disable=invalid-name

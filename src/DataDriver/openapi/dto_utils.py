@@ -2,27 +2,15 @@ from logging import getLogger
 from typing import Any, Dict, Type
 from uuid import uuid4
 
-from .dto_base import Dto
+from datadriver_openapi.dto_base import Dto
 
 logger = getLogger(__name__)
 
-
-#TODO: does not belong here, how to handle user-provided business logic?
-from .user_specific.usermanagement_dtos import DeviceGroupSendDto, RoleItemDto
-USERMANAGEMENT_DTO_MAPPING = {
-    (r"/deviceGroups", "post"): DeviceGroupSendDto,
-    (r"/deviceGroups/{deviceGroupId}", "patch"): DeviceGroupSendDto,
-    (r"/deviceGroups/{deviceGroupId}", "put"): DeviceGroupSendDto,
-    (r"/roles/{roleId}/deviceGroups", "post"): RoleItemDto,
-    (r"/roles/{roleId}/fixedLayouts", "post"): RoleItemDto,
-    (r"/roles/{roleId}/functions", "post"): RoleItemDto,
-    (r"/roles/{roleId}/layouts", "post"): RoleItemDto,
-    (r"/roles/{roleId}/monitors", "post"): RoleItemDto,
-    (r"/roles/{roleId}/multiLayouts", "post"): RoleItemDto,
-    (r"/roles/{roleId}/servers", "post"): RoleItemDto,
-    (r"/roles/{roleId}/users", "post"): RoleItemDto,
-    (r"/roles/{roleId}/viewerMacros", "post"): RoleItemDto,
-}
+try:
+    from mappings import DTO_MAPPING
+except ImportError as exception:
+    logger.debug(f"DTO_MAPPING was not imported: {exception}")
+    DTO_MAPPING = {}
 
 class DtoMixin:
     def set_minimum_data(self) -> None:
@@ -71,6 +59,6 @@ def add_dto_mixin(dto: Dto) -> ExtendedDto:
 
 def get_dto_class(endpoint: str, method: str) -> Type[Dto]:
     try:
-        return USERMANAGEMENT_DTO_MAPPING[(endpoint, method)]
+        return DTO_MAPPING[(endpoint, method)]
     except KeyError:
         return Dto

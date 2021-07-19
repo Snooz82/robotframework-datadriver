@@ -51,6 +51,7 @@ __version__ = "1.3.0"
 
 
 class DataDriver:
+# region: docstring
     """
 
 ===================================================
@@ -1090,7 +1091,7 @@ Binary creates with 40 test cases and 8 threads something like that:
     P16: 40
 
     """
-
+# endregion
     ROBOT_LIBRARY_DOC_FORMAT = "reST"
     ROBOT_LIBRARY_VERSION = __version__
     ROBOT_LISTENER_API_VERSION = 3
@@ -1119,6 +1120,7 @@ Binary creates with 40 test cases and 8 threads something like that:
         optimize_pabot: PabotOpt = PabotOpt.Equal,
         **kwargs,
     ):
+# region: docstring
         """**Example:**
 
 .. code :: robotframework
@@ -1214,6 +1216,7 @@ Optimize Pabot
 When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit`` to be faster.
 
         """
+# endregion
         self.ROBOT_LIBRARY_LISTENER = self
         print(kwargs)
         try:

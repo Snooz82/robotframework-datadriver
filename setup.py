@@ -37,11 +37,7 @@ setup(
         "xls": ["pandas", "xlrd >= 1.2.0", "openpyxl"],
         "openapi": [
             "requests",
-            "jsonref",
-            "jsonschema",
-            "openapi_core",
-            "openapi_spec_validator",
-            "ruamel.yaml",
+            "prance",
         ]
     },
     python_requires=">=3.6",
