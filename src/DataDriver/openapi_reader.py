@@ -15,8 +15,8 @@
 from logging import getLogger
 from typing import Any, Dict, List
 
-from .AbstractReaderClass import AbstractReaderClass
-from .ReaderConfig import TestCaseData
+from DataDriver.AbstractReaderClass import AbstractReaderClass
+from DataDriver.ReaderConfig import TestCaseData
 
 try:
     from prance import ResolvingParser

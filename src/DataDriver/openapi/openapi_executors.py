@@ -1,7 +1,22 @@
+# Copyright 2021-  Robin Mackaij
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json as _json
 import random
 import sys
 from dataclasses import asdict, make_dataclass
+from importlib import import_module
 from itertools import zip_longest
 from logging import getLogger
 from pathlib import Path
@@ -18,7 +33,7 @@ from requests.auth import HTTPBasicAuth
 from robot.api.deco import keyword, library
 from urllib3.exceptions import InsecureRequestWarning
 
-from openapi.dto_base import (
+from DataDriver.openapi.dto_base import (
     Dto,
     IdDependency,
     PropertyValueConstraint,
@@ -58,16 +73,17 @@ class OpenapiExecutors:
             # path.pop a location that we didn't append
             mappings_folder = str(mappings_path.parent)
             sys.path.append(mappings_folder)
+            mappings_module_name = mappings_path.stem
             try:
-                from mappings_path.stem import IN_USE_MAPPING
+                mappings_module = import_module(mappings_module_name)
+                self.in_use_mapping: Dict[str, Any] = mappings_module.IN_USE_MAPPING
             except ImportError as exception:
                 logger.debug(f"IN_USE_MAPPING was not imported: {exception}")
-                IN_USE_MAPPING = {}
+                self.in_use_mapping = {}
             finally:
-                from openapi.dto_utils import add_dto_mixin, get_dto_class
-                self.in_use_mapping: Dict[str, Any] = IN_USE_MAPPING
+                from DataDriver.openapi.dto_utils import add_dto_mixin, get_dto_class
                 self.add_dto_mixin = add_dto_mixin
-                self.get_dto_class = get_dto_class
+                self.get_dto_class = get_dto_class(mappings_module_name=mappings_module_name)
                 sys.path.pop()
 
     @keyword
