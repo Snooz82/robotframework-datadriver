@@ -1,9 +1,9 @@
-*** Test Cases ***;${user.name};${user}[password];[Tags];[Documentation]
+*** Test Cases ***;${username};${password};[Tags];[Documentation]
 Right user empty pass;demo;${EMPTY};1;This is a test case documentation of the first one.
 Right user wrong pass;demo;FooBar;2,3,foo;This test case has the Tags 2,3 and foo
-Empty user right pass;${EMPTY};mode;1,2,3,4;This test case has a generated name based on template name.
-Empty user empty pass;${EMPTY};${EMPTY};4,2;
-Empty user wrong pass;${EMPTY};FooBar;;
-Wrong user right pass;FooBar;mode;foo,1;
-Wrong user empty pass;FooBar;${EMPTY};foo;
-Wrong user wrong pass;FooBar;FooBar;foo,2;
+;${EMPTY};mode;1,2,3,4;This test case has a generated name based on template name.
+;${EMPTY};${EMPTY};;
+;${EMPTY};FooBar;;
+;FooBar;mode;foo,1;
+;FooBar;${EMPTY};foo;
+;FooBar;FooBar;foo,2;

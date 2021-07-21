@@ -32,3 +32,7 @@ include *.py
 # added by check_manifest.py
 recursive-include atest *.sh
 recursive-include atest *.txt
+
+# added by check-manifest
+recursive-include atest *.NoJson
+recursive-include atest *.json

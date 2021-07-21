@@ -24,7 +24,6 @@ from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 from robot.utils import DotDict  # type: ignore
 
 
-
 built_in = BuiltIn()
 
 
@@ -44,6 +43,8 @@ class AbstractReaderClass(ABC):
         self.sheet_name = reader_config.sheet_name
         self.list_separator = reader_config.list_separator
         self.kwargs = reader_config.kwargs
+        for key, value in reader_config.kwargs.items():
+            setattr(self, key, value)
 
         self.test_case_column_id = None
         self.arguments_column_ids: List = list()
@@ -121,10 +122,13 @@ class AbstractReaderClass(ABC):
         base = variable_match.base
         items = variable_match.items
         if variable_match.is_list_variable:
-            variable_value = [
-                built_in.replace_variables(var)
-                for var in (str(variable_value).split(self.list_separator))
-            ]
+            if not variable_value:
+                variable_value = []
+            else:
+                variable_value = [
+                    built_in.replace_variables(var)
+                    for var in (str(variable_value).split(self.list_separator))
+                ]
         elif variable_match.is_dict_variable:
             variable_value = built_in.create_dictionary(
                 *(str(variable_value).split(self.list_separator))

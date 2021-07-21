@@ -1,6 +1,6 @@
 *** Settings ***
 Test Template     TestKeyword
-Library           DataDriver    encoding=utf-8
+Library           DataDriver    encoding=utf_8
 
 *** Test Cases ***
 Template Test

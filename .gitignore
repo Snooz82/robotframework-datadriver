@@ -130,6 +130,7 @@ lsp
 atest/logs
 .pabotsuitenames
 .vscode
+example/Login Tests/logs
 
 # PowerShell utility scripts
 _*.ps1

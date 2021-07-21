@@ -1,5 +1,6 @@
 *** Settings ***
 Library    DataDriver    file=.xlsx    encoding=utf-8
+Library    Collections
 Test Template   Test
 
 *** Test Cases ***
@@ -9,9 +10,7 @@ Tempalte
 Test
     [Arguments]    ${scalar}     ${list}    ${list_eval}    ${dict}    ${dict_eval}     ${eval}     ${exp_eval}    ${user}
     Run Keyword    ${scalar}    ${eval}    ${exp_eval}
-    FOR    ${item}    ${exp}   IN ZIP   ${list}   ${list_eval}
-       Should Be Equal    ${item}    ${exp}
-    END
+    Lists Should Be Equal   ${list}   ${list_eval}
     FOR    ${Key}   IN   @{dict_eval}
         Should Be Equal    ${dict.${Key}}    ${dict_eval}[${Key}]
     END

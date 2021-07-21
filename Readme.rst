@@ -1,15 +1,15 @@
 
 
 ===================================================
-robotframework-datadriver
+DataDriver for Robot Framework®
 ===================================================
 
-DataDriver is a Data-Driven Testing library for Robot Framework.
+DataDriver is a Data-Driven extension for Robot Framework®.
 This document explains how to use the DataDriver library listener. For
 information about installation, support, and more, please visit the
 `project page <https://github.com/Snooz82/robotframework-datadriver>`_
 
-For more information about Robot Framework, see http://robotframework.org.
+For more information about Robot Framework®, see http://robotframework.org.
 
 DataDriver is used/imported as Library but does not provide keywords
 which can be used in a test. DataDriver uses the Listener Interface
@@ -62,24 +62,25 @@ Because Python 2.7 is deprecated, there are no new feature to python 2.7 compati
 Table of contents
 -----------------
 
--  `What DataDriver does`_
--  `How DataDriver works`_
+-  `What DataDriver Does`_
+-  `How DataDriver Works`_
 -  `Usage`_
--  `Structure of test suite`_
+-  `Structure of Test Suite`_
 -  `Structure of data file`_
+-  `Accessing Test Data From Robot Variables`_
 -  `Data Sources`_
 -  `File Encoding and CSV Dialect`_
 -  `Custom DataReader Classes`_
--  `Selection of Test Cases to execute`_
+-  `Selection of Test Cases to Execute`_
 -  `Configure DataDriver by Pre-Run Keyword`_
 -  `Pabot and DataDriver`_
 
 
-What DataDriver does
+What DataDriver Does
 --------------------
 
 DataDriver is an alternative approach to create Data-Driven Tests with
-Robot Framework. DataDriver creates multiple test cases based on a test
+Robot Framework®. DataDriver creates multiple test cases based on a test
 template and data content of a csv or Excel file. All created tests
 share the same test sequence (keywords) and differ in the test data.
 Because these tests are created on runtime only the template has to be
@@ -147,12 +148,12 @@ used in testing… ;-)
 `See example csv table <#example-csv>`__
 
 
-How DataDriver works
+How DataDriver Works
 --------------------
 
 When the DataDriver is used in a test suite it will be activated before
 the test suite starts. It uses the Listener Interface Version 3 of Robot
-Framework to read and modify the test specification objects. After
+Framework® to read and modify the test specification objects. After
 activation it searches for the ``Test Template`` -Keyword to analyze the
 ``[Arguments]`` it has. As a second step, it loads the data from the
 specified data source. Based on the ``Test Template`` -Keyword, DataDriver
@@ -195,7 +196,7 @@ and path like the test suite .robot .
         ...
 
 
-Structure of test suite
+Structure of Test Suite
 -----------------------
 
 
@@ -249,7 +250,7 @@ As ``Test Template`` the keyword ``Invalid Login`` is used. This
 keyword has two arguments. Argument names are ``${username}`` and
 ``${password}``. These names have to be in the CSV file as column
 header. The test case has two variable names included in its name,
-which does not have any functionality in Robot Framework. However, the
+which does not have any functionality in Robot Framework®. However, the
 Data Driver will use the test case name as a template name and
 replaces the variables with the specific value of the single generated
 test case.
@@ -293,49 +294,28 @@ Example Data file
 |             |             |             |             | documentation of |
 |             |             |             |             | the first one.   |
 +-------------+-------------+-------------+-------------+------------------+
-| Right user  | demo        | FooBar      | 2           |                  |
-| wrong pass  |             |             |             |                  |
-+-------------+-------------+-------------+-------------+------------------+
-| empty user  | ${EMPTY}    | mode        | 1,2,3,4     | This test        |
-| mode pass   |             |             |             | case has         |
+| Right user  | demo        | FooBar      | 2,3,foo     | This test        |
+| wrong pass  |             |             |             | case has         |
 |             |             |             |             | the Tags         |
-|             |             |             |             | 1,2,3 and 4      |
+|             |             |             |             | 2,3 and foo      |
 |             |             |             |             | assigned.        |
 +-------------+-------------+-------------+-------------+------------------+
-|             | ${EMPTY}    | ${EMPTY}    |             | This test        |
+|             | ${EMPTY}    | mode        | 1,2,3,4     | This test        |
 |             |             |             |             | case has a       |
 |             |             |             |             | generated        |
 |             |             |             |             | name based       |
 |             |             |             |             | on template      |
 |             |             |             |             | name.            |
 +-------------+-------------+-------------+-------------+------------------+
-|             | ${EMPTY}    | FooBar      |             | This test        |
-|             |             |             |             | case has a       |
-|             |             |             |             | generated        |
-|             |             |             |             | name based       |
-|             |             |             |             | on template      |
-|             |             |             |             | name.            |
+|             | ${EMPTY}    | ${EMPTY}    |             |                  |
 +-------------+-------------+-------------+-------------+------------------+
-|             | FooBar      | mode        |             | This test        |
-|             |             |             |             | case has a       |
-|             |             |             |             | generated        |
-|             |             |             |             | name based       |
-|             |             |             |             | on template      |
-|             |             |             |             | name.            |
+|             | ${EMPTY}    | FooBar      |             |                  |
 +-------------+-------------+-------------+-------------+------------------+
-|             | FooBar      | ${EMPTY}    |             | This test        |
-|             |             |             |             | case has a       |
-|             |             |             |             | generated        |
-|             |             |             |             | name based       |
-|             |             |             |             | on template      |
-|             |             |             |             | name.            |
+|             | FooBar      | mode        |             |                  |
 +-------------+-------------+-------------+-------------+------------------+
-|             | FooBar      | FooBar      |             | This test        |
-|             |             |             |             | case has a       |
-|             |             |             |             | generated        |
-|             |             |             |             | name based       |
-|             |             |             |             | on template      |
-|             |             |             |             | name.            |
+|             | FooBar      | ${EMPTY}    |             |                  |
++-------------+-------------+-------------+-------------+------------------+
+|             | FooBar      | FooBar      |             |                  |
 +-------------+-------------+-------------+-------------+------------------+
 
 In this data file, eight test cases are defined. Each line specifies one
@@ -349,13 +329,13 @@ Supported Data Types
 
 In general DataDriver supports any Object that is handed over from the DataReader.
 However the text based readers for csv, excel and so do support different types as well.
-DataDriver supports Robot Framework Scalar variables as well as Dictionaries and Lists.
+DataDriver supports Robot Framework® Scalar variables as well as Dictionaries and Lists.
 It also support python literal evaluations.
 
 Scalar Variables
 ^^^^^^^^^^^^^^^^
 
-The Prefix ``$`` defines that the value in the cell is taken as in Robot Framework Syntax.
+The Prefix ``$`` defines that the value in the cell is taken as in Robot Framework® Syntax.
 ``String`` is ``str``, ``${1}`` is ``int`` and ``${None}`` is NoneType.
 The Prefix only defines the value typ. It can also be used to assign a scalar to a dictionary key.
 See example table: ``${user}[id]``
@@ -373,7 +353,7 @@ The arguments here are comma (``,``) separated.
 See example table: ``&{dict}``
 
 The other option is to define scalar variables in dictionary syntax like ``${user}[name]`` or ``${user.name}``
-That can be also nested dictionaries. DataDriver will create Robot Framework (DotDict) Dictionaries, that can be accessed with ``${user.name.first}``
+That can be also nested dictionaries. DataDriver will create Robot Framework® (DotDict) Dictionaries, that can be accessed with ``${user.name.first}``
 See example table: ``${user}[name][first]``
 
 
@@ -383,23 +363,14 @@ List Variables
 Lists can be created with the prefix ``@`` as comma (``,``) separated list.
 See example table: ``@{list}``
 
+Be aware that a list with an empty string has to be the cell content `${Empty}`.
 
 Python Literals
 ^^^^^^^^^^^^^^^
 
 DataDriver can evaluate Literals.
 It uses the prefix ``e`` for that. (i.e. ``e{list_eval}``)
-For that it uses `ast.literal_eval <https://docs.python.org/3.8/library/ast.html#ast.literal_eval>`_
-The following Python literal structures are supported:
-- ``strings``
-- ``bytes``
-- ``numbers``
-- ``tuples``
-- ``lists``
-- ``dicts``
-- ``sets``
-- ``booleans``
-- ``None``
+For that it uses `BuiltIn Evaluate <https://robotframework.org/robotframework/latest/libraries/BuiltIn.html#Evaluate>`_
 
 See example table: ``e{user.chk}``
 
@@ -420,6 +391,255 @@ See example table: ``e{user.chk}``
 |  ``6``                   |  ``Should be Equal``  |  ``[1,2]``    |  ``["[1","2]"]``        |  ``key=value,key2=value2``  |  ``{'key': 'value', 'key2': 'value2'}``  |  ``None``                |  ``${none}``      |  ``6``            |  ``Ismo``                  |  ``Aro``                | ``{'id': '6', 'name': {'first': 'Ismo', 'last': 'Aro'}}``        |
 +--------------------------+-----------------------+---------------+-------------------------+-----------------------------+------------------------------------------+--------------------------+-------------------+-------------------+----------------------------+-------------------------+------------------------------------------------------------------+
 
+
+Accessing Test Data From Robot Variables
+----------------------------------------
+
+If neccesary it is possible to access the fetched data tables directly from a Robot Framework® variable.
+This could be helpfull in Test Setup or in Suite Setup.
+
+There are three variables available within the Data-Driven Suite:
+
+@{DataDriver_DATA_LIST}
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A list as suite variable containing a robot dictionary for each test case that is selected for execution.
+
+.. code :: json
+
+    [
+      {
+        "test_case_name": "Right user empty pass",
+        "arguments": {
+          "${username}": "demo",
+          "${password}": "${EMPTY}"
+        },
+        "tags": [
+          "1"
+        ],
+        "documentation": "This is a test case documentation of the first one."
+      },
+      {
+        "test_case_name": "Right user wrong pass",
+        "arguments": {
+          "${username}": "demo",
+          "${password}": "FooBar"
+        },
+        "tags": [
+          "2",
+          "3",
+          "foo"
+        ],
+        "documentation": "This test case has the Tags 2,3 and foo"
+      },
+      {
+        "test_case_name": "Login with user '${EMPTY}' and password 'mode'",
+        "arguments": {
+          "${username}": "${EMPTY}",
+          "${password}": "mode"
+        },
+        "tags": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "documentation": "This test case has a generated name based on template name."
+      },
+      {
+        "test_case_name": "Login with user '${EMPTY}' and password '${EMPTY}'",
+        "arguments": {
+          "${username}": "${EMPTY}",
+          "${password}": "${EMPTY}"
+        },
+        "tags": [
+          ""
+        ],
+        "documentation": ""
+      },
+      {
+        "test_case_name": "Login with user '${EMPTY}' and password 'FooBar'",
+        "arguments": {
+          "${username}": "${EMPTY}",
+          "${password}": "FooBar"
+        },
+        "tags": [
+          ""
+        ],
+        "documentation": ""
+      },
+      {
+        "test_case_name": "Login with user 'FooBar' and password 'mode'",
+        "arguments": {
+          "${username}": "FooBar",
+          "${password}": "mode"
+        },
+        "tags": [
+          "foo",
+          "1"
+        ],
+        "documentation": ""
+      },
+      {
+        "test_case_name": "Login with user 'FooBar' and password '${EMPTY}'",
+        "arguments": {
+          "${username}": "FooBar",
+          "${password}": "${EMPTY}"
+        },
+        "tags": [
+          "foo"
+        ],
+        "documentation": ""
+      },
+      {
+        "test_case_name": "Login with user 'FooBar' and password 'FooBar'",
+        "arguments": {
+          "${username}": "FooBar",
+          "${password}": "FooBar"
+        },
+        "tags": [
+          "foo",
+          "2"
+        ],
+        "documentation": ""
+      }
+    ]
+
+This can be accessed as usual in Robot Framework®.
+
+``${DataDriver_DATA_LIST}[2][arguments][\\${password}]`` would result in ``mode`` .
+
+
+
+&{DataDriver_DATA_DICT}
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A dictionary as suite variable that contains the same data as the list, with the test names as keys.
+
+.. code :: json
+
+    {
+      "Right user empty pass": {
+        "test_case_name": "Right user empty pass",
+        "arguments": {
+          "${username}": "demo",
+          "${password}": "${EMPTY}"
+        },
+        "tags": [
+          "1"
+        ],
+        "documentation": "This is a test case documentation of the first one."
+      },
+      "Right user wrong pass": {
+        "test_case_name": "Right user wrong pass",
+        "arguments": {
+          "${username}": "demo",
+          "${password}": "FooBar"
+        },
+        "tags": [
+          "2",
+          "3",
+          "foo"
+        ],
+        "documentation": "This test case has the Tags 2,3 and foo"
+      },
+      "Login with user '${EMPTY}' and password 'mode'": {
+        "test_case_name": "Login with user '${EMPTY}' and password 'mode'",
+        "arguments": {
+          "${username}": "${EMPTY}",
+          "${password}": "mode"
+        },
+        "tags": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "documentation": "This test case has a generated name based on template name."
+      },
+      "Login with user '${EMPTY}' and password '${EMPTY}'": {
+        "test_case_name": "Login with user '${EMPTY}' and password '${EMPTY}'",
+        "arguments": {
+          "${username}": "${EMPTY}",
+          "${password}": "${EMPTY}"
+        },
+        "tags": [
+          ""
+        ],
+        "documentation": ""
+      },
+      "Login with user '${EMPTY}' and password 'FooBar'": {
+        "test_case_name": "Login with user '${EMPTY}' and password 'FooBar'",
+        "arguments": {
+          "${username}": "${EMPTY}",
+          "${password}": "FooBar"
+        },
+        "tags": [
+          ""
+        ],
+        "documentation": ""
+      },
+      "Login with user 'FooBar' and password 'mode'": {
+        "test_case_name": "Login with user 'FooBar' and password 'mode'",
+        "arguments": {
+          "${username}": "FooBar",
+          "${password}": "mode"
+        },
+        "tags": [
+          "foo",
+          "1"
+        ],
+        "documentation": ""
+      },
+      "Login with user 'FooBar' and password '${EMPTY}'": {
+        "test_case_name": "Login with user 'FooBar' and password '${EMPTY}'",
+        "arguments": {
+          "${username}": "FooBar",
+          "${password}": "${EMPTY}"
+        },
+        "tags": [
+          "foo"
+        ],
+        "documentation": ""
+      },
+      "Login with user 'FooBar' and password 'FooBar'": {
+        "test_case_name": "Login with user 'FooBar' and password 'FooBar'",
+        "arguments": {
+          "${username}": "FooBar",
+          "${password}": "FooBar"
+        },
+        "tags": [
+          "foo",
+          "2"
+        ],
+        "documentation": ""
+      }
+    }
+
+&{DataDriver_TEST_DATA}
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A dictionary as test variable that contains the test data of the current test case.
+This dictionary does also contain arguments that are not used in the ``Test Template`` keyword.
+This can be used in Test Setup and within a test case.
+
+.. code :: json
+
+    {
+      "test_case_name": "Right user wrong pass",
+      "arguments": {
+        "${username}": "demo",
+        "${password}": "FooBar"
+      },
+      "tags": [
+        "2",
+        "3",
+        "foo"
+      ],
+      "documentation": "This test case has the Tags 2,3 and foo"
+    }
+
+
 Data Sources
 ------------
 
@@ -428,7 +648,7 @@ CSV / TSV (Character-separated values)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default DataDriver reads csv files. With the `Encoding and CSV
-Dialect <#EncodingandCSVDialect>`__ settings you may configure which
+Dialect <#file-encoding-and-csv-dialect>`__ settings you may configure which
 structure your data source has.
 
 
@@ -463,9 +683,9 @@ Microsoft Excel xls or xlsx file have the possibility to type thair data
 cells. Numbers are typically of the type float. If these data are not
 explicitly defined as text in Excel, pandas will read it as the type
 that is has in excel. Because we have to work with strings in Robot
-Framework these data are converted to string. This leads to the
+Framework® these data are converted to string. This leads to the
 situation that a European time value like "04.02.2019" (4th January
-2019) is handed over to Robot Framework in Iso time "2019-01-04
+2019) is handed over to Robot Framework® in Iso time "2019-01-04
 00:00:00". This may cause unwanted behavior. To mitigate this risk you
 should define Excel based files explicitly as text within Excel.
 
@@ -656,7 +876,7 @@ supported Dialects are:
 
 
 
-Usage in Robot Framework
+Usage in Robot Framework®
 
 .. code :: robotframework
 
@@ -688,7 +908,7 @@ To register a userdefined format user have to set the
 option ``dialect`` to ``UserDefined``
 
 
-Usage in Robot Framework
+Usage in Robot Framework®
 
 .. code :: robotframework
 
@@ -780,7 +1000,7 @@ In the first case or if your custom reader is in python path just use it like th
     Library          DataDriver    reader_class=my_reader
 
 In case it is somewhere on the disk, it is possible to use an absolute or relative path to a custom Reader.
-Imports of custom readers follow the same rules like importing Robot Framework libraries.
+Imports of custom readers follow the same rules like importing Robot Framework® libraries.
 Path can be relative to ${EXECDIR} or to DataDriver/__init__.py:
 
 
@@ -813,11 +1033,11 @@ This `my_reader.py` should implement a class inherited from AbstractReaderClass 
 See other readers as example.
 
 
-Selection of Test Cases to execute
+Selection of Test Cases to Execute
 ----------------------------------
 
 Because test cases that are created by DataDriver after parsing while execution,
-it is not possible to use some Robot Framework methods to select test cases.
+it is not possible to use some Robot Framework® methods to select test cases.
 
 
 Examples for options that have to be used differently:
@@ -916,13 +1136,13 @@ It is possible to use tags to filter the data source.
 To use this, tags must be assigned to the test cases in data source.
 
 
-Robot Framework Command Line Arguments
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Robot Framework® Command Line Arguments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To filter the source, the normal command line arguments of Robot Framework can be used.
-See Robot Framework Userguide_ for more information
-Be aware that the filtering of Robot Framework itself is done before DataDriver is called.
-This means if the Template test is already filtered out by Robot Framework, DataDriver can never be called.
+To filter the source, the normal command line arguments of Robot Framework® can be used.
+See Robot Framework® Userguide_ for more information
+Be aware that the filtering of Robot Framework® itself is done before DataDriver is called.
+This means if the Template test is already filtered out by Robot Framework®, DataDriver can never be called.
 If you want to use ``--include`` the DataDriver TestSuite should have a ``DefaultTag`` or ``ForceTag`` that
 fulfills these requirements.
 
@@ -935,7 +1155,7 @@ Filter based on Library Options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is also possible to filter the data source by an init option of DataDriver.
-If these Options are set, Robot Framework Filtering will be ignored.
+If these Options are set, Robot Framework® Filtering will be ignored.
 
 Example:
 
@@ -960,7 +1180,7 @@ The ``config keyword``
 - Gets all the arguments, that Data Driver gets from Library import, as a Robot Dictionary
 - Shall return the (updated) Data Driver arguments as a Robot Dictionary
 
-Usage in Robot Framework
+Usage in Robot Framework®
 
 .. code :: robotframework
 
@@ -995,15 +1215,17 @@ You should use Pabot version 1.10.0 or newer.
 DataDriver supports ``--testlevelsplit`` from pabot only if the PabotLib is in use.
 Use ``--pabotlib`` to enable that.
 
-When using pabot, DataDriver automatically splits the amount of test cases into nearly same sized groups.
+When using pabot like this, DataDriver automatically splits the amount of test cases into nearly same sized groups.
 Is uses the processes count from pabot to calculate the groups.
 When using 8 processes with 100 test cases you will get 8 groups of tests with the size of 12 to 13 tests.
-These 8 groups are then executed as one block with 8 processes. This reduces a lot of overhead.
+These 8 groups are then executed as one block with 8 processes.
+This reduces a lot of overhead with Suite Setup and Teardown.
 
 You can switch between three modes:
-- Equal: means it creates equal sizes groups
-- Binary: is more complex. it created a decreasing size of containers.
-- Atomic: it does not groupd tests at all and runs really each test case in a separate thread.
+
+- ``Equal``: means it creates equal sizes groups
+- ``Binary``: is more complex. it created a decreasing size of containers to support better balancing.
+- ``Atomic``: it does not group tests at all and runs really each test case in a separate thread.
 
 This can be set by ``optimize_pabot`` in Library import.
 

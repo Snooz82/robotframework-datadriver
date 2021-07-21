@@ -1,4 +1,4 @@
-${number}
-${3}
-${6}
-${9}
+*** Test Cases ***;${number};${user.name};${user.pwd};[Tags];[Documentation]
+Another Name;${3};Ismo;The Destroyer;1,2;Hello Doc
+;${6};Mikko;The Coder;;Some other doc
+;${9};Tatu;The Volunteer;1,2;Cheers René
