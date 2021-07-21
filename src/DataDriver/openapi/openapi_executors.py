@@ -100,7 +100,7 @@ class OpenapiExecutors:
     @keyword
     def test_unauthorized(self, method: str, endpoint: str) -> None:
         url = self.get_valid_url(endpoint)
-        logger.info(f"Sending {method} request to {url}")
+        logger.info(f"Sending unauthorized {method} request to {url}")
         response = self.session.request(
             method=method,
             url=url,
@@ -179,10 +179,13 @@ class OpenapiExecutors:
                 response_data = response.json()
                 if isinstance(response_data, list):
                     valid_ids: List[str] = [item["id"] for item in response_data]
+                    logger.debug(f"get_valid_id_for_endpoint: returning choice from list {valid_ids}")
                     return choice(valid_ids)
                 if valid_id := response_data.get("id"):
+                    logger.debug(f"get_valid_id_for_endpoint: returning {valid_id}")
                     return valid_id
                 valid_ids = [item["id"] for item in response_data["items"]]
+                logger.debug(f"get_valid_id_for_endpoint: returning choice from items {valid_ids}")
                 return choice(valid_ids)
             except Exception as exception:
                 logger.debug(
@@ -290,7 +293,9 @@ class OpenapiExecutors:
             ]
             # if an id reference is found, it can only be one (resources are unique)
             if id_get_path:
-                return self.get_valid_id_for_endpoint(endpoint=id_get_path.pop())
+                valid_id = self.get_valid_id_for_endpoint(endpoint=id_get_path[0])
+                logger.debug(f"get_dependent_id for {id_get_path} returned {valid_id}")
+                return valid_id
             return None
 
         json_data: Dict[str, Any] = {}
