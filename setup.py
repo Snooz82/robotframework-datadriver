@@ -22,6 +22,7 @@ setup(
     url="https://github.com/Snooz82/robotframework-datadriver",
     package_dir={"": "src"},
     packages=find_packages("src"),
+    package_data={'': ['*.libspec']},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
