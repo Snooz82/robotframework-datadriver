@@ -19,6 +19,7 @@ import os.path
 import re
 import traceback
 from glob import glob
+from typing import Any
 
 from robot.api.logger import console  # type: ignore
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
@@ -1259,6 +1260,24 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         self.template_keyword = None
         self.data_table = None
         self.test_case_data = TestCaseData()
+        if reader_class == "openapi_reader":
+            self._init_openapi_executor(**kwargs)
+
+    def _init_openapi_executor(self, **kwargs: Any) -> None:
+        import DataDriver.openapi.openapi_executors as executors
+        openapi_executor = executors.OpenapiExecutors(
+            source=kwargs.get("url", self.config_dict.file),
+            origin=kwargs.get("origin", ""),
+            base_path=kwargs.get("base_path", ""),
+            mappings_path=kwargs.get("mappings_path", ""),
+            username=kwargs.get("username", ""),
+            password=kwargs.get("password", ""),
+            auth=kwargs.get("auth", None),
+        )
+        self.validate_openapi_document = openapi_executor.validate_openapi_document
+        self.test_unauthorized = openapi_executor.test_unauthorized
+        self.test_endpoint = openapi_executor.test_endpoint
+
 
     def _start_suite(self, suite: TestSuite, result):
         """Called when a test suite starts.
