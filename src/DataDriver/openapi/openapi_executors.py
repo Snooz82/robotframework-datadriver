@@ -29,7 +29,7 @@ import jsonschema
 from openapi_spec_validator import openapi_v3_spec_validator, validate_spec
 from prance import ResolvingParser
 from requests import Response, Session
-from requests.auth import HTTPBasicAuth
+from requests.auth import AuthBase, HTTPBasicAuth
 from robot.api.deco import keyword, library
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -53,16 +53,20 @@ class OpenapiExecutors:
             source: str,
             origin: str = "",
             base_path: str = "",
-            user: str = "",
-            password: str = "",
             mappings_path: Union[str, Path] = "",
+            username: str = "",
+            password: str = "",
+            auth: Optional[AuthBase] = None,
         ) -> None:
         parser = ResolvingParser(source)
         self.openapi_doc: Dict[str, Any] = parser.specification
         self.session = Session()
         self.origin = origin
         self.base_url = f"{self.origin}{base_path}"
-        self.auth = HTTPBasicAuth(user, password)
+        if auth:
+            self.auth = auth
+        else:
+            self.auth = HTTPBasicAuth(username, password)
         if mappings_path:
             mappings_path = Path(mappings_path)
             if not mappings_path.is_file():
