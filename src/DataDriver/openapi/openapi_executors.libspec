@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="openapi_executors" type="LIBRARY" format="HTML" scope="GLOBAL" generated="2021-07-20T14:17:31Z" specversion="3" source="openapi_executors.py" lineno="50">
+<version/>
+<doc>&lt;p&gt;Documentation for library &lt;code&gt;openapi_executors&lt;/code&gt;.&lt;/p&gt;</doc>
+<tags>
+</tags>
+<inits>
+<init name="Init" lineno="51">
+<arguments repr="source: str, origin: str = , base_path: str = , mappings_path: str | Path = , username: str = , password: str = , auth: AuthBase | None = None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="source: str">
+<name>source</name>
+<type>str</type>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="origin: str = ">
+<name>origin</name>
+<type>str</type>
+<default/>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="base_path: str = ">
+<name>base_path</name>
+<type>str</type>
+<default/>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="mappings_path: str | Path = ">
+<name>mappings_path</name>
+<type>str</type>
+<type>Path</type>
+<default/>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="username: str = ">
+<name>username</name>
+<type>str</type>
+<default/>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="password: str = ">
+<name>password</name>
+<type>str</type>
+<default/>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="auth: AuthBase | None = None">
+<name>auth</name>
+<type>AuthBase</type>
+<type>None</type>
+<default>None</default>
+</arg>
+</arguments>
+<doc>&lt;p&gt;Initialize self.  See help(type(self)) for accurate signature.&lt;/p&gt;</doc>
+<shortdoc>Initialize self.  See help(type(self)) for accurate signature.</shortdoc>
+</init>
+</inits>
+<keywords>
+<kw name="Test Endpoint" lineno="112">
+<arguments repr="method: str, endpoint: str, status_code: int">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="method: str">
+<name>method</name>
+<type>str</type>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="endpoint: str">
+<name>endpoint</name>
+<type>str</type>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="status_code: int">
+<name>status_code</name>
+<type>int</type>
+</arg>
+</arguments>
+<doc/>
+<shortdoc/>
+</kw>
+<kw name="Test Unauthorized" lineno="101">
+<arguments repr="method: str, endpoint: str">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="method: str">
+<name>method</name>
+<type>str</type>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="endpoint: str">
+<name>endpoint</name>
+<type>str</type>
+</arg>
+</arguments>
+<doc/>
+<shortdoc/>
+</kw>
+<kw name="Validate Openapi Document" lineno="94">
+<arguments repr="">
+</arguments>
+<doc/>
+<shortdoc/>
+</kw>
+</keywords>
+<datatypes>
+</datatypes>
+</keywordspec>
