@@ -56,7 +56,8 @@ class OpenapiReader(AbstractReaderClass):
                     # which case we don't know what to expect and thus can't verify
                     if response != "default" and response not in ignored_responses:
                         tag_list: List[str] = []
-                        tag_list.extend(method_data.get("tags"))
+                        if tags:= method_data.get("tags", None):
+                            tag_list.extend(tags)
                         tag_list.append(f"Method: {method.upper()}")
                         tag_list.append(f"Response: {response}")
                         test_data.append(
