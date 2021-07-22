@@ -1,0 +1,5 @@
+--outputdir logs
+--exclude performanceORFailing
+--extension robot
+--loglevel TRACE:INFO
+--listener RobotStackTracer

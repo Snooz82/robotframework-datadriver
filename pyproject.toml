@@ -1,0 +1,61 @@
+[tool.poetry]
+name="robotframework-datadriver"
+version = "1.5.0-alpha.0"
+description = "A library for Data-Driven Testing."
+license = "Apache-2.0"
+authors = ["René Rohner(Snooz82) <snooz@posteo.de>"]
+maintainers = ["René Rohner(Snooz82) <snooz@posteo.de>"]
+readme =  "Readme.rst"
+homepage = "https://github.com/Snooz82/robotframework-datadriver"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Testing :: Acceptance",
+    "Framework :: Robot Framework",
+]
+packages = [
+    { include = "DataDriver", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.6.1"
+robotframework = ">=3.1"
+pandas = {version = ">=1", optional = true}
+xlrd = {version = ">=1.2.0", optional = true}
+openpyxl = {version = "*", optional = true}
+requests = {version = "*", optional = true}
+prance = {version = "*", optional = true}
+jsonschema = {version = "*", optional = true}
+openapi-spec-validator = {version = "*", optional = true}
+
+[tool.poetry.extras]
+xls = ["pandas", "xlrd", "openpyxl"]
+openapi = ["requests", "prance", "jsonschema", "openapi_spec_validator"]
+
+[tool.poetry.dev-dependencies]
+docutils = "*"
+Pygments = "*"
+pandas = ">=1"
+xlrd = ">=1.2.0"
+openpyxl = "*"
+requests = "*"
+prance = "*"
+jsonschema = "*"
+openapi-spec-validator = "*"
+robotframework-seleniumlibrary = "*"
+robotframework-stacktrace = "*"
+webdrivermanager = "*"
+uvicorn = "*"
+fastapi = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+readme = "create_readme:main"
+testserver = "start_openapi_testserver:main"
+atest = "run_atest:main"
