@@ -3,7 +3,7 @@ Library    DataDriver    encoding=utf8
 Test Template   Test
 
 *** Test Cases ***
-Tempalte
+Template
 
 *** Keywords ***
 Test
@@ -36,4 +36,3 @@ Validate User
     Should Be Equal    ${user}[id]            ${user}[chk][id]
     Should Be Equal    ${user.name.first}     ${user}[chk][name][first]
     Should Be Equal    ${user}[name][last]    ${user}[chk][name][last]
-    

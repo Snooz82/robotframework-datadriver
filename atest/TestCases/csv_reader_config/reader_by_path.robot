@@ -1,14 +1,14 @@
 *** Settings ***
-Library    DataDriver    reader_class=../src/DataDriver/csv_reader.py  
+Library    DataDriver    reader_class=${root}/src/DataDriver/csv_reader.py
 ...    file=tab-csv-file-name.tsv
 ...    encoding=UTF8
-...    dialect=UserDefined    
-...    delimiter=\t    
-...    quotechar='    
-...    escapechar=\\        
+...    dialect=UserDefined
+...    delimiter=\t
+...    quotechar='
+...    escapechar=\\
 ...    my_key=my_value
 ...    my_key2=my_value2
-...    skipinitialspace=True    
+...    skipinitialspace=True
 ...    lineterminator=\n
 
 Test Template    Check Variables
@@ -33,5 +33,4 @@ Check Variables
 Verify Variable
     [Arguments]    ${var}    ${exp_var}    ${default}
     Run Keyword And Continue On Failure   Should Not Be Equal    ${var}    ${default}
-    Run Keyword And Continue On Failure   Should Be Equal As Strings    ${var}    ${exp_var}    
-        
+    Run Keyword And Continue On Failure   Should Be Equal As Strings    ${var}    ${exp_var}

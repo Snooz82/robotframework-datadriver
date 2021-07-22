@@ -17,5 +17,7 @@ check vars
 
 Config Reader
     [Arguments]    ${config}
-    ${new_config}=    Create Dictionary    reader_class=TestCases/custom_reader/custom_reader.py    min=0    max=8
+    ${new_config}=    Create Dictionary
+    ...    reader_class=${root}/atest/TestCases/custom_reader/custom_reader.py
+    ...    min=0    max=8
     [Return]    ${new_config}
