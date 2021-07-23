@@ -50,6 +50,7 @@ robotframework-stacktrace = "*"
 webdrivermanager = "*"
 uvicorn = "*"
 fastapi = "*"
+coverage = {version = "^5.5", extras = ["toml"]}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -59,3 +60,8 @@ build-backend = "poetry.core.masonry.api"
 readme = "create_readme:main"
 testserver = "start_openapi_testserver:main"
 atest = "run_atest:main"
+
+[tool.coverage.run]
+branch = true
+parallel = false
+source = ["src"]
