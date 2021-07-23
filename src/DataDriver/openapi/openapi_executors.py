@@ -89,6 +89,11 @@ class OpenapiExecutors:
                 self.add_dto_mixin = add_dto_mixin
                 self.get_dto_class = get_dto_class(mappings_module_name=mappings_module_name)
                 sys.path.pop()
+        else:
+            self.in_use_mapping = {}
+            from DataDriver.openapi.dto_utils import add_dto_mixin, get_dto_class
+            self.add_dto_mixin = add_dto_mixin
+            self.get_dto_class = get_dto_class(mappings_module_name="no_mapping")
 
     @keyword
     def validate_openapi_document(self) -> None:
@@ -120,7 +125,7 @@ class OpenapiExecutors:
             json_data = asdict(dto)
             if status_code == 409 and dto:
                 json_data = self.ensure_conflict(url=url, dto=dto, method=method)
-            if status_code == 400 and dto:
+            if status_code in [400, 422] and dto:
                 json_data = dto.get_invalidated_data(schema)
         if status_code == 403:
             self.ensure_in_use(url)
@@ -128,7 +133,7 @@ class OpenapiExecutors:
             url = self.invalidate_url(url)
         if method == "PATCH":
             response = self.authorized_request(method="GET", url=url)
-            # The /users/{userId}/password can be PATCHed but GET is not allowed
+            # TODO: is this generic enough to keep? remove if not
             if response.status_code != 405:
                 original_data = response.json()
         response = self.authorized_request(method=method, url=url, json=json_data)
@@ -204,8 +209,8 @@ class OpenapiExecutors:
         # instead of a newly created resource. In this case, the send_json must be
         # in the array of the 'array_item' property on {id}
         send_path: str = response.request.path_url
-        response_path = response_data["href"]
-        if send_path not in response_path:
+        response_path = response_data.get("href", None)
+        if response_path and send_path not in response_path:
             property_to_check = send_path.replace(response_path, "")[1:]
             item_list: List[Dict[str, Any]] = response_data[property_to_check]
             # Use the (mandatory) id to get the POSTed resource from the list
@@ -312,6 +317,11 @@ class OpenapiExecutors:
                     continue
             if property_type == "boolean":
                 json_data[property_name] = bool(random.getrandbits(1))
+                continue
+            # if the property specifies an enum, pick one at random
+            if from_enum := schema["properties"	][property_name].get("enum", None):
+                value = choice(from_enum)
+                json_data[property_name] = value
                 continue
             # Use int32 integers if "format" does not specify int64
             if property_type == "integer":
@@ -501,18 +511,14 @@ class OpenapiExecutors:
         # instead of a newly created resource. In this case, the send_json must be
         # in the array of the 'array_item' property on {id}
         send_path: str = response.request.path_url
-        response_path = reference["href"]
-        if send_path not in response_path:
+        response_path = reference.get("href", None)
+        if response_path and send_path not in response_path:
             property_to_check = send_path.replace(response_path, "")[1:]
             if isinstance(reference[property_to_check], list):
                 item_list: List[Dict[str, Any]] = reference[property_to_check]
                 # Use the (mandatory) id to get the POSTed resource from the list
                 [reference] = [item for item in item_list if item["id"] == send_json["id"]]
         for key, value in send_json.items():
-            # the received password value is the password hash so comparing to the send
-            # value will always fail
-            if key == "password":
-                continue
             try:
                 if value is None:
                     # if a None value is send, the target property should be cleared or
