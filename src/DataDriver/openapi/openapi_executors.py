@@ -372,16 +372,12 @@ class OpenapiExecutors:
         url_parts = url.split("/")
         resource_type = url_parts[-2]
         resource_id = url_parts[-1]
-        # post_endpoint = IN_USE_MAPPING[resource_type]
         post_endpoint = self.in_use_mapping[resource_type]
         dto, _ = self.get_dto_and_schema(method="POST", endpoint=post_endpoint)
         json_data = asdict(dto)
-        if resource_type != "roles":
-            json_data["id"] = resource_id
-            post_url = self.get_valid_url(endpoint=post_endpoint)
-        else:
-            post_url = f"{url}/deviceGroups"
-        response = self.authorized_request(url=post_url, method="POST", json=json_data)
+        json_data["id"] = resource_id
+        post_url = self.get_valid_url(endpoint=post_endpoint)
+        response = self.authorized_request(method="POST", url=post_url, json=json_data)
         assert response.ok
 
     def ensure_conflict(self, url: str, dto: Dto, method: str) -> Dict[str, Any]:
