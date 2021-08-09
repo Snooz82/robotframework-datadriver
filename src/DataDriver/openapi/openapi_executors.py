@@ -180,7 +180,7 @@ class OpenapiExecutors:
             # For endpoints that do no support POST, try to get an existing id using GET
             try:
                 response = self.authorized_request(method="GET", url=url)
-                assert response.status_code == 200
+                assert response.ok
                 response_data = response.json()
                 if isinstance(response_data, list):
                     valid_ids: List[str] = [item["id"] for item in response_data]
@@ -199,7 +199,7 @@ class OpenapiExecutors:
                 )
                 raise exception
 
-        assert response.status_code == 201, (
+        assert response.ok, (
             f"get_valid_id_for_endpoint received status_code {response.status_code}"
         )
         response_data = response.json()
@@ -382,7 +382,7 @@ class OpenapiExecutors:
         else:
             post_url = f"{url}/deviceGroups"
         response = self.authorized_request(url=post_url, method="POST", json=json_data)
-        assert response.status_code == 201
+        assert response.ok
 
     def ensure_conflict(self, url: str, dto: Dto, method: str) -> Dict[str, Any]:
         json_data = asdict(dto)
@@ -399,7 +399,7 @@ class OpenapiExecutors:
                     method="POST", url=post_url, json=json_data
                 )
                 # conflicting resource may already exist, so 409 is also valid
-                assert response.status_code in [201, 409], (
+                assert response.ok or response.status_code == 409, (
                     f"ensure_conflict received {response.status_code}: {response.json()}"
                 )
                 return json_data
@@ -413,7 +413,7 @@ class OpenapiExecutors:
         except Exception:
             # couldn't retrieve a resource to conflict with, so create one instead
             response = self.authorized_request(method="POST", url=url, json=json_data)
-            assert response.status_code == 201, (
+            assert response.ok, (
                 f"ensure_conflict received {response.status_code}: {response.json()}"
             )
             return json_data
