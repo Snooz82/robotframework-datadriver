@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#TODO: support ${itemId} mapping instead of only "id"
+
 import json as _json
 import random
 import sys
@@ -232,10 +234,10 @@ class OpenapiExecutors:
             raise NotImplementedError(f"method '{method}' not suported on '{spec_endpoint}")
         if (body_spec := method_spec.get("requestBody", None)) is None:
             return body_spec, None
-        # content should be a single key/value entry, so use tuple assignment
+        # Content should be a single key/value entry, so use tuple assignment
         content_type, = body_spec["content"].keys()
         if content_type != "application/json":
-            # At present, all endpoints use json so no supported for other types.
+            # At present no supported for other types.
             raise NotImplementedError(f"content_type '{content_type}' not supported")
         content_schema = body_spec["content"][content_type]["schema"]
         resolved_schema: Dict[str, Any] = self.resolve_schema(content_schema)
@@ -310,7 +312,6 @@ class OpenapiExecutors:
             if constrained_values := get_constrained_values(property_name):
                 json_data[property_name] = choice(constrained_values)
                 continue
-            #TODO: ${itemId} or id
             if property_name == "id":
                 if dependent_id := get_dependent_id(operation_id):
                     json_data[property_name] = dependent_id
@@ -356,7 +357,18 @@ class OpenapiExecutors:
                     value = value[:maximum]
                 json_data[property_name] = value
                 continue
-            raise NotImplementedError(f"{property_type}")
+            if property_type == "object":
+                #TODO: needs refactor? user implemented Dto should probably not depend
+                # on endpoint and method
+                default_dto = self.get_dto_class(endpoint="", method="")
+                object_data = self.get_dto_data(
+                    schema=schema["properties"][property_name],
+                    dto=default_dto,
+                    operation_id="",
+                )
+                json_data[property_name] = object_data
+                continue
+            raise NotImplementedError(f"Type '{property_type}' is currently not supported")
         return json_data
 
     @staticmethod
