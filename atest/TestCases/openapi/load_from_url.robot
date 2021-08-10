@@ -3,6 +3,8 @@ Library            DataDriver    reader_class=openapi_reader
 ...                    url=http://127.0.0.1:8000/openapi.json
 ...                    origin=http://127.0.0.1:8000
 ...                    base_path=${EMPTY}
+...                    mappings_path=${CURDIR}/custom_user_mappings.py
+...                    ignore_fastapi_default_422=True
 Force Tags         OpenAPI
 Suite Setup        Validate OpenAPI specification
 Test Template      Validate Test Endpoint Keyword
