@@ -39,20 +39,19 @@ class Dto:
 @dataclass
 class PropertyValueConstraint(Constraint):
     """The allowed values for property_name."""
-
     property_name: str
     values: List[Any]
 
 
 @dataclass
 class IdDependency(Dependency):
-    operation_id: str
+    """The path where a valid id for the propery_name can be gotten (using GET)"""
+    property_name: str
     get_path: str
 
 
 @dataclass
 class UniquePropertyValueConstraint(Constraint):
     """The value of the property must be unique within the resource scope."""
-
     property_name: str
     value: Any

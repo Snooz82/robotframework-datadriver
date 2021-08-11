@@ -15,14 +15,13 @@
 #TODO: support ${itemId} mapping instead of only "id"
 
 import json as _json
-import random
 import sys
 from dataclasses import asdict, make_dataclass
 from importlib import import_module
 from itertools import zip_longest
 from logging import getLogger
 from pathlib import Path
-from random import choice, randint
+from random import choice, getrandbits, randint, uniform
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from uuid import uuid4
 from warnings import simplefilter
@@ -128,7 +127,7 @@ class OpenapiExecutors:
             if status_code == 409 and dto:
                 json_data = self.ensure_conflict(url=url, dto=dto, method=method)
             if status_code in [400, 422] and dto:
-                json_data = dto.get_invalidated_data(schema)
+                json_data = dto.get_invalidated_data(schema, status_code)
         if status_code == 403:
             self.ensure_in_use(url)
         if status_code == 404:
@@ -141,8 +140,12 @@ class OpenapiExecutors:
         response = self.authorized_request(method=method, url=url, json=json_data)
         if response.status_code != status_code:
             if not response.ok:
+                if description := response.json().get("detail"):
+                    pass
+                else:
+                    description = response.json().get("message")
                 logger.error(
-                    f"{response.reason}: {response.json().get('message')}"
+                    f"{response.reason}: {description}"
                 )
             logger.info(
                 f"\nSend: {_json.dumps(json_data, indent=4, sort_keys=True)}"
@@ -263,11 +266,16 @@ class OpenapiExecutors:
     def get_parametrized_endpoint(self, endpoint: str) -> str:
         def match_parts(parts: List[str], spec_parts: List[str]) -> bool:
             for part, spec_part in zip_longest(parts, spec_parts, fillvalue="Filler"):
+                if part == "Filler" or spec_part == "Filler":
+                    return False
                 if part != spec_part and not spec_part.startswith("{"):
                     return False
             return True
 
         endpoint_parts = endpoint.split("/")
+        # trailing '/' should not be matched
+        if len(endpoint_parts) > 2 and endpoint_parts[-1] == "":
+            endpoint_parts.pop(-1)
         spec_endpoints: List[str] = {**self.openapi_doc}["paths"].keys()
         for spec_endpoint in spec_endpoints:
             spec_endpoint_parts = spec_endpoint.split("/")
@@ -290,12 +298,12 @@ class OpenapiExecutors:
             # values should be empty or contain 1 list of allowed values
             return values.pop() if values else []
 
-        def get_dependent_id(operation_id: str) -> Optional[str]:
+        def get_dependent_id(property_name: str) -> Optional[str]:
             dependencies = dto.get_dependencies()
             id_get_path = [
                 d.get_path for d in dependencies if (
                     isinstance(d, IdDependency) and
-                    d.operation_id == operation_id
+                    d.property_name == property_name
                 )
             ]
             # if an id reference is found, it can only be one (resources are unique)
@@ -312,12 +320,11 @@ class OpenapiExecutors:
             if constrained_values := get_constrained_values(property_name):
                 json_data[property_name] = choice(constrained_values)
                 continue
-            if property_name == "id":
-                if dependent_id := get_dependent_id(operation_id):
-                    json_data[property_name] = dependent_id
-                    continue
+            if dependent_id := get_dependent_id(property_name):
+                json_data[property_name] = dependent_id
+                continue
             if property_type == "boolean":
-                json_data[property_name] = bool(random.getrandbits(1))
+                json_data[property_name] = bool(getrandbits(1))
                 continue
             # if the property specifies an enum, pick one at random
             if from_enum := schema["properties"	][property_name].get("enum", None):
@@ -343,7 +350,7 @@ class OpenapiExecutors:
             if property_type == "number":
                 minimum = schema["properties"][property_name].get("minimum", 0.0)
                 maximum = schema["properties"][property_name].get("maximum", 1.0)
-                value = random.uniform(minimum, maximum)
+                value = uniform(minimum, maximum)
                 json_data[property_name] = value
                 continue
             #TODO: byte, binary, date, date-time based on "format"
@@ -384,13 +391,17 @@ class OpenapiExecutors:
         url_parts = url.split("/")
         resource_type = url_parts[-2]
         resource_id = url_parts[-1]
-        post_endpoint = self.in_use_mapping[resource_type]
+        post_endpoint, property_name = self.in_use_mapping[resource_type]
         dto, _ = self.get_dto_and_schema(method="POST", endpoint=post_endpoint)
         json_data = asdict(dto)
-        json_data["id"] = resource_id
+        json_data[property_name] = resource_id
         post_url = self.get_valid_url(endpoint=post_endpoint)
         response = self.authorized_request(method="POST", url=post_url, json=json_data)
-        assert response.ok
+        if not response.ok:
+            logger.debug(
+                f"POST on {post_url} with json {json_data} failed: {response.json()}"
+            )
+            response.raise_for_status()
 
     def ensure_conflict(self, url: str, dto: Dto, method: str) -> Dict[str, Any]:
         json_data = asdict(dto)

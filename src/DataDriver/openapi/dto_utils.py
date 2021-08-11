@@ -14,7 +14,8 @@
 
 from importlib import import_module
 from logging import getLogger
-from typing import Any, Dict, Tuple, Type
+from random import randint, uniform
+from typing import Any, Dict, List, Tuple, Type
 from uuid import uuid4
 
 from DataDriver.openapi.dto_base import Dto
@@ -32,8 +33,48 @@ class DtoMixin:
     def set_partial_data(self) -> None:
         raise NotImplementedError
 
-    def get_invalidated_data(self, schema: Dict[str, Any]) -> Dict[str, Any]:
+    def get_invalidated_data(
+            self, schema: Dict[str, Any], status_code: int
+        ) -> Dict[str, Any]:
         properties: Dict[str, Any] = self.__dict__
+        # if there are dependencies and / or constraints, change the (valid) values
+        # to random values
+        constrained_properties: List[str] = []
+        constrained_properties += [d.property_name for d in self.get_dependencies()]
+        constrained_properties += [c.proprety_name for c in self.get_constraints()]
+        # for status 400, invalidate a constraint but send otherwise valid data
+        if constrained_properties and status_code == 400:
+            for property_to_invalidate in constrained_properties:
+                property_data = schema["properties"][property_to_invalidate]
+                property_type = property_data["type"]
+                current_value = properties[property_to_invalidate]
+                if property_type == "boolean":
+                    properties[property_to_invalidate] = not current_value
+                    continue
+                if property_type == "integer":
+                    minimum = property_data.get("minimum", -2147483648)
+                    maximum = property_data.get("maximum", 2147483647)
+                    value = randint(minimum, maximum)
+                    properties[property_to_invalidate] = value
+                    continue
+                if property_type == "number":
+                    minimum = property_data.get("minimum", 0.0)
+                    maximum = property_data.get("maximum", 1.0)
+                    value = uniform(minimum, maximum)
+                    properties[property_to_invalidate] = value
+                    continue
+                if property_type == "string":
+                    minimum = property_data.get("minLength", 0)
+                    maximum = property_data.get("maxLength", 36)
+                    value = uuid4().hex
+                    while len(value) < minimum:
+                        value = value + uuid4().hex
+                    if len(value) > maximum:
+                        value = value[:maximum]
+                    properties[property_to_invalidate] = value
+                    continue
+            return properties
+        # for status 422 or if there are no constraints, send invalid data
         # For all properties that require a type other than a string, set a string
         schema_properties = schema["properties"]
         for property_name, property_values in schema_properties.items():
