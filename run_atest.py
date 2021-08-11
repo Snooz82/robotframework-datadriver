@@ -11,6 +11,7 @@ def main():
         "robot",
         f"--argumentfile={project_root}/atest/rf_cli.args",
         f"--variable=root:{project_root}",
+        f"--outputdir={project_root}/atest/logs",
         f"{project_root}/atest/TestCases",
     ]
     subprocess.run(cmd)
