@@ -81,7 +81,7 @@ class OpenapiExecutors:
             mappings_module_name = mappings_path.stem
             try:
                 mappings_module = import_module(mappings_module_name)
-                self.in_use_mapping: Dict[str, Any] = mappings_module.IN_USE_MAPPING
+                self.in_use_mapping: Dict[str, Tuple[str, str]] = mappings_module.IN_USE_MAPPING
             except ImportError as exception:
                 logger.debug(f"IN_USE_MAPPING was not imported: {exception}")
                 self.in_use_mapping = {}
@@ -298,20 +298,31 @@ class OpenapiExecutors:
             # values should be empty or contain 1 list of allowed values
             return values.pop() if values else []
 
-        def get_dependent_id(property_name: str) -> Optional[str]:
+        def get_dependent_id(property_name: str, operation_id: str) -> Optional[str]:
             dependencies = dto.get_dependencies()
-            id_get_path = [
-                d.get_path for d in dependencies if (
+            # multiple get paths are possible based on the operation being performed
+            id_get_paths = [
+                (d.get_path, d.operation_id) for d in dependencies if (
                     isinstance(d, IdDependency) and
                     d.property_name == property_name
                 )
             ]
-            # if an id reference is found, it can only be one (resources are unique)
-            if id_get_path:
-                valid_id = self.get_valid_id_for_endpoint(endpoint=id_get_path[0])
-                logger.debug(f"get_dependent_id for {id_get_path} returned {valid_id}")
-                return valid_id
-            return None
+            if not id_get_paths:
+                return None
+            if len(id_get_paths) == 1:
+                id_get_path, _ = id_get_paths.pop()
+            else:
+                try:
+                    [id_get_path] = [
+                        path for path, operation in id_get_paths if operation == operation_id
+                    ]
+                # There could be multiple get_paths, but not one for the current operation
+                except ValueError:
+                    return None
+            valid_id = self.get_valid_id_for_endpoint(endpoint=id_get_path)
+            logger.debug(f"get_dependent_id for {id_get_path} returned {valid_id}")
+            return valid_id
+
 
         json_data: Dict[str, Any] = {}
 
@@ -320,7 +331,9 @@ class OpenapiExecutors:
             if constrained_values := get_constrained_values(property_name):
                 json_data[property_name] = choice(constrained_values)
                 continue
-            if dependent_id := get_dependent_id(property_name):
+            if dependent_id := get_dependent_id(
+                property_name=property_name, operation_id=operation_id
+            ):
                 json_data[property_name] = dependent_id
                 continue
             if property_type == "boolean":

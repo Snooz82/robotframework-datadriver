@@ -14,7 +14,7 @@
 
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any, List
+from typing import Any, List, Optional
 
 
 class Constraint(ABC):
@@ -48,6 +48,7 @@ class IdDependency(Dependency):
     """The path where a valid id for the propery_name can be gotten (using GET)"""
     property_name: str
     get_path: str
+    operation_id: Optional[str] = None
 
 
 @dataclass
