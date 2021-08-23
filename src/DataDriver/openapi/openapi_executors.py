@@ -88,7 +88,9 @@ class OpenapiExecutors:
             finally:
                 from DataDriver.openapi.dto_utils import add_dto_mixin, get_dto_class
                 self.add_dto_mixin = add_dto_mixin
-                self.get_dto_class = get_dto_class(mappings_module_name=mappings_module_name)
+                self.get_dto_class = get_dto_class(
+                    mappings_module_name=mappings_module_name
+                )
                 sys.path.pop()
         else:
             self.in_use_mapping = {}
@@ -121,12 +123,12 @@ class OpenapiExecutors:
 
         url = self.get_valid_url(method=method, endpoint=endpoint)
         dto, schema = self.get_dto_and_schema(method=method, endpoint=endpoint)
-        if dto:
+        if dto and schema:
             dto = self.add_dto_mixin(dto=dto)
             json_data = asdict(dto)
-            if status_code == 409 and dto:
+            if status_code == 409:
                 json_data = self.ensure_conflict(url=url, dto=dto, method=method)
-            if status_code in [400, 422] and dto:
+            if status_code in [400, 422]:
                 json_data = dto.get_invalidated_data(schema, status_code)
         if status_code == 403:
             self.ensure_in_use(url)
@@ -154,7 +156,9 @@ class OpenapiExecutors:
             raise AssertionError(
                 f"Response status_code {response.status_code} was not {status_code}"
             )
-        self.validate_response(endpoint=endpoint, response=response, original_data=original_data)
+        self.validate_response(
+            endpoint=endpoint, response=response, original_data=original_data
+        )
 
     def get_valid_url(self, endpoint: str, method: str = "") -> str:
         endpoint_parts = list(endpoint.split("/"))
@@ -186,16 +190,20 @@ class OpenapiExecutors:
             try:
                 response = self.authorized_request(method="GET", url=url)
                 assert response.ok
-                response_data = response.json()
+                response_data: Union[Dict[str, Any], List[Dict[str, Any]]] = response.json()
                 if isinstance(response_data, list):
                     valid_ids: List[str] = [item["id"] for item in response_data]
-                    logger.debug(f"get_valid_id_for_endpoint: returning choice from list {valid_ids}")
+                    logger.debug(
+                        f"get_valid_id_for_endpoint: returning choice from list {valid_ids}"
+                    )
                     return choice(valid_ids)
                 if valid_id := response_data.get("id"):
                     logger.debug(f"get_valid_id_for_endpoint: returning {valid_id}")
                     return valid_id
                 valid_ids = [item["id"] for item in response_data["items"]]
-                logger.debug(f"get_valid_id_for_endpoint: returning choice from items {valid_ids}")
+                logger.debug(
+                    f"get_valid_id_for_endpoint: returning choice from items {valid_ids}"
+                )
                 return choice(valid_ids)
             except Exception as exception:
                 logger.debug(
@@ -214,14 +222,14 @@ class OpenapiExecutors:
         # instead of a newly created resource. In this case, the send_json must be
         # in the array of the 'array_item' property on {id}
         send_path: str = response.request.path_url
-        response_path = response_data.get("href", None)
+        response_path: Optional[str] = response_data.get("href", None)
         if response_path and send_path not in response_path:
             property_to_check = send_path.replace(response_path, "")[1:]
             item_list: List[Dict[str, Any]] = response_data[property_to_check]
             # Use the (mandatory) id to get the POSTed resource from the list
             [valid_id] = [item["id"] for item in item_list if item["id"] == send_json["id"]]
         else:
-            valid_id = response_data["id"]
+            valid_id: str = response_data["id"]
         return valid_id
 
     def get_dto_and_schema(
@@ -500,7 +508,7 @@ class OpenapiExecutors:
         if content_type == "application/json":
             jsonschema.validate(instance=response.content, schema=content_schema)
         else:
-            # At present, all endpoints use json so no supported for other types.
+            # At present, only json is supported.
             raise NotImplementedError(f"content_type '{content_type}' not supported")
         if response.headers["Content-Type"] != content_type:
             raise ValueError(
@@ -582,19 +590,21 @@ class OpenapiExecutors:
                     try:
                         assert value == reference[key], (
                             f"Received value for {key} '{reference[key]}' does not "
-                            f"match '{value}' in the pre-patch data"
-                            f"\nPre-patch: {_json.dumps(original_data, indent=4, sort_keys=True)}"
+                            f"match '{value}' in the pre-patch data\nPre-patch: "
+                            f"{_json.dumps(original_data, indent=4, sort_keys=True)}"
                             f"\nGot: {_json.dumps(reference, indent=4, sort_keys=True)}"
                         )
                     except KeyError:
                         raise AssertionError(
                             f"{key} was with value '{value}' was no longer "
-                            f"present in the response: {reference}"
-                            f"\nPre-patch: {_json.dumps(original_data, indent=4, sort_keys=True)}"
+                            f"present in the response: {reference}\nPre-patch: "
+                            f"{_json.dumps(original_data, indent=4, sort_keys=True)}"
                             f"\nGot: {_json.dumps(reference, indent=4, sort_keys=True)}"
                         )
 
-    def get_response_spec(self, endpoint: str, method: str, status_code: int) -> Dict[str, Any]:
+    def get_response_spec(
+            self, endpoint: str, method: str, status_code: int
+        ) -> Dict[str, Any]:
         method = method.lower()
         status = str(status_code)
         spec = {**self.openapi_doc}["paths"][endpoint][method]["responses"][status]
