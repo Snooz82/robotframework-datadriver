@@ -37,45 +37,58 @@ class DtoMixin:
             self, schema: Dict[str, Any], status_code: int
         ) -> Dict[str, Any]:
         properties: Dict[str, Any] = self.__dict__
-        # if there are dependencies and / or constraints, change the (valid) values
-        # to random values
+
         constrained_properties: List[str] = []
-        constrained_properties += [d.property_name for d in self.get_dependencies()]
-        constrained_properties += [c.proprety_name for c in self.get_constraints()]
-        # for status 400, invalidate a constraint but send otherwise valid data
-        if constrained_properties and status_code == 400:
-            for property_to_invalidate in constrained_properties:
-                property_data = schema["properties"][property_to_invalidate]
-                property_type = property_data["type"]
-                current_value = properties[property_to_invalidate]
-                if property_type == "boolean":
-                    properties[property_to_invalidate] = not current_value
-                    continue
-                if property_type == "integer":
-                    minimum = property_data.get("minimum", -2147483648)
-                    maximum = property_data.get("maximum", 2147483647)
-                    value = randint(minimum, maximum)
-                    properties[property_to_invalidate] = value
-                    continue
-                if property_type == "number":
-                    minimum = property_data.get("minimum", 0.0)
-                    maximum = property_data.get("maximum", 1.0)
-                    value = uniform(minimum, maximum)
-                    properties[property_to_invalidate] = value
-                    continue
-                if property_type == "string":
-                    minimum = property_data.get("minLength", 0)
-                    maximum = property_data.get("maxLength", 36)
-                    value = uuid4().hex
-                    while len(value) < minimum:
-                        value = value + uuid4().hex
-                    if len(value) > maximum:
-                        value = value[:maximum]
-                    properties[property_to_invalidate] = value
-                    continue
-            return properties
-        # for status 422 or if there are no constraints, send invalid data
-        # For all properties that require a type other than a string, set a string
+        #TODO: figure out if dependencies should be considered; breaking a dependency
+        # can result in a number of response codes, depending on API implementation;
+        # perhaps a mapping is needed for the relation response code and the reason
+        # constrained_properties += [d.property_name for d in self.get_dependencies()]
+        constrained_properties += [c.property_name for c in self.get_constraints()]
+        # if possible, invalidate a constraint but send otherwise valid data
+        for property_name in properties.keys():
+            property_data = schema["properties"][property_name]
+            property_type = property_data["type"]
+            current_value = properties[property_name]
+            #TODO: add handling for enums; if defined, set something not in the enum
+            if property_type == "boolean" and property_name in constrained_properties:
+                properties[property_name] = not current_value
+                return properties
+            if property_type == "integer":
+                if minimum := property_data.get("minimum"):
+                    properties[property_name] = minimum - 1
+                    return properties
+                if maximum := property_data.get("maximum"):
+                    properties[property_name] = maximum + 1
+                    return properties
+                if property_name in constrained_properties:
+                    #TODO: figure out a good generic approach, also consider multiple
+                    # constraints on the same property
+                    #HACK: this int is way out of the json supported int range
+                    properties[property_name] = uuid4().int
+                    return properties
+            if property_type == "number":
+                if minimum := property_data.get("minimum"):
+                    properties[property_name] = minimum - 1
+                    return properties
+                if maximum := property_data.get("maximum"):
+                    properties[property_name] = maximum + 1
+                    return properties
+                if property_name in constrained_properties:
+                    #TODO: figure out a good generic approach, also consider multiple
+                    # constraints on the same property
+                    #HACK: this float is way out of the json supported float range
+                    properties[property_name] = uuid4().int / 3.14
+                    return properties
+            if property_type == "string":
+                if minimum := property_data.get("minLength"):
+                    if minimum > 0:
+                        # if there is a minimum length, send 1 character less
+                        properties[property_name] = current_value[0:minimum-1]
+                        return properties
+                if maximum := property_data.get("maxLength"):
+                    properties[property_name] = current_value + uuid4().hex
+                    return properties
+        # if there are no constraints to violate, send invalid data types
         schema_properties = schema["properties"]
         for property_name, property_values in schema_properties.items():
             property_type = property_values.get("type")
@@ -85,7 +98,7 @@ class DtoMixin:
                 )
                 properties[property_name] = uuid4().hex
             else:
-                # Since int / float / bool can always be interpreted as sting,
+                # Since int / float / bool can always be cast to sting,
                 # change the string to a nested object
                 properties[property_name] = [
                     {
