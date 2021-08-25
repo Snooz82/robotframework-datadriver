@@ -19,6 +19,7 @@ import os.path
 import re
 import traceback
 from glob import glob
+from pathlib import Path
 from typing import Any
 
 from robot.api.logger import console  # type: ignore
@@ -95,9 +96,19 @@ Excel Support
 
 For file support of ``xls`` or ``xlsx`` file you need to install the extra XLS or the dependencies.
 It contains the dependencies of pandas, numpy and xlrd. Just add [XLS] to your installation.
-New since version 3.6.
 
 ``pip install --upgrade robotframework-datadriver[XLS]``
+
+
+OpenAPI / Swagger Support
+~~~~~~~~~~~~~
+
+For support of OpenAPI / Swagger the following additional dependencies are required:
+requests, prance, jsonschema and openapi_spec_validator.
+These dependencies can be automatically be installed by using the [openapi] install option.
+New since version 1.5.
+
+``pip install --upgrade robotframework-datadriver[openapi]``
 
 
 Python 2
@@ -827,6 +838,71 @@ Example with folders:
         Should Be Equal    ${TEST_NAME}    ${content}
 
 
+OpenAPI (aka Swagger)
+~~~~~~~~~~~~~~~~~~~~~
+
+The OpenAPI Specification (OAS) defines a standard, language-agnostic interface to RESTful APIs.
+https://swagger.io/specification/
+
+The openapi module implements a reader class that generates a test case for each
+endpoint, method and response that is defined in an OpenAPI document, typically
+an openapi.json or openapi.yaml file.
+
+
+How it works
+^^^^^^^^^^^^
+
+If the openapi_reader is used and the file has the .json or .yaml extension, it will be
+loaded by the prance module and the test cases will be generated.
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library            DataDriver    reader_class=openapi_reader
+    ...                    file=openapi.json
+    Test Template      Do Nothing
+
+
+    *** Test Cases ***
+    Some OpenAPI test for ${method} on ${endpoint} where ${status_code} is expected
+
+    *** Keywords *** ***
+    Do Nothing
+        [Arguments]    ${endpoint}    ${method}    ${status_code}
+        No Operation
+
+It is also possible to load the openapi.json / openapi.yaml directly from the server
+by using the url instead of a local file:
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library            DataDriver    reader_class=openapi_reader
+    ...                    url=http://127.0.0.1:8000/openapi.json
+
+
+Since the OpenAPI document is essentially a contract that specifies what operations are
+supported and what data needs to be send and will be returned, it is possible to
+automatically validate the API against this contract. For this purpose, the openapi
+module also implements a number of keywords.
+
+
+Validate OpenAPI Document
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Validate OpenAPI Document is intended to be used in the Suite Setup and will validate
+the OpenAPI document against the OpenAPI v3 specification. All errors encountered will
+be logged and the keyword fails if any errors are found. This keyword can be used in
+Test Setup to Skip test execution for the generated Test Cases if the document is
+invalid to prevent a great number of failed test cases.
+
+
+Test Endpoint
+^^^^^^^^^^^^^
+
+
+
+
 File Encoding and CSV Dialect
 -----------------------------
 
@@ -1488,20 +1564,17 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             self._init_openapi_executor(**kwargs)
 
     def _init_openapi_executor(self, **kwargs: Any) -> None:
-        import DataDriver.openapi.openapi_executors as executors
-        openapi_executor = executors.OpenapiExecutors(
-            source=kwargs.get("url", self.config_dict.file),
-            origin=kwargs.get("origin", ""),
-            base_path=kwargs.get("base_path", ""),
-            mappings_path=kwargs.get("mappings_path", ""),
-            username=kwargs.get("username", ""),
-            password=kwargs.get("password", ""),
-            auth=kwargs.get("auth", None),
+        mappings_path = Path(kwargs.get("mappings_path", "")).as_posix()
+        BuiltIn().import_library(
+            "DataDriver.openapi.openapi_executors",
+            kwargs.get("url", self.config_dict.file),
+            kwargs.get("origin", ""),
+            kwargs.get("base_path", ""),
+            mappings_path,
+            kwargs.get("username", ""),
+            kwargs.get("password", ""),
+            kwargs.get("auth", None),
         )
-        self.validate_openapi_document = openapi_executor.validate_openapi_document
-        self.test_unauthorized = openapi_executor.test_unauthorized
-        self.test_endpoint = openapi_executor.test_endpoint
-
 
     def _start_suite(self, suite: TestSuite, result):
         """Called when a test suite starts.
