@@ -32,6 +32,7 @@ from prance import ResolvingParser
 from requests import Response, Session
 from requests.auth import AuthBase, HTTPBasicAuth
 from robot.api.deco import keyword, library
+from robot.libraries.BuiltIn import BuiltIn
 from urllib3.exceptions import InsecureRequestWarning
 
 from DataDriver.openapi.dto_base import (
@@ -40,6 +41,9 @@ from DataDriver.openapi.dto_base import (
     PropertyValueConstraint,
     UniquePropertyValueConstraint,
 )
+
+
+run_keyword = BuiltIn().run_keyword
 
 
 logger = getLogger(__name__)
@@ -106,9 +110,9 @@ class OpenapiExecutors:
         validate_spec(self.openapi_doc)
 
     @keyword
-    def test_unauthorized(self, method: str, endpoint: str) -> None:
-        url = self.get_valid_url(endpoint)
-        logger.info(f"Sending unauthorized {method} request to {url}")
+    def test_unauthorized(self, endpoint: str, method: str) -> None:
+        url = run_keyword("get_valid_url", endpoint)
+        # logger.info(f"Sending unauthorized {method} request to {url}")
         response = self.session.request(
             method=method,
             url=url,
@@ -121,23 +125,22 @@ class OpenapiExecutors:
         json_data: Optional[Dict[str, Any]] = None
         original_data: Optional[Dict[str, Any]] = None
 
-        url = self.get_valid_url(method=method, endpoint=endpoint)
+        url: str = run_keyword("get_valid_url", endpoint)
         dto, schema = self.get_dto_and_schema(method=method, endpoint=endpoint)
         if dto and schema:
             dto = self.add_dto_mixin(dto=dto)
             json_data = asdict(dto)
             if status_code == 409:
-                json_data = self.ensure_conflict(url=url, dto=dto, method=method)
+                json_data = run_keyword("ensure_conflict", url, method, dto)
             if status_code in [400, 422]:
                 json_data = dto.get_invalidated_data(schema, status_code)
         if status_code == 403:
-            self.ensure_in_use(url)
+            run_keyword("ensure_in_use", url)
         if status_code == 404:
-            url = self.invalidate_url(url)
+            url = run_keyword("invalidate_url", url)
         if method == "PATCH":
-            response = self.authorized_request(method="GET", url=url)
-            # TODO: is this generic enough to keep? remove if not
-            if response.status_code != 405:
+            response: Response = run_keyword("authorized_request", url, "GET")
+            if response.ok:
                 original_data = response.json()
         response = self.authorized_request(method=method, url=url, json=json_data)
         if response.status_code != status_code:
@@ -156,19 +159,29 @@ class OpenapiExecutors:
             raise AssertionError(
                 f"Response status_code {response.status_code} was not {status_code}"
             )
-        self.validate_response(
-            endpoint=endpoint, response=response, original_data=original_data
-        )
+        run_keyword("validate_response", endpoint, response, original_data)
+        if method == "DELETE" and response.ok:
+            response = run_keyword("authorized_request", url, "GET")
+            if response.ok:
+                raise AssertionError(
+                    f"Resource still exists after deletion. Url was {url}"
+                )
+            # if the endpoint supports GET, 404 is expected, if not 405 is expected
+            if response.status_code not in [404, 405]:
+                logger.warning(
+                    f"Unexpected response after deleting resource: Status_code "
+                    f"{response.status_code} was received after trying to get {url} "
+                    f"after sucessfully deleting it."
+                )
 
-    def get_valid_url(self, endpoint: str, method: str = "") -> str:
+    @keyword
+    def get_valid_url(self, endpoint: str) -> str:
         endpoint_parts = list(endpoint.split("/"))
         for index, part in enumerate(endpoint_parts):
             if part.startswith("{") and part.endswith("}"):
                 type_endpoint_parts = endpoint_parts[slice(index)]
                 type_endpoint = "/".join(type_endpoint_parts)
-                existing_id = self.get_valid_id_for_endpoint(
-                    endpoint=type_endpoint, method=method
-                )
+                existing_id: str = run_keyword("get_valid_id_for_endpoint", type_endpoint)
                 if not existing_id:
                     raise Exception
                 endpoint_parts[index] = existing_id
@@ -176,8 +189,9 @@ class OpenapiExecutors:
         url = f"{self.base_url}{resolved_endpoint}"
         return url
 
-    def get_valid_id_for_endpoint(self, endpoint: str, method: str = "") -> str:
-        url = self.get_valid_url(endpoint=endpoint, method=method)
+    @keyword
+    def get_valid_id_for_endpoint(self, endpoint: str) -> str:
+        url = self.get_valid_url(endpoint=endpoint)
         # Try to create a new resource to prevent 403 and 409 conflicts caused by
         # operations performed on the same resource by other test cases
         try:
@@ -291,6 +305,7 @@ class OpenapiExecutors:
                 return spec_endpoint
         raise ValueError(f"{endpoint} not matched to openapi_doc path")
 
+    @keyword
     def get_dto_data(
             self, schema: Dict[str, Any], dto: Type[Dto], operation_id: str
         ) -> Optional[Dict[str, Any]]:
@@ -386,8 +401,7 @@ class OpenapiExecutors:
                 json_data[property_name] = value
                 continue
             if property_type == "object":
-                #TODO: needs refactor? user implemented Dto should probably not depend
-                # on endpoint and method
+                #FIXME: user implemented Dto should not depend on endpoint and method
                 default_dto = self.get_dto_class(endpoint="", method="")
                 object_data = self.get_dto_data(
                     schema=schema["properties"][property_name],
@@ -400,6 +414,7 @@ class OpenapiExecutors:
         return json_data
 
     @staticmethod
+    @keyword
     def invalidate_url(valid_url: str) -> str:
         url_parts = list(valid_url.split("/"))
         for part in reversed(url_parts):
@@ -408,6 +423,7 @@ class OpenapiExecutors:
                 return invalid_url
         raise Exception(f"Failed to invalidate {valid_url}")
 
+    @keyword
     def ensure_in_use(self, url: str) -> None:
         url_parts = url.split("/")
         resource_type = url_parts[-2]
@@ -424,7 +440,8 @@ class OpenapiExecutors:
             )
             response.raise_for_status()
 
-    def ensure_conflict(self, url: str, dto: Dto, method: str) -> Dict[str, Any]:
+    @keyword
+    def ensure_conflict(self, url: str, method: str, dto: Dto) -> Dict[str, Any]:
         json_data = asdict(dto)
         for constraint in dto.get_constraints():
             if isinstance(constraint, UniquePropertyValueConstraint):
@@ -488,6 +505,7 @@ class OpenapiExecutors:
                 merged_schema[key] = value
         return merged_schema
 
+    @keyword
     def validate_response(
             self,
             endpoint: str,
@@ -540,6 +558,7 @@ class OpenapiExecutors:
             )
 
     @staticmethod
+    @keyword
     def validate_send_response(
             response: Response,
             original_data: Optional[Dict[str, Any]] = None
@@ -610,10 +629,11 @@ class OpenapiExecutors:
         spec = {**self.openapi_doc}["paths"][endpoint][method]["responses"][status]
         return spec
 
+    @keyword
     def authorized_request(
             self,
-            method: str,
             url: str,
+            method: str,
             json: Optional[Any] = None,
         ) -> Response:
         logger.info(f"Sending {method} request to {url}")
