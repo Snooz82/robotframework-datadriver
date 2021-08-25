@@ -1,11 +1,20 @@
+from enum import Enum
 from typing import Dict, List, Optional
 from uuid import uuid4
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, conint, constr, confloat
 
 app = FastAPI()
+
+
+class WeekDay(str, Enum):
+    Monday = "Monday"
+    Tuesday = "Tuesday"
+    Wednesday = "Wednesday"
+    Thursday = "Thursday"
+    Friday = "Friday"
 
 
 class Message(BaseModel):
@@ -14,25 +23,32 @@ class Message(BaseModel):
 
 class WageGroup(BaseModel):
     id: str
+    # hourly_rate: confloat(ge=14.37, lt=50.00)
     hourly_rate: float
 
 
 class EmployeeDetails(BaseModel):
     id: str
     name: str
+    # login_name: constr(strip_whitespace=True, min_length=1, max_length=20)
     employee_number: int
     wagegroup_id: str
+    parttime_day: Optional[WeekDay]
 
 
 class Employee(BaseModel):
     name: str
+    # login_name: constr(strip_whitespace=True, min_length=1, max_length=20)
     wagegroup_id: str
+    parttime_day: Optional[WeekDay]
 
 
 class EmployeeUpdate(BaseModel):
     name: Optional[str]
+    # login_name: Optional[constr(strip_whitespace=True, min_length=1, max_length=20)]
     employee_number: Optional[int]
     wagegroup_id: Optional[str]
+    parttime_day: Optional[WeekDay]
 
 
 WAGE_GROUPS: Dict[str, WageGroup] = {}
