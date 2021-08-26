@@ -425,13 +425,22 @@ class OpenapiExecutors:
 
     @keyword
     def ensure_in_use(self, url: str) -> None:
-        url_parts = url.split("/")
-        resource_type = url_parts[-2]
-        resource_id = url_parts[-1]
+        endpoint = url.removeprefix(self.base_url)
+        endpoint_parts = endpoint.split("/")
+        # first part will be '' since an endpoint starts with /
+        endpoint_parts.pop(0)
+        parameterized_url = self.get_parametrized_endpoint(endpoint=endpoint)
+        if parameterized_url.endswith("}"):
+            resource_type = endpoint_parts[-2]
+            resource_id = endpoint_parts[-1]
+        else:
+            resource_type = endpoint_parts[-1]
+            resource_id = None
         post_endpoint, property_name = self.in_use_mapping[resource_type]
         dto, _ = self.get_dto_and_schema(method="POST", endpoint=post_endpoint)
         json_data = asdict(dto)
-        json_data[property_name] = resource_id
+        if resource_id:
+            json_data[property_name] = resource_id
         post_url = self.get_valid_url(endpoint=post_endpoint)
         response = self.authorized_request(method="POST", url=post_url, json=json_data)
         if not response.ok:
