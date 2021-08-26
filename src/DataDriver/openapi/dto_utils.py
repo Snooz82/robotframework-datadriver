@@ -14,11 +14,11 @@
 
 from importlib import import_module
 from logging import getLogger
-from random import randint, uniform
+from random import shuffle
 from typing import Any, Dict, List, Tuple, Type
 from uuid import uuid4
 
-from DataDriver.openapi.dto_base import Dto
+from DataDriver.openapi.dto_base import Dto, Constraint, Dependency, IdDependency
 
 logger = getLogger(__name__)
 
@@ -38,18 +38,41 @@ class DtoMixin:
         ) -> Dict[str, Any]:
         properties: Dict[str, Any] = self.__dict__
 
-        constrained_properties: List[str] = []
-        #TODO: figure out if dependencies should be considered; breaking a dependency
+        #TODO: Figure out how dependencies should be considered; breaking a dependency
         # can result in a number of response codes, depending on API implementation;
-        # perhaps a mapping is needed for the relation response code and the reason
-        # constrained_properties += [d.property_name for d in self.get_dependencies()]
-        constrained_properties += [c.property_name for c in self.get_constraints()]
-        # if possible, invalidate a constraint but send otherwise valid data
-        for property_name in properties.keys():
+        # perhaps a mapping is needed for the relation between response code and the reason.
+        # Current implementation breaks an existing IdDependency which ensures the
+        # properties in the request will not violate the schema, so the API logic is
+        # where the 4xx response must come from.
+        dependencies: List[Dependency] = self.get_dependencies()
+        shuffle(dependencies)
+        for dependency in dependencies:
+            if isinstance(dependency, IdDependency) and status_code != 422:
+                properties[dependency.property_name] = uuid4().hex
+                return properties
+
+        #TODO: figure out how constraints should be broken, depending on the type of
+        # constraint
+        constrained_properties: List[Constraint] = [
+            c.property_name for c in self.get_constraints()
+        ]
+        property_names = list(properties.keys())
+        # shuffle the propery_names so different properties on the Dto are invalidated
+        # when rerunning the test
+        shuffle(property_names)
+        for property_name in property_names:
+            # if possible, invalidate a constraint but send otherwise valid data
             property_data = schema["properties"][property_name]
             property_type = property_data["type"]
             current_value = properties[property_name]
             #TODO: add handling for enums; if defined, set something not in the enum
+            if enum_values := property_data.get("enum"):
+                invalidated_value = self.get_invalid_value_from_enum(
+                    values=enum_values, value_type=property_type
+                )
+                if invalidated_value is not None:
+                    properties[property_name] = invalidated_value
+                    return properties
             if property_type == "boolean" and property_name in constrained_properties:
                 properties[property_name] = not current_value
                 return properties
@@ -108,6 +131,28 @@ class DtoMixin:
                     }
                 ]
         return properties
+
+    @staticmethod
+    def get_invalid_value_from_enum(values: List[Any], value_type: str):
+        if value_type == "string":
+            invalid_value: Any = ""
+        elif value_type in ["integer", "number"]:
+            invalid_value = 0
+        elif value_type == "array":
+            invalid_value = []
+        elif value_type == "object":
+            invalid_value = {}
+        else:
+            logger.warning(f"Cannot invalidate enum value with type {value_type}")
+            return None
+        for value in values:
+            if value_type in ["string", "integer", "number"]:
+                invalid_value += value
+            if value_type == "array":
+                invalid_value.extend(value)
+            if value_type == "object":
+                invalid_value.update(value)
+        return invalid_value
 
 
 class ExtendedDto(Dto, DtoMixin):
