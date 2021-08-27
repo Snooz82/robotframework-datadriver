@@ -14,7 +14,7 @@
 
 from typing import Optional, Any, Dict, List
 
-from robot.utils import DotDict
+from robot.utils import DotDict  # type: ignore
 
 from .utils import PabotOpt
 

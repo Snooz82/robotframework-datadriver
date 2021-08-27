@@ -655,6 +655,8 @@ structure your data source has.
 XLS / XLSX Files
 ~~~~~~~~~~~~~~~~
 
+To use Excel file types, you have to install DataDriver with the Extra XLS.
+
 If you want to use Excel based data sources, you may just set the file
 to the extention or you may point to the correct file. If the extention
 is ".xls" or ".xlsx" DataDriver will interpret it as Excel file.
@@ -689,6 +691,15 @@ situation that a European time value like "04.02.2019" (4th January
 00:00:00". This may cause unwanted behavior. To mitigate this risk you
 should define Excel based files explicitly as text within Excel.
 
+Alternatively you may deactivate that string conversion.
+To do so, you have to add the option ``preserve_xls_types`` to ``True``.
+In that case, you will get str, float, boolean, int, datetime.time,
+datetime.datetime and some others.
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    file=my_data_source.xlsx    preserve_xls_types=True
 
 PICT (Pairwise Independent Combinatorial Testing)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

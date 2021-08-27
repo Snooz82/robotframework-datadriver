@@ -14,25 +14,18 @@
 try:
     import pandas as pd  # type: ignore
     from math import nan  # type: ignore
+    import xlrd  # type: ignore
 except ImportError:
     raise ImportError(
         """Requirements (pandas, xlrd) for XLS support are not installed.
     Use 'pip install -U robotframework-datadriver[XLS]' to install XLS support."""
     )
 
-from .AbstractReaderClass import AbstractReaderClass
+from .xlsx_reader import xlsx_reader
 
 
-class xls_reader(AbstractReaderClass):
-    def get_data_from_source(self):
-        data_frame = pd.read_excel(self.file, sheet_name=self.sheet_name, dtype=str).replace(
-            nan, "", regex=True
-        )
-        self._analyse_header(list(data_frame))
-        for row_index, row in enumerate(data_frame.values.tolist()):
-            try:
-                self._read_data_from_table(row)
-            except Exception as e:
-                e.row = row_index + 1
-                raise e
-        return self.data_table
+class xls_reader(xlsx_reader):
+    def read_data_frame_from_file(self, dtype):
+        return pd.read_excel(
+            self.file, sheet_name=self.sheet_name, dtype=dtype
+        ).replace(nan, "", regex=True)

@@ -47,10 +47,11 @@ from .utils import (  # type: ignore
     Encodings,
 )
 
-__version__ = "1.4.1"
+__version__ = "1.5.0"
 
 
 class DataDriver:
+    # region: docstring
     """
 
 ===================================================
@@ -708,6 +709,8 @@ structure your data source has.
 XLS / XLSX Files
 ~~~~~~~~~~~~~~~~
 
+To use Excel file types, you have to install DataDriver with the Extra XLS.
+
 If you want to use Excel based data sources, you may just set the file
 to the extention or you may point to the correct file. If the extention
 is ".xls" or ".xlsx" DataDriver will interpret it as Excel file.
@@ -742,6 +745,15 @@ situation that a European time value like "04.02.2019" (4th January
 00:00:00". This may cause unwanted behavior. To mitigate this risk you
 should define Excel based files explicitly as text within Excel.
 
+Alternatively you may deactivate that string conversion.
+To do so, you have to add the option ``preserve_xls_types`` to ``True``.
+In that case, you will get str, float, boolean, int, datetime.time,
+datetime.datetime and some others.
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    file=my_data_source.xlsx    preserve_xls_types=True
 
 PICT (Pairwise Independent Combinatorial Testing)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1312,6 +1324,7 @@ Binary creates with 40 test cases and 8 threads something like that:
     P16: 40
 
     """
+# endregion
 
     ROBOT_LIBRARY_DOC_FORMAT = "reST"
     ROBOT_LIBRARY_VERSION = __version__
@@ -1330,7 +1343,7 @@ Binary creates with 40 test cases and 8 threads something like that:
         skipinitialspace: bool = False,
         lineterminator: str = "\r\n",
         *,
-        sheet_name=0,
+        sheet_name: Union[str, int] = 0,
         reader_class: Optional[str] = None,
         file_search_strategy: str = "PATH",
         file_regex: str = r"(?i)(.*?)(\.csv)",
@@ -1339,8 +1352,9 @@ Binary creates with 40 test cases and 8 threads something like that:
         listseperator: str = ",",
         config_keyword: Optional[str] = None,
         optimize_pabot: PabotOpt = PabotOpt.Equal,
-        **kwargs,
+        **kwargs: Any,
     ):
+        # region: docstring
         """**Example:**
 
 .. code :: robotframework
@@ -1436,8 +1450,8 @@ Optimize Pabot
 When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit`` to be faster.
 
         """
+        # endregion
         self.ROBOT_LIBRARY_LISTENER = self
-        print(kwargs)
         try:
             re.compile(file_regex)
         except re.error as e:
@@ -1478,7 +1492,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         self.template_test = None
         self.template_keyword = None
         self.data_table = None
-        self.data_table_dict = None
+        self.data_table_dict = DotDict()
         self.test_case_data = TestCaseData()
 
     def _start_suite(self, suite: TestSuite, result):
@@ -1512,7 +1526,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             if self.reader_config.file:
                 error(
                     f'In source file:\n'
-                    f'  File "{self.reader_config.file}", line {e.row if hasattr(e, "row") else "0"}'
+                    f'  File "{self.reader_config.file}", line {e.row if hasattr(e, "row") else "0"}'  # type: ignore
                 )
             debug(traceback.format_exc())
             raise e
@@ -1528,7 +1542,15 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         self.data_table_dict = DotDict([(item.test_case_name, item) for item in self.data_table])
         BuiltIn().set_suite_variable('${DataDriver_DATA_DICT}', self.data_table_dict)
 
+    def _get_all_tags(self):
+        all_tags = set()
+        for test_data in self.data_table:
+            all_tags.update(test_data.tags or [])
+        return all_tags
+
     def _clean_template_test(self):
+        for tag in self._get_all_tags():
+            self.template_test.tags.remove(tag)
         if self._is_new_model():
             self.template_test.body = None
         else:

@@ -22,5 +22,4 @@ Check Variables
 Verify Variable
     [Arguments]    ${var}    ${exp_var}    ${default}
     Run Keyword And Continue On Failure   Should Not Be Equal    ${var}    ${default}
-    Run Keyword And Continue On Failure   Should Be Equal As Strings    ${var}    ${exp_var}    
-        
+    Run Keyword And Continue On Failure   Should Be Equal As Strings    ${var}    ${exp_var}

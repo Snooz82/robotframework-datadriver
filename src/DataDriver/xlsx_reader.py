@@ -14,20 +14,21 @@
 try:
     import pandas as pd  # type: ignore
     from math import nan  # type: ignore
+    import openpyxl  # type: ignore
 except ImportError:
     raise ImportError(
         """Requirements (pandas, openpyxl) for XLSX support are not installed.
     Use 'pip install -U robotframework-datadriver[XLS]' to install XLSX support."""
     )
+from robot.utils import is_truthy  # type: ignore
 
 from .AbstractReaderClass import AbstractReaderClass
 
 
 class xlsx_reader(AbstractReaderClass):
     def get_data_from_source(self):
-        data_frame = pd.read_excel(
-            self.file, sheet_name=self.sheet_name, dtype=str, engine="openpyxl"
-        ).replace(nan, "", regex=True)
+        dtype = object if is_truthy(getattr(self, "preserve_xls_types", False)) else str
+        data_frame = self.read_data_frame_from_file(dtype)
         self._analyse_header(list(data_frame))
         for row_index, row in enumerate(data_frame.values.tolist()):
             try:
@@ -36,3 +37,8 @@ class xlsx_reader(AbstractReaderClass):
                 e.row = row_index + 1
                 raise e
         return self.data_table
+
+    def read_data_frame_from_file(self, dtype):
+        return pd.read_excel(
+            self.file, sheet_name=self.sheet_name, dtype=dtype, engine="openpyxl"
+        ).replace(nan, "", regex=True)

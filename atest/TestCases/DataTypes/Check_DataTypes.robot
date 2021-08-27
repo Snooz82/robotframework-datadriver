@@ -3,7 +3,7 @@ Library    DataDriver    encoding=utf8
 Test Template   Test
 
 *** Test Cases ***
-Tempalte
+Template
 
 *** Keywords ***
 Test
