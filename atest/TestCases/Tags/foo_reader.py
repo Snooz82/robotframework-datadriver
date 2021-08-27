@@ -3,7 +3,6 @@ from DataDriver.ReaderConfig import TestCaseData
 
 
 class foo_reader(AbstractReaderClass):
-
     def get_data_from_source(self):
         return self._read_file_to_data_table()
 

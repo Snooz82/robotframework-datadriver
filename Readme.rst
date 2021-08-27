@@ -1,5 +1,3 @@
-
-
 ===================================================
 DataDriver for Robot Framework®
 ===================================================
@@ -1268,5 +1266,3 @@ Binary creates with 40 test cases and 8 threads something like that:
     P14: 38
     P15: 39
     P16: 40
-
-    

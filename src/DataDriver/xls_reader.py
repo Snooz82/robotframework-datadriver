@@ -26,6 +26,6 @@ from .xlsx_reader import xlsx_reader
 
 class xls_reader(xlsx_reader):
     def read_data_frame_from_file(self, dtype):
-        return pd.read_excel(
-            self.file, sheet_name=self.sheet_name, dtype=dtype
-        ).replace(nan, "", regex=True)
+        return pd.read_excel(self.file, sheet_name=self.sheet_name, dtype=dtype).replace(
+            nan, "", regex=True
+        )
