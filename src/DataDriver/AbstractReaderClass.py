@@ -42,6 +42,7 @@ class AbstractReaderClass(ABC):
         self.lineterminator = reader_config.lineterminator
         self.sheet_name = reader_config.sheet_name
         self.list_separator = reader_config.list_separator
+        self.handle_template_tags = reader_config.handle_template_tags
         self.kwargs = reader_config.kwargs
         for key, value in reader_config.kwargs.items():
             setattr(self, key, value)

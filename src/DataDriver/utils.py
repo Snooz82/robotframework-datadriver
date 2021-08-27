@@ -151,6 +151,23 @@ This can be set by ``optimize_pabot`` in Library import.
     Atomic = auto()
 
 
+class TagHandling(Enum):
+    """
+You can configure how to handle tags from the template in generated tests:
+
+- ForceTags: Will add all tags of the template test to all data-driven test cases.
+- UnsetTags: Will add only these tags from template test to the tests, that are not assigned to any of the test cases.
+- DefaultTags: Will only add tags to data-driven test if no tag is set on that test.
+- NoTags: Will not add any tags from the template to date-driven tests.
+
+    """
+    ForceTags = auto()
+    UnsetTags = auto()
+    DefaultTags = auto()
+    NoTags = auto()
+
+
+
 def debug(msg: Any, newline: bool = True, stream: str = "stdout"):
     if get_variable_value("${LOG LEVEL}") in ["DEBUG", "TRACE"]:
         logger.console(msg, newline, stream)

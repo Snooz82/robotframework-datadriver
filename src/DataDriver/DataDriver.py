@@ -44,7 +44,7 @@ from .utils import (  # type: ignore
     error,
     equally_partition_test_list,
     binary_partition_test_list,
-    Encodings,
+    Encodings, TagHandling,
 )
 
 __version__ = "1.5.0"
@@ -1349,6 +1349,7 @@ Binary creates with 40 test cases and 8 threads something like that:
         file_regex: str = r"(?i)(.*?)(\.csv)",
         include: Optional[str] = None,
         exclude: Optional[str] = None,
+        handle_template_tags: TagHandling = TagHandling.UnsetTags,
         listseperator: str = ",",
         config_keyword: Optional[str] = None,
         optimize_pabot: PabotOpt = PabotOpt.Equal,
@@ -1385,6 +1386,7 @@ Options
     ...    file_regex=(?i)(.*?)(\\.csv)
     ...    include=None
     ...    exclude=None
+    ...    handle_template_tags=UnsetTags
     ...    listseperator=,
     ...    config_keyword=None
     ...    optimize_pabot=Equal
@@ -1415,21 +1417,22 @@ Dialect to LineTerminator
 Defines how a csv file is interpreted.
 
 
-Sheet Name
-^^^^^^^^^^
-
-Defines which Excel Sheed has to be taken.
-
-
 Reader Class
 ^^^^^^^^^^^^
 
 Defines which custom DataReader shall be loaded and get handed over all configs to deliver the TestCaseData.
 
+
 Include & Exclude
 ^^^^^^^^^^^^^^^^^
 
 Alternative way to CLI Options of Robot Framework® to filter the specific TestCaseData based on given Tags.
+
+
+Handle Template Tags
+^^^^^^^^^^^^^^^^^^^^
+
+It can be configured how the tags of the template test will be added to the data-driven test cases.
 
 
 List Separator
@@ -1462,6 +1465,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         self.robot_options = robot_options()
         self.include = self.robot_options["include"] if not include else include
         self.exclude = self.robot_options["exclude"] if not exclude else exclude
+        self.handle_template_tags = handle_template_tags
         encoding_str = encoding.name if isinstance(encoding, Encodings) else str(encoding)
 
         self.config_dict = DotDict(
@@ -1480,6 +1484,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             file_regex=file_regex,
             include=self.include,
             exclude=self.exclude,
+            handle_template_tags=self.handle_template_tags,
             list_separator=listseperator,
             config_keyword=config_keyword,
             optimize_pabot=optimize_pabot,
@@ -1549,8 +1554,11 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         return all_tags
 
     def _clean_template_test(self):
-        for tag in self._get_all_tags():
-            self.template_test.tags.remove(tag)
+        if self.handle_template_tags == TagHandling.NoTags:
+            self.template_test.tags = Tags()
+        elif self.handle_template_tags == TagHandling.UnsetTags:
+            for tag in self._get_all_tags():
+                self.template_test.tags.remove(tag)
         if self._is_new_model():
             self.template_test.body = None
         else:
@@ -1585,19 +1593,20 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _included_by_tags(self):
         if self.include and isinstance(self.test_case_data.tags, list):
-            tags = Tags()
-            tags.add(self.template_test.tags)
-            tags.add(self.test_case_data.tags)
-            return tags.match(self.include)
+            return self._filter_tag(self.include)
         return True
 
     def _not_excluded_by_tags(self):
         if self.exclude and isinstance(self.test_case_data.tags, list):
-            tags = Tags()
-            tags.add(self.template_test.tags)
-            tags.add(self.test_case_data.tags)
-            return not tags.match(self.exclude)
+            return not self._filter_tag(self.exclude)
         return True
+
+    def _filter_tag(self, filter_setting):
+        tags = Tags()
+        if self.handle_template_tags != TagHandling.DefaultTags or len(self.test_case_data.tags) == 0:
+            tags.add(self.template_test.tags)
+        tags.add(self.test_case_data.tags)
+        return tags.match(filter_setting)
 
     def _create_data_table(self):
         """
@@ -1864,6 +1873,8 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _add_test_case_tags(self):
         if isinstance(self.test_case_data.tags, list):
+            if self.handle_template_tags == TagHandling.DefaultTags and len(self.test_case_data.tags) > 0:
+                self.test.tags = Tags()
             for tag in self.test_case_data.tags:
                 self.test.tags.add(tag.strip())
         self._add_tag_if_pabot_dryrun()

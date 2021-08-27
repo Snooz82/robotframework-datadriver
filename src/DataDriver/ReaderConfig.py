@@ -16,7 +16,7 @@ from typing import Optional, Any, Dict, List
 
 from robot.utils import DotDict  # type: ignore
 
-from .utils import PabotOpt
+from .utils import PabotOpt, TagHandling
 
 
 class ReaderConfig:
@@ -40,6 +40,7 @@ class ReaderConfig:
         file_regex: Optional[str] = None,
         include: Optional[str] = None,
         exclude: Optional[str] = None,
+        handle_template_tags: TagHandling = TagHandling.UnsetTags,
         list_separator: Optional[str] = ",",
         config_keyword: Optional[str] = None,
         optimize_pabot: PabotOpt = PabotOpt.Equal,
@@ -61,6 +62,7 @@ class ReaderConfig:
         self.file_regex = file_regex
         self.include = include
         self.exclude = exclude
+        self.handle_template_tags = handle_template_tags
         self.list_separator = list_separator
         self.config_keyword = config_keyword
         self.optimize_pabot = optimize_pabot
