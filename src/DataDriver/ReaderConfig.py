@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Any, Dict, List
+from typing import Optional, Any, Dict, List, Union, Type
+
+from DataDriver.AbstractReaderClass import AbstractReaderClass
 
 from robot.utils import DotDict  # type: ignore
 
@@ -35,7 +37,7 @@ class ReaderConfig:
         skipinitialspace: Optional[bool] = None,
         lineterminator: Optional[str] = None,
         sheet_name: Any = None,
-        reader_class: Optional[str] = None,
+        reader_class: Optional[Union[str, Type[AbstractReaderClass]]] = None,
         file_search_strategy: str = "path",
         file_regex: Optional[str] = None,
         include: Optional[str] = None,

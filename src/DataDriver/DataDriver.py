@@ -27,7 +27,7 @@ from robot.running.model import TestCase  # type: ignore
 from robot.model.tags import Tags  # type: ignore
 from robot.utils.dotdict import DotDict  # type: ignore
 from robot.utils.importer import Importer  # type: ignore
-from typing import Optional, Union, Any  # type: ignore
+from typing import Optional, Union, Any, Type  # type: ignore
 
 from .AbstractReaderClass import AbstractReaderClass  # type: ignore
 from .ReaderConfig import ReaderConfig  # type: ignore
@@ -1345,7 +1345,7 @@ class DataDriver:
         lineterminator: str = "\r\n",
         *,
         sheet_name: Union[str, int] = 0,
-        reader_class: Optional[str] = None,
+        reader_class: Optional[Union[str, Type[AbstractReaderClass]]] = None,
         file_search_strategy: str = "PATH",
         file_regex: str = r"(?i)(.*?)(\.csv)",
         include: Optional[str] = None,
@@ -1643,8 +1643,10 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         reader_class = getattr(reader_module, f"{reader_type}_reader")
         return reader_class
 
-    def _get_data_reader_from_reader_class(self):
+    def _get_data_reader_from_reader_class(self) -> Type[AbstractReaderClass]:
         reader_name = self.reader_config.reader_class
+        if issubclass(reader_name, AbstractReaderClass):
+            return reader_name
         debug(f"[ DataDriver ] Initializes  {reader_name}")
         if os.path.isfile(reader_name):
             reader_class = self._get_reader_class_from_path(reader_name)
