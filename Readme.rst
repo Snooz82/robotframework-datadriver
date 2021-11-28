@@ -16,7 +16,7 @@ on a Data-File that contains the data for Data-Driven Testing. These
 data file may be .csv , .xls or .xlsx files.
 
 Data Driver is also able to cooperate with Microsoft PICT. An Open
-Source Windows tool for data combination testing. Pict is able to
+Source tool for data combination testing. Pict is able to
 generate data combinations based on textual model definitions.
 https://github.com/Microsoft/pict
 
