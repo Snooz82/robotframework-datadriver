@@ -765,8 +765,8 @@ class DataDriver:
     Documentation: https://github.com/Microsoft/pict/blob/master/doc/pict.md
 
 
-    Requirements
-    ^^^^^^^^^^^^
+    Requirements of PICT
+    ^^^^^^^^^^^^^^^^^^^^
 
     -  Path to pict.exe must be set in the %PATH% environment variable.
     -  Data model file has the file extention ".pict"
