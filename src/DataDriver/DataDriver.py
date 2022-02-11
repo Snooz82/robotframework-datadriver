@@ -791,8 +791,8 @@ class DataDriver:
 
     .. code :: robotframework
 
-    *** Settings ***
-    Library    DataDriver    pict_arg.pict    pict_options=/o:3 /r
+        *** Settings ***
+        Library    DataDriver    pict_arg.pict    pict_options=/o:3 /r
 
 
     Glob File Pattern
