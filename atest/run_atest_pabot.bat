@@ -1,0 +1,1 @@
+pabot --testlevelsplit --pabotlib --processes 4 -d logs --listener RobotStackTracer --exclude performanceORfailingORfilteredORNoPabot --loglevel TRACE:INFO --extension robot .

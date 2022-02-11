@@ -5,7 +5,7 @@ from os.path import abspath, dirname, join
 
 CURDIR = dirname(abspath(__file__))
 
-with open("README.rst", "r", encoding="utf-8") as fh:
+with open("Readme.rst", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 with open(join(CURDIR, "src", "DataDriver", "DataDriver.py"), encoding="utf-8") as f:

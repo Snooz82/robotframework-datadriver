@@ -17,6 +17,7 @@ import csv
 import time
 import os
 from .AbstractReaderClass import AbstractReaderClass, ReaderConfig
+from DataDriver.utils import debug
 
 
 class pict_reader(AbstractReaderClass):
@@ -27,7 +28,7 @@ class pict_reader(AbstractReaderClass):
 
     def get_data_from_source(self):
         self._register_dialect()
-        self._create_gemerated_file_from_model_file()
+        self._create_generated_file_from_model_file()
         self._read_generated_file_to_dictionaries()
         return self.data_table
 
@@ -41,8 +42,10 @@ class pict_reader(AbstractReaderClass):
             quoting=csv.QUOTE_NONE,
         )
 
-    def _create_gemerated_file_from_model_file(self):
-        os.system(f'pict "{self.file}" > "{self.pictout_file}"')
+    def _create_generated_file_from_model_file(self):
+        args = self.pict_options if hasattr(self, 'pict_options') else ''
+        debug(f'pict "{self.file}" {args} > "{self.pictout_file}"')
+        os.system(f'pict "{self.file}" {args} > "{self.pictout_file}"')
 
     def _read_generated_file_to_dictionaries(self):
         with open(self.pictout_file, "r", encoding="utf_8") as csvfile:

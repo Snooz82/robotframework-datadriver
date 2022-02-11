@@ -48,7 +48,7 @@ from .utils import (  # type: ignore
     TagHandling,
 )
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 
 
 class DataDriver:
@@ -786,6 +786,13 @@ class DataDriver:
 
         *** Settings ***
         Library    DataDriver    my_model_file.pict
+
+    It is possible to give options to pict with the import argument `pict_options=`.
+
+    .. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    pict_arg.pict    pict_options=/o:3 /r
 
 
     Glob File Pattern
