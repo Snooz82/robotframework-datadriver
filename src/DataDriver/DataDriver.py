@@ -1812,7 +1812,9 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _add_test_list_to_pabot_queue(self, pabotlib, test_list):
         test_names = [f"{self.suite_name}.{test.name}" for test in test_list]
-        pabot_string = '|'.join([name.replace('\\', '\\\\').replace('|', '\\|') for name in test_names])
+        pabot_string = '|'.join(
+            [name.replace('\\', '\\\\').replace('|', '\\|') for name in test_names]
+        )
         pabotlib.run_keyword(
             "add_suite_to_execution_queue",
             [self.suite_name, [f"DYNAMICTESTS:{pabot_string}"]],

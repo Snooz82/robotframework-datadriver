@@ -16,7 +16,6 @@
 import re
 
 from robot.errors import VariableError  # type: ignore
-from robot.utils import py2to3  # type: ignore
 
 
 def search_variable(string, identifiers="$@&%*", ignore_errors=False):
@@ -25,7 +24,6 @@ def search_variable(string, identifiers="$@&%*", ignore_errors=False):
     return VariableSearcher(identifiers, ignore_errors).search(string)
 
 
-@py2to3
 class VariableMatch(object):
     def __init__(self, string, identifier=None, base=None, items=(), start=-1, end=-1):
         self.string = string
@@ -74,10 +72,10 @@ class VariableMatch(object):
     def is_dict_variable(self):
         return bool(self.is_variable and self.identifier == "&" and not self.items)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.identifier is not None
 
-    def __unicode__(self):
+    def __str__(self):
         if not self:
             return "<no match>"
         items = "".join("[%s]" % i for i in self.item) if self.items else ""
@@ -223,7 +221,6 @@ def unescape_variable_syntax(item):
 
 # TODO: This is pretty odd/ugly and used only in two places. Implement
 # something better or just remove altogether.
-@py2to3
 class VariableIterator(object):
     def __init__(self, string, identifiers="$@&%*"):
         self._string = string
@@ -241,7 +238,7 @@ class VariableIterator(object):
     def __len__(self):
         return sum(1 for _ in self)
 
-    def __nonzero__(self):
+    def __bool__(self):
         try:
             next(iter(self))
         except StopIteration:
