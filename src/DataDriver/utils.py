@@ -1,4 +1,5 @@
 import math
+import re
 
 from enum import Enum, auto
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
@@ -190,7 +191,8 @@ def error(msg: Any, html: bool = False):
 def get_filter_dynamic_test_names():
     dynamic_test_list = get_variable_value("${DYNAMICTESTS}")
     if isinstance(dynamic_test_list, str):
-        return dynamic_test_list.split("|")
+        test_names_esc = re.split(r'(?<!\\)(?:\\\\)*\|', dynamic_test_list)
+        return [name.replace('\\|', '|').replace('\\\\', '\\') for name in test_names_esc]
     elif isinstance(dynamic_test_list, list):
         return dynamic_test_list
     else:
