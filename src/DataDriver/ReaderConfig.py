@@ -35,7 +35,7 @@ class ReaderConfig:
         skipinitialspace: Optional[bool] = None,
         lineterminator: Optional[str] = None,
         sheet_name: Any = None,
-        reader_class: Optional[str] = None,
+        reader_class: Any = None,
         file_search_strategy: str = "path",
         file_regex: Optional[str] = None,
         include: Optional[str] = None,

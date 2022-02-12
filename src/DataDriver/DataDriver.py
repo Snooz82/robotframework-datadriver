@@ -64,7 +64,7 @@ class DataDriver:
     information about installation, support, and more, please visit the
     `project page <https://github.com/Snooz82/robotframework-datadriver>`_
 
-    For more information about Robot Framework®, see http://robotframework.org.
+    For more information about Robot Framework®, see https://robotframework.org.
 
     DataDriver is used/imported as Library but does not provide keywords
     which can be used in a test. DataDriver uses the Listener Interface
@@ -1219,7 +1219,7 @@ class DataDriver:
     If you want to use ``--include`` the DataDriver TestSuite should have a ``DefaultTag`` or ``ForceTag`` that
     fulfills these requirements.
 
-    .. _Userguide: http://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#tag-patterns
+    .. _Userguide: https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#tag-patterns
 
     Example: ``robot --include 1OR2 --exclude foo DataDriven.robot``
 
@@ -1352,7 +1352,7 @@ class DataDriver:
         lineterminator: str = "\r\n",
         *,
         sheet_name: Union[str, int] = 0,
-        reader_class: Optional[str] = None,
+        reader_class: Optional[Union[AbstractReaderClass, str]] = None,
         file_search_strategy: str = "PATH",
         file_regex: str = r"(?i)(.*?)(\.csv)",
         include: Optional[str] = None,
@@ -1403,7 +1403,7 @@ Options
 File
 ^^^^
 
-Defines which data file to be read. May be None or an extension like ``.txt`` or relative or absolute path.
+Defines which data file to be read. Maybe None or an extension like ``.txt`` or relative or absolute path.
 ``file_search_strategy=`` and ``file_regex`` may also have influence here.
 
 
@@ -1508,12 +1508,12 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         self.data_table_dict = DotDict()
         self.test_case_data = TestCaseData()
 
-    def _start_suite(self, suite: TestSuite, result):
+    def _start_suite(self, suite: TestSuite, *_):
         """Called when a test suite starts.
         Data and result are model objects representing the executed test suite and its execution results, respectively.
 
-        :param suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
-        :param result: NOT USED
+        suite: class robot.running.model.TestSuite(name='', doc='', metadata=None, source=None)
+        *_: result NOT USED
         """
         try:
             self.suite_name = suite.longname
@@ -1543,7 +1543,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             debug(traceback.format_exc())
             raise e
 
-    def _start_test(self, test: TestCase, result):
+    def _start_test(self, test: TestCase, *_):
         BuiltIn().set_test_variable(
             '${DataDriver_TEST_DATA}',
             self.data_table_dict.get(test.name, {"ERROR": "Test Case not found..."}),
@@ -1630,15 +1630,16 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         debug(f"[ DataDriver ] {len(self.data_table)} Test Cases loaded...")
 
     def _data_reader(self) -> AbstractReaderClass:
-        if not self.reader_config.reader_class:
-            reader_class = self._get_data_reader_from_file_extension()
+        reader_class = self.reader_config.reader_class
+        if inspect.isclass(reader_class) and issubclass(reader_class, AbstractReaderClass):
+            return reader_class(self.reader_config)
+        if not reader_class:
+            self.reader_config.reader_class = self._get_data_reader_from_file_extension()
         else:
-            reader_class = self._get_data_reader_from_reader_class()
-        reader_instance = reader_class(self.reader_config)
+            self.reader_config.reader_class = self._get_data_reader_from_reader_class()
+        reader_instance = self.reader_config.reader_class(self.reader_config)
         if not isinstance(reader_instance, AbstractReaderClass):
-            raise ImportError(
-                f"{self.reader_config.reader_class} in no instance of AbstractDataReader!"
-            )
+            raise ImportError(f"{reader_class} in no instance of AbstractDataReader!")
         return reader_instance
 
     def _get_data_reader_from_file_extension(self):
@@ -1667,7 +1668,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             else:
                 try:
                     reader_class = self._get_reader_class_from_module(reader_name)
-                except Exception as e:
+                except Exception:
                     reader_module = importlib.import_module(
                         f"..{reader_name}", "DataDriver.DataDriver"
                     )

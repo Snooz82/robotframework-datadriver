@@ -92,13 +92,13 @@ RoboCon 2020 Talk
 .. image:: https://img.youtube.com/vi/RtEUr1i4x3s/0.jpg
    :target: https://www.youtube.com/watch?v=RtEUr1i4x3s
 
-Brief overview what DataDriver is and how it works at the RoboCon 2020 in Helsinki.
+Brief overview what DataDriver is and how it works at the RoboCon 2020 in Helsiki.
 
 
 Alternative approach
 ~~~~~~~~~~~~~~~~~~~~
 
-DataDriver gives an alternative to the built-in data-driven approach
+DataDriver gives an alternative to the build in data driven approach
 like:
 
 .. code :: robotframework
@@ -132,11 +132,11 @@ like:
         click login button
         Error page should be visible
 
-This inbuilt approach is fine for a handful of data and a handful of
+This inbuilt approach is fine for a hand full of data and a hand full of
 test cases. If you have generated or calculated data and specially if
 you have a variable amount of test case / combinations these robot files
 become quite a pain. With DataDriver you may write the same test case
-syntax but only once and deliver the data from an external data file.
+syntax but only once and deliver the data from en external data file.
 
 One of the rare reasons when Microsoft® Excel or LibreOffice Calc may be
 used in testing… ;-)
@@ -173,8 +173,8 @@ Data Driver is a "Library Listener" but does not provide keywords.
 Because Data Driver is a listener and a library at the same time it
 sets itself as a listener when this library is imported into a test suite.
 
-To use it, just import it as Library in your suite. You may use the first
-argument (option) to set the file name or path to the data file.
+To use it, just use it as Library in your suite. You may use the first
+argument (option) which may set the file name or path to the data file.
 
 Without any options set, it loads a .csv file which has the same name
 and path like the test suite .robot .
@@ -201,21 +201,21 @@ Structure of Test Suite
 Requirements
 ~~~~~~~~~~~~
 
-In the moment there are some requirements how a test
+In the Moment there are some requirements how a test
 suite must be structured so that the DataDriver can get all the
 information it needs.
 
  - only the first test case will be used as a template. All other test
    cases will be deleted.
  - Test cases have to be defined with a
-   ``Test Template`` in the Settings section. The reason for this is
+   ``Test Template`` in Settings secion. Reason for this is,
    that the DataDriver needs to know the names of the test case arguments.
    Test cases do not have named arguments. Keywords do.
  - The keyword which is used as
    ``Test Template`` must be defined within the test suite (in the same
    \*.robot file). If the keyword which is used as ``Test Template`` is
    defined in a ``Resource`` the DataDriver has no access to its
-   arguments' names.
+   arguments names.
 
 
 Example Test Suite
