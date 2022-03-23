@@ -36,3 +36,6 @@ recursive-include atest *.txt
 # added by check-manifest
 recursive-include atest *.NoJson
 recursive-include atest *.json
+
+# added by check-manifest
+include *.md

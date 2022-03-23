@@ -7,7 +7,7 @@ This document explains how to use the DataDriver library listener. For
 information about installation, support, and more, please visit the
 `project page <https://github.com/Snooz82/robotframework-datadriver>`_
 
-For more information about Robot Framework®, see http://robotframework.org.
+For more information about Robot Framework®, see https://robotframework.org.
 
 DataDriver is used/imported as Library but does not provide keywords
 which can be used in a test. DataDriver uses the Listener Interface
@@ -708,8 +708,8 @@ https://github.com/Microsoft/pict
 Documentation: https://github.com/Microsoft/pict/blob/master/doc/pict.md
 
 
-Requirements
-^^^^^^^^^^^^
+Requirements of PICT
+^^^^^^^^^^^^^^^^^^^^
 
 -  Path to pict.exe must be set in the %PATH% environment variable.
 -  Data model file has the file extention ".pict"
@@ -729,6 +729,13 @@ Except the file option all other options of the library will be ignored.
 
     *** Settings ***
     Library    DataDriver    my_model_file.pict
+
+It is possible to give options to pict with the import argument `pict_options=`.
+
+.. code :: robotframework
+
+    *** Settings ***
+    Library    DataDriver    pict_arg.pict    pict_options=/o:3 /r
 
 
 Glob File Pattern
@@ -1155,7 +1162,7 @@ This means if the Template test is already filtered out by Robot Framework®, Da
 If you want to use ``--include`` the DataDriver TestSuite should have a ``DefaultTag`` or ``ForceTag`` that
 fulfills these requirements.
 
-.. _Userguide: http://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#tag-patterns
+.. _Userguide: https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#tag-patterns
 
 Example: ``robot --include 1OR2 --exclude foo DataDriven.robot``
 
