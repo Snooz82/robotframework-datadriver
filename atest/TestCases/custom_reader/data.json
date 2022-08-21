@@ -1,0 +1,27 @@
+[
+  {
+    "test_case_name": "first",
+    "arguments": {
+      "${username}": "demo",
+      "${password}": "mode"
+    },
+    "tags": [
+      "tag1",
+      "tag2",
+      "smoke"
+    ],
+    "documentation": "This is the doc"
+  },
+  {
+    "test_case_name": "second",
+    "arguments": {
+      "${username}": "${EMPTY}",
+      "${password}": "mode"
+    },
+    "tags": [
+      "tag1",
+      "smoke"
+    ],
+    "documentation": "This is the doc"
+  }
+]

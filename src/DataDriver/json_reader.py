@@ -42,9 +42,12 @@
   }
 ]
 """
-
+from json import load
 from .AbstractReaderClass import AbstractReaderClass
+from .ReaderConfig import TestCaseData
 
 
 class json_reader(AbstractReaderClass):
-    pass
+    def get_data_from_source(self):
+        with open(self.file, 'r', encoding="utf-8") as json_file:
+            return [TestCaseData(**test) for test in load(json_file)]

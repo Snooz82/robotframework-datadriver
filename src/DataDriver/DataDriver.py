@@ -1533,15 +1533,15 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
                 suite.tests = test_list
             self._set_date_table_to_robot_variable()
             debug(f"[ DataDriver ] {len(test_list)} tests added.")
-        except Exception as e:
+        except Exception as exception:
             error(f'[ DataDriver ] Error in robot file:\n  File "{suite.source}", line 0')
             if self.reader_config.file:
                 error(
                     f'In source file:\n'
-                    f'  File "{self.reader_config.file}", line {e.row if hasattr(e, "row") else "0"}'  # type: ignore
+                    f'  File "{self.reader_config.file}", line {exception.row if hasattr(exception, "row") else "0"}'  # type: ignore
                 )
             debug(traceback.format_exc())
-            raise e
+            raise exception
 
     def _start_test(self, test: TestCase, *_):
         BuiltIn().set_test_variable(
@@ -1845,6 +1845,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             tags=self.template_test.tags,
             template=self.template_test.template,
             lineno=self.template_test.lineno,
+            timeout=self.template_test.timeout,
         )
         self.test.parent = self.template_test.parent
         self._replace_test_case_name()
