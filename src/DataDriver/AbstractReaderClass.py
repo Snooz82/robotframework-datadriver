@@ -112,10 +112,14 @@ class AbstractReaderClass(ABC):
                 )
         tags = (
             [t.strip() for t in row[self.tags_column_id].split(",")]
-            if self.tags_column_id
+            if self.tags_column_id is not None
             else None
         )
-        documentation = row[self.documentation_column_id] if self.documentation_column_id else ""
+        documentation = (
+            row[self.documentation_column_id]
+            if self.documentation_column_id is not None
+            else ""
+        )
 
         self.data_table.append(TestCaseData(test_case_name, arguments, tags, documentation))
 
