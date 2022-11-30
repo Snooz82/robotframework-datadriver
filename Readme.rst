@@ -791,7 +791,10 @@ Example with folders:
 File Encoding and CSV Dialect
 -----------------------------
 
-While there are various specifications and implementations for the CSV format (see `RFC 4180 <https://www.rfc-editor.org/rfc/rfc4180.html>`_), there is no formal specification in existence, which allows for a wide variety of interpretations of CSV files. Therefore it is possible to define your own dialect or use
+While there are various specifications and implementations for the CSV format
+(see `RFC 4180 <https://www.rfc-editor.org/rfc/rfc4180.html>`_),
+there is no formal specification in existence, which allows for a wide variety of interpretations of CSV files.
+Therefore it is possible to define your own dialect or use
 predefined. The default is Excel-EU which is a semicolon separated
 file.
 These Settings are changeable as options of the Data Driver Library.
