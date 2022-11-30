@@ -54,7 +54,7 @@ class generic_csv_reader(AbstractReaderClass):
                 if row_index == 0:
                     row_of_variables = []
                     for cell in row:
-                        row_of_variables.append(f"${{{cell}}}")
+                        row_of_variables.append(f"${{{cell.strip()}}}")
                     self._analyse_header(row_of_variables)
                 else:
                     self._read_data_from_table(row)

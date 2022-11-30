@@ -68,9 +68,9 @@ class AbstractReaderClass(ABC):
         )
 
     def _is_test_case_header(self, header_string: str):
-        is_test = self.TEST_CASE_TABLE_PATTERN.fullmatch(header_string)
-        is_task = self.TASK_TABLE_PATTERN.fullmatch(header_string)
-        return is_task or is_test
+        return self.TEST_CASE_TABLE_PATTERN.fullmatch(
+            header_string
+        ) or self.TASK_TABLE_PATTERN.fullmatch(header_string)
 
     def _is_variable(self, header_string: str):
         return self.VARIABLE_PATTERN.match(header_string)
@@ -84,6 +84,7 @@ class AbstractReaderClass(ABC):
     def _analyse_header(self, header_cells):
         self.header = header_cells
         for cell_index, cell in enumerate(self.header):
+            cell = cell.strip()
             if self._is_test_case_header(cell):
                 self.test_case_column_id = cell_index
             elif self._is_variable(cell):
@@ -99,7 +100,7 @@ class AbstractReaderClass(ABC):
         )
         arguments = {}
         for arguments_column_id in self.arguments_column_ids:
-            variable_string = self.header[arguments_column_id]
+            variable_string = str(self.header[arguments_column_id]).strip()
             variable_value = row[arguments_column_id]
             if self.LIT_EVAL_PATTERN.fullmatch(variable_string):
                 variable_string = f"${variable_string[1:]}"
@@ -115,7 +116,7 @@ class AbstractReaderClass(ABC):
             if self.tags_column_id
             else None
         )
-        documentation = row[self.documentation_column_id] if self.documentation_column_id else ""
+        documentation = row[self.documentation_column_id] if self.documentation_column_id else None
 
         self.data_table.append(TestCaseData(test_case_name, arguments, tags, documentation))
 

@@ -75,7 +75,7 @@ class TestCaseData(DotDict):
         test_case_name: str = "",
         arguments: Optional[Dict] = None,
         tags: Optional[List] = None,
-        documentation: str = "",
+        documentation: Optional[str] = None,
     ):
         super().__init__()
         self.test_case_name = test_case_name

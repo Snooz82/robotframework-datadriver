@@ -32,7 +32,7 @@ setup(
         "Topic :: Software Development :: Testing :: Acceptance",
         "Framework :: Robot Framework",
     ],
-    install_requires=["robotframework >= 3.1", "docutils", "Pygments"],
+    install_requires=["robotframework >= 4.0.2", "docutils", "Pygments"],
     extras_require={"xls": ["pandas", "xlrd >= 1.2.0", "openpyxl"]},
-    python_requires=">=3.6.1",
+    python_requires=">=3.6.15",
 )

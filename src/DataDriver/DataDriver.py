@@ -48,7 +48,7 @@ from .utils import (  # type: ignore
     TagHandling,
 )
 
-__version__ = "1.6.1"
+__version__ = "1.7.0"
 
 
 class DataDriver:
@@ -1502,7 +1502,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         self.reader_config = ReaderConfig(**self.config_dict)
         self.suite_name = None
         self.suite_source = None
-        self.template_test = None
+        self.template_test: Optional[TestCase] = None
         self.template_keyword = None
         self.data_table = None
         self.data_table_dict = DotDict()
@@ -1526,11 +1526,12 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             self._clean_template_test()
             test_list = self._get_filtered_test_list()
             if self._handle_pabot(test_list):
-                suite.tests = []
-                suite.keywords.setup = None
-                suite.keywords.teardown = None
+                suite.tests.clear()
+                suite.setup = None
+                suite.teardown = None
             else:
-                suite.tests = test_list
+                suite.tests.clear()
+                suite.tests.extend(test_list)
             self._set_date_table_to_robot_variable()
             debug(f"[ DataDriver ] {len(test_list)} tests added.")
         except Exception as exception:
@@ -1566,14 +1567,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         elif self.handle_template_tags == TagHandling.UnsetTags:
             for tag in self._get_all_tags():
                 self.template_test.tags.remove(tag)
-        if self._is_new_model():
-            self.template_test.body = None
-        else:
-            setup = self.template_test.keywords.setup
-            teardown = self.template_test.keywords.teardown
-            self.template_test.keywords.clear()
-            self.template_test.keywords.setup = setup
-            self.template_test.keywords.teardown = teardown
+        self.template_test.body = None
 
     def _update_config(self):
         if self.config_dict.config_keyword:
@@ -1864,18 +1858,11 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             self.test.name = self.test_case_data.test_case_name
 
     def _replace_test_case_keywords(self):
-        if self._is_new_model():
-            self.test.setup = self.template_test.setup
-            self.test.teardown = self.template_test.teardown
-            self.test.body.create_keyword(
-                name=self.template_keyword.name, args=self._get_template_arguments()
-            )
-        else:
-            self.test.keywords.setup = self.template_test.keywords.setup
-            self.test.keywords.create(
-                name=self.template_keyword.name, args=self._get_template_arguments()
-            )
-            self.test.keywords.teardown = self.template_test.keywords.teardown
+        self.test.setup = self.template_test.setup
+        self.test.teardown = self.template_test.teardown
+        self.test.body.create_keyword(
+            name=self.template_keyword.name, args=self._get_template_arguments()
+        )
 
     def _get_template_arguments(self):
         return_arguments = []
@@ -1902,7 +1889,5 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             self.test.tags.add("pabot:dynamictest")
 
     def _replace_test_case_doc(self):
-        self.test.doc = self.test_case_data.documentation
-
-    def _is_new_model(self):
-        return hasattr(self.template_test, "body")
+        if self.test_case_data.documentation is not None:
+            self.test.doc = self.test_case_data.documentation

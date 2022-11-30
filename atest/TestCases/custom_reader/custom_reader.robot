@@ -1,6 +1,6 @@
 *** Settings ***
 Library    DataDriver    reader_class=TestCases/custom_reader/custom_reader.py    optimize_pabot=equal
-...            min=0    max=101
+...            min=0    max=97
 Test Template    check vars
 
 
