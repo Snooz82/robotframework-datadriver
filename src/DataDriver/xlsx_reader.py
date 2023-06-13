@@ -41,5 +41,5 @@ class xlsx_reader(AbstractReaderClass):
 
     def read_data_frame_from_file(self, dtype):
         return pd.read_excel(
-            self.file, sheet_name=self.sheet_name, dtype=dtype, engine="openpyxl"
+            self.file, sheet_name=self.sheet_name, dtype=dtype, engine="openpyxl", na_filter=False
         ).replace(nan, "", regex=True)
