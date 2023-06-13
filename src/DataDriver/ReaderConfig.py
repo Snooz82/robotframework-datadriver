@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Any, Dict, List
+
+from typing import Any, Dict, List, Optional
 
 from robot.utils import DotDict  # type: ignore
 
@@ -44,7 +45,7 @@ class ReaderConfig:
         list_separator: Optional[str] = ",",
         config_keyword: Optional[str] = None,
         optimize_pabot: PabotOpt = PabotOpt.Equal,
-        **kwargs
+        **kwargs,
     ):
 
         self.file = file

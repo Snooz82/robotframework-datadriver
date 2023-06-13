@@ -16,7 +16,9 @@
 from DataDriver.AbstractReaderClass import (
     AbstractReaderClass,
 )  # inherit class from AbstractReaderClass
-from DataDriver.ReaderConfig import TestCaseData  # return list of TestCaseData to DataDriver
+from DataDriver.ReaderConfig import (
+    TestCaseData,
+)  # return list of TestCaseData to DataDriver
 
 
 class custom_reader(AbstractReaderClass):

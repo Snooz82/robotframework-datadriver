@@ -16,8 +16,8 @@
 # Thanks for this contribution
 
 
-from os.path import normpath, basename, splitext, abspath, isfile, isdir
 from glob import glob
+from pathlib import Path
 
 from DataDriver.AbstractReaderClass import AbstractReaderClass
 
@@ -30,11 +30,12 @@ class glob_reader(AbstractReaderClass):
     def _read_glob_to_data_table(self):
         self._analyse_header(["*** Test Cases ***", self.kwargs.get("arg_name", "${file_name}")])
         for match_path in sorted(glob(self.file)):
-            match_path = abspath(match_path).replace("\\", "/")
-            if isfile(match_path):
-                test_case_name = basename(splitext(match_path)[0])
-            elif isdir(match_path):
-                test_case_name = basename(normpath(match_path))
+            path = Path(match_path).resolve()
+            path_as_posix = path.as_posix()
+            if path.is_file():
+                test_case_name = path.stem
+            elif path.is_dir():
+                test_case_name = path.name
             else:
-                test_case_name = match_path
-            self._read_data_from_table([test_case_name, match_path])
+                test_case_name = str(path_as_posix)
+            self._read_data_from_table([test_case_name, str(path_as_posix)])

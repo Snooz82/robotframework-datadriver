@@ -14,6 +14,8 @@
 
 
 import csv
+from pathlib import Path
+
 from DataDriver.AbstractReaderClass import AbstractReaderClass
 
 
@@ -48,7 +50,7 @@ class generic_csv_reader(AbstractReaderClass):
             )
 
     def _read_file_to_data_table(self):
-        with open(self.file, "r", encoding=self.csv_encoding) as csvfile:
+        with Path(self.file).open(encoding=self.csv_encoding) as csvfile:
             reader = csv.reader(csvfile, self.csv_dialect)
             for row_index, row in enumerate(reader):
                 if row_index == 0:

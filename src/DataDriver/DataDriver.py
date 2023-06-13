@@ -14,38 +14,39 @@
 
 import importlib
 import inspect
-import os
-import os.path
 import re
 import traceback
 from glob import glob
+from pathlib import Path
+from typing import Any, Optional, Union  # type: ignore
 
 from robot.api.logger import console  # type: ignore
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
+from robot.model.tags import Tags  # type: ignore
 from robot.model.testsuite import TestSuite  # type: ignore
 from robot.running.model import TestCase  # type: ignore
-from robot.model.tags import Tags  # type: ignore
 from robot.utils.dotdict import DotDict  # type: ignore
 from robot.utils.importer import Importer  # type: ignore
-from typing import Optional, Union, Any  # type: ignore
 
 from .AbstractReaderClass import AbstractReaderClass  # type: ignore
-from .ReaderConfig import ReaderConfig  # type: ignore
-from .ReaderConfig import TestCaseData  # type: ignore
 from .argument_utils import robot_options  # type: ignore
+from .ReaderConfig import (
+    ReaderConfig,  # type: ignore
+    TestCaseData,  # type: ignore
+)
 from .utils import (  # type: ignore
+    Encodings,
     PabotOpt,
-    is_same_keyword,
+    TagHandling,
+    binary_partition_test_list,
+    debug,
+    equally_partition_test_list,
+    error,
     get_filter_dynamic_test_names,
     get_variable_value,
     is_pabot_dry_run,
-    debug,
+    is_same_keyword,
     warn,
-    error,
-    equally_partition_test_list,
-    binary_partition_test_list,
-    Encodings,
-    TagHandling,
 )
 
 __version__ = "1.7.0"
@@ -1473,8 +1474,8 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             console(e)
 
         self.robot_options = robot_options()
-        self.include = self.robot_options["include"] if not include else include
-        self.exclude = self.robot_options["exclude"] if not exclude else exclude
+        self.include = include if include else self.robot_options["include"]
+        self.exclude = exclude if exclude else self.robot_options["exclude"]
         self.handle_template_tags = handle_template_tags
         encoding_str = encoding.name if isinstance(encoding, Encodings) else str(encoding)
 
@@ -1540,7 +1541,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             error(f'[ DataDriver ] Error in robot file:\n  File "{suite.source}", line 0')
             if self.reader_config.file:
                 error(
-                    f'In source file:\n'
+                    f"In source file:\n"
                     f'  File "{self.reader_config.file}", line {exception.row if hasattr(exception, "row") else "0"}'  # type: ignore
                 )
             debug(traceback.format_exc())
@@ -1548,14 +1549,14 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _start_test(self, test: TestCase, *_):
         BuiltIn().set_test_variable(
-            '${DataDriver_TEST_DATA}',
+            "${DataDriver_TEST_DATA}",
             self.data_table_dict.get(test.name, {"ERROR": "Test Case not found..."}),
         )
 
     def _set_date_table_to_robot_variable(self):
-        BuiltIn().set_suite_variable('${DataDriver_DATA_LIST}', self.data_table)
+        BuiltIn().set_suite_variable("${DataDriver_DATA_LIST}", self.data_table)
         self.data_table_dict = DotDict([(item.test_case_name, item) for item in self.data_table])
-        BuiltIn().set_suite_variable('${DataDriver_DATA_DICT}', self.data_table_dict)
+        BuiltIn().set_suite_variable("${DataDriver_DATA_DICT}", self.data_table_dict)
 
     def _get_all_tags(self):
         all_tags = set()
@@ -1578,10 +1579,10 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             self.reader_config = ReaderConfig(**{**config, **config_update})
 
     def _get_filtered_test_list(self):
-        temp_test_list = list()
-        temp_data_table = list()
+        temp_test_list = []
+        temp_data_table = []
         dynamic_test_list = get_filter_dynamic_test_names()
-        for index, self.test_case_data in enumerate(self.data_table):
+        for self.test_case_data in self.data_table:  # noqa: B020
             if self._included_by_tags() and self._not_excluded_by_tags():
                 self._create_test_from_template()
                 if (
@@ -1639,27 +1640,23 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         return reader_instance
 
     def _get_data_reader_from_file_extension(self):
-        file_extension = os.path.splitext(self.reader_config.file)[1]
-        reader_type = file_extension.lower()[1:]
+        reader_type = Path(self.reader_config.file).suffix.lower()[1:]
         debug(f"[ DataDriver ] Initialized in {reader_type}-mode.")
         reader_module = importlib.import_module(f"..{reader_type}_reader", "DataDriver.DataDriver")
         debug(f"[ DataDriver ] Reader Module: {reader_module}")
-        reader_class = getattr(reader_module, f"{reader_type}_reader")
-        return reader_class
+        return getattr(reader_module, f"{reader_type}_reader")
 
     def _get_data_reader_from_reader_class(self):
-        reader_name = self.reader_config.reader_class
+        reader_name = Path(self.reader_config.reader_class)
         debug(f"[ DataDriver ] Initializes  {reader_name}")
-        if os.path.isfile(reader_name):
+        if reader_name.is_file():
             reader_class = self._get_reader_class_from_path(reader_name)
         else:
-            local_file = os.path.join(os.path.split(os.path.realpath(__file__))[0], reader_name)
-            relative_file = os.path.join(
-                os.path.realpath(os.path.split(self.suite_source)[0]), reader_name
-            )
-            if os.path.isfile(local_file):
+            local_file = Path(__file__).resolve().parent / reader_name
+            relative_file = Path(self.suite_source).resolve().parent / reader_name
+            if local_file.is_file():
                 reader_class = self._get_reader_class_from_path(local_file)
-            elif os.path.isfile(relative_file):
+            elif relative_file.is_file():
                 reader_class = self._get_reader_class_from_path(relative_file)
             else:
                 try:
@@ -1668,14 +1665,14 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
                     reader_module = importlib.import_module(
                         f"..{reader_name}", "DataDriver.DataDriver"
                     )
-                    reader_class = getattr(reader_module, reader_name)
+                    reader_class = getattr(reader_module, str(reader_name))
         debug(f"[ DataDriver ] Reader Class: {reader_class}")
         return reader_class
 
     @staticmethod
-    def _get_reader_class_from_path(file_name):
+    def _get_reader_class_from_path(file_name: Path):
         debug(f"[ DataDriver ] Loading Reader from file {file_name}")
-        abs_path = os.path.abspath(file_name)
+        abs_path = str(file_name.resolve())
         importer = Importer("DataReader")
         debug(f"[ DataDriver ] Reader path: {abs_path}")
         reader = importer.import_class_or_module_by_path(abs_path)
@@ -1695,14 +1692,15 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         return reader
 
     def _resolve_file_attribute(self) -> None:
+        configured_file = (
+            str(self.reader_config.file) if self.reader_config.file else self.reader_config.file
+        )
         if self.reader_config.file_search_strategy == "PATH":
-            if self.reader_config.reader_class and not self.reader_config.file:
+            if self.reader_config.reader_class and not configured_file:
                 return
             if self._check_valid_glob():
                 return
-            if (not self.reader_config.file) or (
-                "" == self.reader_config.file[: self.reader_config.file.rfind(".")]
-            ):
+            if (not configured_file) or (not configured_file[: configured_file.rfind(".")]):
                 self._set_data_file_to_suite_source()
             else:
                 self._check_if_file_exists_as_path_or_in_suite()
@@ -1716,14 +1714,14 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             )
 
     def _set_data_file_to_suite_source(self):
+        suite_source = Path(self.suite_source)
         if not self.reader_config.file:
-            suite_path_as_data_file = f"{self.suite_source[:self.suite_source.rfind('.')]}.csv"
+            suite_path_as_data_file = suite_source.parent / f"{suite_source.stem}.csv"
         else:
-            suite_path = self.suite_source[: self.suite_source.rfind(".")]
             file_extension = self.reader_config.file[self.reader_config.file.rfind(".") :]
-            suite_path_as_data_file = f"{suite_path}{file_extension}"
-        if os.path.isfile(suite_path_as_data_file):
-            self.reader_config.file = suite_path_as_data_file
+            suite_path_as_data_file = suite_source.parent / f"{suite_source.stem}{file_extension}"
+        if suite_path_as_data_file.is_file():
+            self.reader_config.file = str(suite_path_as_data_file)
         else:
             raise FileNotFoundError(
                 f"File attribute was empty. "
@@ -1732,19 +1730,18 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             )
 
     def _check_if_file_exists_as_path_or_in_suite(self):
-        if not os.path.isfile(self.reader_config.file):
-            suite_dir = str(os.path.dirname(self.suite_source))
-            file_in_suite_dir = os.path.join(suite_dir, self.reader_config.file)
-            if os.path.isfile(file_in_suite_dir):
-                self.reader_config.file = file_in_suite_dir
+        if not Path(self.reader_config.file).is_file():
+            file_in_suite_dir = Path(self.suite_source).parent / self.reader_config.file
+            if file_in_suite_dir.is_file():
+                self.reader_config.file = str(file_in_suite_dir)
             else:
                 raise FileNotFoundError(
                     f"File attribute was not a full path. Tried to find {file_in_suite_dir} but file does not exist."
                 )
 
     def _check_valid_glob(self):
-        if not self.reader_config.reader_class == "glob_reader":
-            return
+        if self.reader_config.reader_class != "glob_reader":
+            return None
         if not glob(self.reader_config.file):
             raise FileNotFoundError(
                 f"Glob pattern did not find a file or folder. Glob pattern was: {self.reader_config.file}"
@@ -1752,10 +1749,11 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         return True
 
     def _search_file_from_regex(self):
-        if os.path.isdir(self.reader_config.file):
-            for filename in os.listdir(self.reader_config.file):
-                if re.match(self.reader_config.file_regex, filename):
-                    self.reader_config.file = os.path.join(self.reader_config.file, filename)
+        file = Path(self.reader_config.file)
+        if file.is_dir():
+            for filename in Path(".").iterdir():
+                if re.match(self.reader_config.file_regex, str(filename)):
+                    self.reader_config.file = str(file / filename)
                     break
 
     def _handle_pabot(self, test_list):
@@ -1765,19 +1763,19 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
             or not self.robot_options["test"]
             or not get_variable_value("${PABOTQUEUEINDEX}")
         ):
-            return
+            return None
         pabot_process_count = int(get_variable_value("${PABOTNUMBEROFPROCESSES}"))
         if not pabot_process_count:
             warn(
                 "You are using an incompatible version of Pabot! "
                 " '--testlevelsplit' is not supported between Pabot 1.2.1 and 1.10.1 with DataDriver"
             )
-            return
+            return None
         try:
             from pabot.pabotlib import Remote  # type: ignore
         except ImportError as e:
             debug(e)
-            return
+            return None
         pabotlib_url = get_variable_value("${PABOTLIBURI}")
         try:
             pabotlib = Remote(pabotlib_url)
@@ -1791,7 +1789,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
                 f"Is PabotLib in use? Try 'pabot --pabotlib'"
             )
             error("Execution as been processes without --testlevelsplit")
-            return
+            return None
         pabotlib.run_keyword("ignore_execution", [get_variable_value("${CALLER_ID}")], {})
         return True
 
@@ -1809,8 +1807,8 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _add_test_list_to_pabot_queue(self, pabotlib, test_list):
         test_names = [f"{self.suite_name}.{test.name}" for test in test_list]
-        pabot_string = '|'.join(
-            [name.replace('\\', '\\\\').replace('|', '\\|') for name in test_names]
+        pabot_string = "|".join(
+            [name.replace("\\", "\\\\").replace("|", "\\|") for name in test_names]
         )
         pabotlib.run_keyword(
             "add_suite_to_execution_queue",
@@ -1850,7 +1848,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         self._replace_test_case_doc()
 
     def _replace_test_case_name(self):
-        if self.test_case_data.test_case_name == "":
+        if not self.test_case_data.test_case_name:
             for variable_name in self.test_case_data.arguments:
                 self.test.name = self.test.name.replace(
                     variable_name, str(self.test_case_data.arguments[variable_name])

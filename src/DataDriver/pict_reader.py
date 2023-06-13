@@ -14,17 +14,20 @@
 
 
 import csv
-import time
 import os
-from .AbstractReaderClass import AbstractReaderClass, ReaderConfig
+import time
+from pathlib import Path
+
 from DataDriver.utils import debug
+
+from .AbstractReaderClass import AbstractReaderClass, ReaderConfig
 
 
 class pict_reader(AbstractReaderClass):
     def __init__(self, reader_config: ReaderConfig):
         super().__init__(reader_config)
         file = self.file or ""
-        self.pictout_file = f"{os.path.splitext(file)[0]}{time.time()}.pictout"
+        self.pictout_file = f"{Path(file).stem}{time.monotonic()}.pictout"
 
     def get_data_from_source(self):
         self._register_dialect()
@@ -43,12 +46,12 @@ class pict_reader(AbstractReaderClass):
         )
 
     def _create_generated_file_from_model_file(self):
-        args = self.pict_options if hasattr(self, 'pict_options') else ''
+        args = self.pict_options if hasattr(self, "pict_options") else ""
         debug(f'pict "{self.file}" {args} > "{self.pictout_file}"')
         os.system(f'pict "{self.file}" {args} > "{self.pictout_file}"')
 
     def _read_generated_file_to_dictionaries(self):
-        with open(self.pictout_file, "r", encoding="utf_8") as csvfile:
+        with Path(self.pictout_file).open(encoding="utf_8") as csvfile:
             reader = csv.reader(csvfile, "PICT")
             for row_index, row in enumerate(reader):
                 if row_index == 0:
@@ -58,4 +61,4 @@ class pict_reader(AbstractReaderClass):
                     self._analyse_header(row_of_variables)
                 else:
                     self._read_data_from_table(row)
-        os.remove(self.pictout_file)
+        Path(self.pictout_file).unlink()

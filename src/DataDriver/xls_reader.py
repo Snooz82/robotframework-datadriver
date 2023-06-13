@@ -11,17 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-try:
-    import pandas as pd  # type: ignore
-    from math import nan  # type: ignore
-    import xlrd  # type: ignore
-except ImportError:
-    raise ImportError(
-        """Requirements (pandas, xlrd) for XLS support are not installed.
-    Use 'pip install -U robotframework-datadriver[XLS]' to install XLS support."""
-    )
-
-from .xlsx_reader import xlsx_reader
+from .xlsx_reader import nan, pd, xlsx_reader
 
 
 class xls_reader(xlsx_reader):

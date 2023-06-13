@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from re import compile
 from typing import List
-
-from .ReaderConfig import ReaderConfig
-from .ReaderConfig import TestCaseData
-from .search import search_variable
 
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 from robot.utils import DotDict  # type: ignore
 
+from .ReaderConfig import ReaderConfig, TestCaseData
+from .search import search_variable
 
 built_in = BuiltIn()
 
@@ -48,11 +46,11 @@ class AbstractReaderClass(ABC):
             setattr(self, key, value)
 
         self.test_case_column_id = None
-        self.arguments_column_ids: List = list()
+        self.arguments_column_ids: List = []
         self.tags_column_id = None
         self.documentation_column_id = None
-        self.header: List = list()
-        self.data_table: List = list()
+        self.header: List = []
+        self.data_table: List[TestCaseData] = []
 
         self.TESTCASE_TABLE_NAME = ReaderConfig.TEST_CASE_TABLE_NAME
         self.TEST_CASE_TABLE_PATTERN = compile(r"(?i)^(\*+\s*test ?cases?[\s*].*)")
@@ -62,10 +60,9 @@ class AbstractReaderClass(ABC):
         self.DOCUMENTATION_PATTERN = compile(r"(?i)(\[)(documentation)(\])")
         self.LIT_EVAL_PATTERN = compile(r"e\{(.+)\}")
 
-    def get_data_from_source(self):
-        raise NotImplementedError(
-            "This method should be implemented and return self.data_table to DataDriver..."
-        )
+    @abstractmethod
+    def get_data_from_source(self) -> List[TestCaseData]:
+        """This method must be implemented and return self.data_table ( a List[TestCaseData] )."""
 
     def _is_test_case_header(self, header_string: str):
         return self.TEST_CASE_TABLE_PATTERN.fullmatch(
@@ -84,14 +81,14 @@ class AbstractReaderClass(ABC):
     def _analyse_header(self, header_cells):
         self.header = header_cells
         for cell_index, cell in enumerate(self.header):
-            cell = cell.strip()
-            if self._is_test_case_header(cell):
+            naked_cell = cell.strip()
+            if self._is_test_case_header(naked_cell):
                 self.test_case_column_id = cell_index
-            elif self._is_variable(cell):
+            elif self._is_variable(naked_cell):
                 self.arguments_column_ids.append(cell_index)
-            elif self._is_tags(cell):
+            elif self._is_tags(naked_cell):
                 self.tags_column_id = cell_index
-            elif self._is_documentation(cell):
+            elif self._is_documentation(naked_cell):
                 self.documentation_column_id = cell_index
 
     def _read_data_from_table(self, row):
@@ -157,8 +154,7 @@ class AbstractReaderClass(ABC):
                     selected_key = selected_key[key]
             selected_key[items[-1]] = built_in.replace_variables(value)
             return argument
-        else:
-            raise TypeError(f"{self._as_var(base)} is defined with a wrong type. Not defaultdict.")
+        raise TypeError(f"{self._as_var(base)} is defined with a wrong type. Not defaultdict.")
 
     def _as_var(self, base):
         return f"${{{base}}}"

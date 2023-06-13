@@ -1,10 +1,10 @@
 import math
 import re
-
 from enum import Enum, auto
-from robot.libraries.BuiltIn import BuiltIn  # type: ignore
+from typing import Any, List
+
 from robot.api import logger  # type: ignore
-from typing import List, Any
+from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 
 from .argument_utils import is_pabot_testlevelsplit
 
@@ -37,7 +37,7 @@ class Encodings(Enum):
     - an IBM PC code page, which is ASCII compatible
     """
 
-    ascii = auto()
+    ascii = auto()  # noqa: A003
     big5 = auto()
     big5hkscs = auto()
     cp037 = auto()
@@ -191,15 +191,15 @@ def error(msg: Any, html: bool = False):
 def get_filter_dynamic_test_names():
     dynamic_test_list = get_variable_value("${DYNAMICTESTS}")
     if isinstance(dynamic_test_list, str):
-        test_names_esc = re.split(r'(?<!\\)(?:\\\\)*\|', dynamic_test_list)
-        return [name.replace('\\|', '|').replace('\\\\', '\\') for name in test_names_esc]
-    elif isinstance(dynamic_test_list, list):
+        test_names_esc = re.split(r"(?<!\\)(?:\\\\)*\|", dynamic_test_list)
+        return [name.replace("\\|", "|").replace("\\\\", "\\") for name in test_names_esc]
+    if isinstance(dynamic_test_list, list):
         return dynamic_test_list
-    else:
-        dynamic_test_name = get_variable_value("${DYNAMICTEST}")
-        if dynamic_test_name:
-            BuiltIn().set_suite_metadata("DataDriver", dynamic_test_name, True)
-            return [dynamic_test_name]
+    dynamic_test_name = get_variable_value("${DYNAMICTEST}")
+    if dynamic_test_name:
+        BuiltIn().set_suite_metadata("DataDriver", dynamic_test_name, True)
+        return [dynamic_test_name]
+    return None
 
 
 def is_pabot_dry_run():
@@ -220,8 +220,8 @@ def _get_normalized_keyword(keyword: str):
 
 def binary_partition_test_list(test_list: List, process_count: int):
     fractions = equally_partition_test_list(test_list, process_count)
-    return_list = list()
-    for i in range(int(math.sqrt(len(test_list) // process_count))):
+    return_list = []
+    for _i in range(int(math.sqrt(len(test_list) // process_count))):
         first, second = _partition_second_half(fractions)
         return_list.extend(first)
         fractions = second
@@ -231,7 +231,7 @@ def binary_partition_test_list(test_list: List, process_count: int):
 
 def _partition_second_half(fractions):
     first = fractions[: len(fractions) // 2]
-    second = list()
+    second = []
     for sub_list in fractions[len(fractions) // 2 :]:
         sub_sub_list = equally_partition_test_list(sub_list, 2)
         second.extend(sub_sub_list)

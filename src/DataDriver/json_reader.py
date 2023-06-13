@@ -43,11 +43,13 @@
 ]
 """
 from json import load
+from pathlib import Path
+
 from .AbstractReaderClass import AbstractReaderClass
 from .ReaderConfig import TestCaseData
 
 
 class json_reader(AbstractReaderClass):
     def get_data_from_source(self):
-        with open(self.file, 'r', encoding="utf-8") as json_file:
+        with Path(self.file).open(encoding="utf-8") as json_file:
             return [TestCaseData(**test) for test in load(json_file)]

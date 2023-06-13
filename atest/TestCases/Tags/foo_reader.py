@@ -10,7 +10,7 @@ class foo_reader(AbstractReaderClass):
         test_data = []
         flipflop = True
         for i in range(6):
-            args = {'${fooarg}': i}
+            args = {"${fooarg}": i}
             tags = ["included"]
             if flipflop:
                 tags = ["filtered"]

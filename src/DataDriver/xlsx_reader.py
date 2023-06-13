@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 try:
-    import pandas as pd  # type: ignore
     from math import nan  # type: ignore
-    import openpyxl  # type: ignore
-except ImportError:
+
+    import openpyxl  # type: ignore  # noqa: F401
+    import pandas as pd  # type: ignore
+except ImportError as err:
     raise ImportError(
         """Requirements (pandas, openpyxl) for XLSX support are not installed.
     Use 'pip install -U robotframework-datadriver[XLS]' to install XLSX support."""
-    )
+    ) from err
 from robot.utils import is_truthy  # type: ignore
 
 from .AbstractReaderClass import AbstractReaderClass

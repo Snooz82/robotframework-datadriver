@@ -1,0 +1,57 @@
+[tool.black]
+target-version = ['py38']
+line-length = 100
+
+[tool.mypy]
+exclude = [
+  '.*__init__\.py$',
+  '^build.*'
+]
+
+[tool.ruff]
+unfixable = []
+exclude = [
+  "atest",
+  "example"
+]
+ignore = [
+  "B008",  # do not perform function calls in argument defaults
+  "E501",  # line too long
+  "N815",  # mixedCase variable in class scope
+  "N803",  # argument name should be lowercase
+  "N806",  # variable in function should be lowercase
+  "N812",  # lowercase imported as non lowercase
+  "W605",  # invalid escape sequence would destroy docs
+  "RUF002",  # Docstring contains ambiguous
+  "N801",  # Class name `xxx` should use CapWords convention
+  "PLR0913",  # Too many arguments to function call
+  "N999",  # Invalid module name:
+]
+target-version = "py37"
+select = [
+  "E",
+  "F",
+  "W",
+  "C90",
+  "I",
+  "N",
+  "B",
+  "PYI",
+  "PL",
+  "PTH",
+  "UP",
+  "A",
+  "C4",
+  "DTZ",
+  "ISC",
+  "ICN",
+  "INP",
+  "PIE",
+  "T20",
+  "PYI",
+  "PT",
+  "RSE",
+  "RET",
+  "SIM",
+  "RUF"
+]

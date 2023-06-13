@@ -1,5 +1,4 @@
 import sys
-
 from enum import IntEnum
 
 from robot.run import USAGE  # type: ignore
@@ -16,7 +15,10 @@ class ArgumentState(IntEnum):
 
 def robot_options():
     arg_parser = ArgumentParser(
-        USAGE, auto_pythonpath=False, auto_argumentfile=True, env_options="ROBOT_OPTIONS"
+        USAGE,
+        auto_pythonpath=False,
+        auto_argumentfile=True,
+        env_options="ROBOT_OPTIONS",
     )
     valid_args = filter_args(arg_parser)
     return arg_parser.parse_args(valid_args)[0]
@@ -26,7 +28,7 @@ def filter_args(arg_parser):
     short_opts = arg_parser._short_opts
     long_opts = arg_parser._long_opts
     arg_state = ArgumentState.ANALYZE_NEXT
-    valid_robot_args = list()
+    valid_robot_args = []
     for arg in sys.argv[1:]:
         if arg_state == ArgumentState.ANALYZE_NEXT:
             arg_state = get_argument_state(arg, short_opts, long_opts)
@@ -53,11 +55,11 @@ def get_argument_state(arg, short_opts, long_opts):
 
 
 def is_short_option(arg):
-    return len(arg) == 2 and arg[0] == "-"
+    return len(arg) == 2 and arg[0] == "-"  # noqa: PLR2004
 
 
 def is_long_option(arg):
-    return len(arg) > 2 and arg[:2] == "--"
+    return len(arg) > 2 and arg[:2] == "--"  # noqa: PLR2004
 
 
 def is_pabot_testlevelsplit():

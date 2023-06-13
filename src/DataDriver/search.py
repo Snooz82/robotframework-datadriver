@@ -24,7 +24,7 @@ def search_variable(string, identifiers="$@&%*", ignore_errors=False):
     return VariableSearcher(identifiers, ignore_errors).search(string)
 
 
-class VariableMatch(object):
+class VariableMatch:
     def __init__(self, string, identifier=None, base=None, items=(), start=-1, end=-1):
         self.string = string
         self.identifier = identifier
@@ -44,7 +44,7 @@ class VariableMatch(object):
 
     @property
     def name(self):
-        return "%s{%s}" % (self.identifier, self.base) if self else None
+        return f"{self.identifier}{{{self.base}}}" if self else None
 
     @property
     def before(self):
@@ -79,10 +79,10 @@ class VariableMatch(object):
         if not self:
             return "<no match>"
         items = "".join("[%s]" % i for i in self.item) if self.items else ""
-        return "%s{%s}%s" % (self.identifier, self.base, items)
+        return f"{self.identifier}{{{self.base}}}{items}"
 
 
-class VariableSearcher(object):
+class VariableSearcher:
     def __init__(self, identifiers, ignore_errors=False):
         self.identifiers = identifiers
         self._ignore_errors = ignore_errors
@@ -198,8 +198,8 @@ class VariableSearcher(object):
             items = "".join("[%s]" % i for i in self.items)
             incomplete = "".join(self.item_chars)
             raise VariableError(
-                "Variable item '%s%s[%s' was not closed "
-                "properly." % (variable, items, incomplete)
+                "Variable item '{}{}[{}' was not closed "
+                "properly.".format(variable, items, incomplete)
             )
 
 
@@ -221,7 +221,7 @@ def unescape_variable_syntax(item):
 
 # TODO: This is pretty odd/ugly and used only in two places. Implement
 # something better or just remove altogether.
-class VariableIterator(object):
+class VariableIterator:
     def __init__(self, string, identifiers="$@&%*"):
         self._string = string
         self._identifiers = identifiers

@@ -1,8 +1,8 @@
 """Pre-run modifier that excludes tests that run PASS last time.
 """
 
-import os
 import re
+from pathlib import Path
 
 from robot.api import ExecutionResult, ResultVisitor, SuiteVisitor  # type: ignore
 from robot.running.model import Variable  # type: ignore
@@ -10,7 +10,7 @@ from robot.running.model import Variable  # type: ignore
 
 class rerunfailed(SuiteVisitor):
     def __init__(self, original_output_xml):
-        if not os.path.isfile(original_output_xml):
+        if not Path(original_output_xml).is_file():
             raise FileNotFoundError(f"{original_output_xml} is no file")
         result = ExecutionResult(original_output_xml)
         results_visitor = DataDriverResultsVisitor()
@@ -21,7 +21,7 @@ class rerunfailed(SuiteVisitor):
         """Remove tests that match the given pattern."""
         if self.has_no_tests(suite.name):
             suite.tests.clear()
-            return None
+            return
         if self._suite_is_data_driven(suite):
             dynamic_tests = Variable("@{DYNAMICTESTS}", self._failed_tests, suite.source)
             suite.resource.variables.append(dynamic_tests)
@@ -38,6 +38,7 @@ class rerunfailed(SuiteVisitor):
         for resource in suite.resource.imports:
             if resource.name == "DataDriver":
                 return True
+        return None
 
     def end_suite(self, suite):
         """Remove suites that are empty after removing tests."""
@@ -45,12 +46,11 @@ class rerunfailed(SuiteVisitor):
 
     def visit_test(self, test):
         """Avoid visiting tests and their keywords to save a little time."""
-        pass
 
 
 class DataDriverResultsVisitor(ResultVisitor):
     def __init__(self):
-        self.failed_tests = list()
+        self.failed_tests = []
 
     def start_test(self, test):
         if test.status == "FAIL":
