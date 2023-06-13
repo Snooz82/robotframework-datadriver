@@ -39,3 +39,6 @@ recursive-include atest *.json
 
 # added by check-manifest
 include *.md
+
+# added by check-manifest
+recursive-include docs *.html
