@@ -49,7 +49,7 @@ from .utils import (  # type: ignore
     warn,
 )
 
-__version__ = "1.8.0"
+__version__ = "1.8.1"
 
 
 class DataDriver:
@@ -1685,7 +1685,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
     def _get_reader_class_from_module(reader_name):
         importer = Importer("DataReader")
         debug(f"[ DataDriver ] Reader Module: {reader_name}")
-        reader = importer.import_class_or_module(reader_name)
+        reader = importer.import_class_or_module(str(reader_name))
         if not inspect.isclass(reader):
             message = f"Importing custom DataReader class {reader_name} failed."
             raise ImportError(message)
