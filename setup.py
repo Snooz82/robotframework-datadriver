@@ -1,8 +1,7 @@
-from setuptools import setup
-from setuptools import find_packages
 import re
 from pathlib import Path
 
+from setuptools import find_packages, setup
 
 with Path("Readme.rst").open(encoding="utf-8") as fh:
     long_description = fh.read()

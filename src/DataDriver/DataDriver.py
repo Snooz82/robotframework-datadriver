@@ -1751,7 +1751,7 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
     def _search_file_from_regex(self):
         file = Path(self.reader_config.file)
         if file.is_dir():
-            for filename in Path(".").iterdir():
+            for filename in Path().iterdir():
                 if re.match(self.reader_config.file_regex, str(filename)):
                     self.reader_config.file = str(file / filename)
                     break

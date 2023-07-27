@@ -1,6 +1,7 @@
 import sys
 from enum import IntEnum
 
+from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 from robot.run import USAGE  # type: ignore
 from robot.utils.argumentparser import ArgumentParser  # type: ignore
 
@@ -16,12 +17,15 @@ class ArgumentState(IntEnum):
 def robot_options():
     arg_parser = ArgumentParser(
         USAGE,
-        auto_pythonpath=False,
         auto_argumentfile=True,
         env_options="ROBOT_OPTIONS",
     )
-    valid_args = filter_args(arg_parser)
-    return arg_parser.parse_args(valid_args)[0]
+    cli_args = arg_parser.parse_args(filter_args(arg_parser))[0]
+    options = BuiltIn().get_variable_value(name='${options}')
+    if options is not None:
+        cli_args['include'] = options['include']
+        cli_args['exclude'] = options['exclude']
+    return cli_args
 
 
 def filter_args(arg_parser):

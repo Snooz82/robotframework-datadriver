@@ -7,3 +7,4 @@ robotframework-pabot
 twine
 xlrd
 Pygments
+ruff
