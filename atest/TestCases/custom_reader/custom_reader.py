@@ -22,13 +22,12 @@ from DataDriver.ReaderConfig import (
 
 
 class custom_reader(AbstractReaderClass):
-
     # This method will be called from DataDriver to get the TestCaseData list.
     def get_data_from_source(self):
         test_data = []
         for i in range(int(self.min), int(self.max)):  # Dummy code to just generate some data
             args = {
-                "${var_1}": str(i),
+                "${var_1}": i,
                 "${var_2}": str(i),
             }  # args is a dictionary. Variable name is the key, value is value.
             test_data.append(

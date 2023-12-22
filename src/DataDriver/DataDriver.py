@@ -24,6 +24,7 @@ from robot.api.logger import console  # type: ignore
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 from robot.model.tags import Tags  # type: ignore
 from robot.model.testsuite import TestSuite  # type: ignore
+from robot.running import ArgInfo  # type: ignore
 from robot.running.model import TestCase  # type: ignore
 from robot.utils.dotdict import DotDict  # type: ignore
 from robot.utils.importer import Importer  # type: ignore
@@ -34,6 +35,7 @@ from .ReaderConfig import (
     ReaderConfig,  # type: ignore
     TestCaseData,  # type: ignore
 )
+from .search import search_variable  # type: ignore
 from .utils import (  # type: ignore
     Encodings,
     PabotOpt,
@@ -49,7 +51,7 @@ from .utils import (  # type: ignore
     warn,
 )
 
-__version__ = "1.9.0"
+__version__ = "1.10.0"
 
 
 class DataDriver:
@@ -1866,11 +1868,21 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _get_template_arguments(self):
         return_arguments = []
+        unassigned_arguments = []
         for arg in self.template_keyword.args:
-            if arg in self.test_case_data.arguments:
-                return_arguments.append(self.test_case_data.arguments[arg])
+            if isinstance(arg, str):
+                variable_match = search_variable(arg)
+                arg_name = variable_match.name
+            elif isinstance(arg, ArgInfo):
+                arg_name = f"${{{arg.name}}}"
             else:
-                return_arguments.append(arg)
+                raise TypeError(f"Unknown argument type: {type(arg)} (DataDriver.py: 1869)")
+            if arg_name in self.test_case_data.arguments:
+                if unassigned_arguments:
+                    raise ValueError(f"Unassigned argument(s) detected: {unassigned_arguments}.")
+                return_arguments.append(self.test_case_data.arguments[arg_name])
+            else:
+                unassigned_arguments.append(arg_name)
         return return_arguments
 
     def _add_test_case_tags(self):

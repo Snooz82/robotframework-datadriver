@@ -27,7 +27,6 @@ built_in = BuiltIn()
 
 class AbstractReaderClass(ABC):
     def __init__(self, reader_config: ReaderConfig):
-
         self.reader_config = reader_config
         self.file = reader_config.file
         self.csv_encoding = reader_config.encoding

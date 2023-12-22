@@ -198,8 +198,7 @@ class VariableSearcher:
             items = "".join("[%s]" % i for i in self.items)
             incomplete = "".join(self.item_chars)
             raise VariableError(
-                "Variable item '{}{}[{}' was not closed "
-                "properly.".format(variable, items, incomplete)
+                f"Variable item '{variable}{items}[{incomplete}' was not closed properly."
             )
 
 

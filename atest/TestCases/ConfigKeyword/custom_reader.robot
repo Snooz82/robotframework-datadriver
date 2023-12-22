@@ -13,7 +13,9 @@ test default    1    2
 *** Keywords ***
 check vars
     [Arguments]    ${var_1}    ${var_2}
-    Should Be Equal    ${var_1}    ${var_2}
+    Should Be Equal As Integers   ${var_1}    ${var_2}
+    Should Be True    ${{isinstance($var1, int)}}
+    Should Be True    ${{isinstance($var2, str)}}
 
 Config Reader
     [Arguments]    ${config}

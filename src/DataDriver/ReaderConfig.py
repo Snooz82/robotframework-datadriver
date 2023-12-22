@@ -21,7 +21,6 @@ from .utils import PabotOpt, TagHandling
 
 
 class ReaderConfig:
-
     TEST_CASE_TABLE_NAME = "*** Test Cases ***"
 
     def __init__(
@@ -47,7 +46,6 @@ class ReaderConfig:
         optimize_pabot: PabotOpt = PabotOpt.Equal,
         **kwargs,
     ):
-
         self.file = file
         self.encoding = encoding
         self.dialect = dialect

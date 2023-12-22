@@ -12,7 +12,7 @@ default ${var_1} ${var_2}     a           a           defaults      This is the 
 
 *** Keywords ***
 Check Variables
-    [Arguments]    ${var_1}    ${var_2}    ${var_name}   ${var_doc}   ${var_tags}
+    [Arguments]    ${var_1}    ${var_2}    ${var_name}=None   ${var_doc}=None   ${var_tags}=None
     Verify Variable    ${var_1}                 ${var_2}          a
     Verify Variable    ${TEST_DOCUMENTATION}    ${var_doc}        This is the Default Documentation
     Verify Variable    ${TEST_NAME}             ${var_name}       defaults

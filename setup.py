@@ -6,7 +6,9 @@ from setuptools import find_packages, setup
 with Path("Readme.rst").open(encoding="utf-8") as fh:
     long_description = fh.read()
 
-with (Path(__file__).resolve().parent / "src" / "DataDriver" / "DataDriver.py").open(encoding="utf-8") as f:
+with (Path(__file__).resolve().parent / "src" / "DataDriver" / "DataDriver.py").open(
+    encoding="utf-8"
+) as f:
     VERSION = re.search('\n__version__ = "(.*)"', f.read()).group(1)
 
 setup(
@@ -22,8 +24,6 @@ setup(
     packages=find_packages("src"),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
@@ -34,7 +34,7 @@ setup(
         "Topic :: Software Development :: Testing :: Acceptance",
         "Framework :: Robot Framework",
     ],
-    install_requires=["robotframework >= 4.0.2", "docutils", "Pygments"],
+    install_requires=["robotframework >= 4.0.2, < 8.0", "docutils", "Pygments"],
     extras_require={"xls": ["pandas", "xlrd >= 1.2.0", "openpyxl"]},
-    python_requires=">=3.7.12",
+    python_requires=">=3.8.0",
 )

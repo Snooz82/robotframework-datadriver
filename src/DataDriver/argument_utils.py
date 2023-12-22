@@ -22,10 +22,10 @@ def robot_options():
     )
     cli_args = arg_parser.parse_args(filter_args(arg_parser))[0]
     try:
-        options = BuiltIn().get_variable_value(name='${options}')
+        options = BuiltIn().get_variable_value(name="${options}")
         if options is not None:
-            cli_args['include'] = options['include']
-            cli_args['exclude'] = options['exclude']
+            cli_args["include"] = options["include"]
+            cli_args["exclude"] = options["exclude"]
     except Exception:
         pass
     return cli_args

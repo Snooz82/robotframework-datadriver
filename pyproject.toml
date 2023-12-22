@@ -26,6 +26,7 @@ ignore = [
   "N801",  # Class name `xxx` should use CapWords convention
   "PLR0913",  # Too many arguments to function call
   "N999",  # Invalid module name:
+  "PTH207",  # Replace `glob` with `Path.glob` or `Path.rglob`
 ]
 target-version = "py37"
 select = [
