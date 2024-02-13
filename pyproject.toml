@@ -9,12 +9,12 @@ exclude = [
 ]
 
 [tool.ruff]
-unfixable = []
+lint.unfixable = []
 exclude = [
   "atest",
   "example"
 ]
-ignore = [
+lint.ignore = [
   "B008",  # do not perform function calls in argument defaults
   "E501",  # line too long
   "N815",  # mixedCase variable in class scope
@@ -29,7 +29,7 @@ ignore = [
   "PTH207",  # Replace `glob` with `Path.glob` or `Path.rglob`
 ]
 target-version = "py37"
-select = [
+lint.select = [
   "E",
   "F",
   "W",

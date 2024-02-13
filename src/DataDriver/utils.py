@@ -37,7 +37,7 @@ class Encodings(Enum):
     - an IBM PC code page, which is ASCII compatible
     """
 
-    ascii = auto()  # noqa: A003
+    ascii = auto()
     big5 = auto()
     big5hkscs = auto()
     cp037 = auto()

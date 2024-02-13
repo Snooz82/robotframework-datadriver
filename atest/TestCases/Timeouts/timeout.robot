@@ -1,26 +1,30 @@
 *** Settings ***
-Library          DataDriver
-Test Template    Check Variables
-Test Timeout     1s
-Force Tags       failing
+Library             DataDriver
+
+Test Timeout        1s
+Test Template       Check Variables
+
+Force Tags          failing
+
 
 *** Variables ***
 ${Default_Tags}=    []
 
-*** Test Cases ***            ${var_1}    ${var_2}    ${var_name}   ${var_doc}                           ${var_tags}
-default ${var_1} ${var_2}     a           a           defaults      This is the Default Documentation    ${Default_Tags}
-    [Documentation]    This is the Default Documentation
+
+*** Test Cases ***    ${var_1}    ${var_2}    ${var_name}    ${var_doc}    ${var_tags}
+default ${var_1} ${var_2}    [Documentation]    This is the Default Documentation
+    a    a    defaults    This is the Default Documentation    ${Default_Tags}
+
 
 *** Keywords ***
 Check Variables
-    [Arguments]    ${var_1}    ${var_2}    ${var_name}   ${var_doc}   ${var_tags}
-    Verify Variable    ${var_1}                 ${var_2}          a
-    Verify Variable    ${TEST_DOCUMENTATION}    ${var_doc}        This is the Default Documentation
-    Verify Variable    ${TEST_NAME}             ${var_name}       defaults
-    Sleep              2s
-
+    [Arguments]    ${var_1}    ${var_2}    ${var_name}    ${var_doc}    ${var_tags}
+    Verify Variable    ${var_1}    ${var_2}    a
+    Verify Variable    ${TEST_DOCUMENTATION}    ${var_doc}    This is the Default Documentation
+    Verify Variable    ${TEST_NAME}    ${var_name}    defaults
+    Sleep    2s
 
 Verify Variable
     [Arguments]    ${var}    ${exp_var}    ${default}
-    Run Keyword And Continue On Failure   Should Not Be Equal    ${var}    ${default}
-    Run Keyword And Continue On Failure   Should Be Equal As Strings    ${var}    ${exp_var}
+    Run Keyword And Continue On Failure    Should Not Be Equal    ${var}    ${default}
+    Run Keyword And Continue On Failure    Should Be Equal As Strings    ${var}    ${exp_var}

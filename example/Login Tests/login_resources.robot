@@ -1,9 +1,11 @@
 *** Settings ***
-Library           SeleniumLibrary
+Library     SeleniumLibrary
+
 
 *** Variables ***
-${LOGIN URL}      http://localhost:7272
-${BROWSER}        firefox
+${LOGIN URL}    http://localhost:7272
+${BROWSER}      firefox
+
 
 *** Keywords ***
 Open my Browser

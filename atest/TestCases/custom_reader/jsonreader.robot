@@ -1,6 +1,7 @@
 *** Settings ***
-Library    DataDriver    data.json
-Test Template    log vars
+Library             DataDriver    data.json
+
+Test Template       log vars
 
 
 *** Test Cases ***

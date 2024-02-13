@@ -18,13 +18,13 @@ import re
 import traceback
 from glob import glob
 from pathlib import Path
-from typing import Any, Optional, Union  # type: ignore
+from typing import Any, Dict, List, Optional, Union  # type: ignore
 
 from robot.api.logger import console  # type: ignore
 from robot.libraries.BuiltIn import BuiltIn  # type: ignore
 from robot.model.tags import Tags  # type: ignore
 from robot.model.testsuite import TestSuite  # type: ignore
-from robot.running import ArgInfo  # type: ignore
+from robot.running import ArgumentSpec  # type: ignore
 from robot.running.model import TestCase  # type: ignore
 from robot.utils.dotdict import DotDict  # type: ignore
 from robot.utils.importer import Importer  # type: ignore
@@ -51,7 +51,7 @@ from .utils import (  # type: ignore
     warn,
 )
 
-__version__ = "1.10.0"
+__version__ = "1.11.0"
 
 
 class DataDriver:
@@ -1863,26 +1863,33 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
         self.test.setup = self.template_test.setup
         self.test.teardown = self.template_test.teardown
         self.test.body.create_keyword(
-            name=self.template_keyword.name, args=self._get_template_arguments()
+            name=self.template_keyword.name,
+            args=self._get_template_arguments(),
+            lineno=self.template_keyword.lineno,
         )
 
-    def _get_template_arguments(self):
+    def _get_template_arguments(self) -> Union[List[Any], Dict[str, Any]]:
+        is_rf_7 = isinstance(self.template_keyword.args, ArgumentSpec)
+        if is_rf_7:
+            keyword_arguments = []
+            for arg in self.template_keyword.args:
+                arg_name = f"${{{arg.name}}}"
+                if arg_name in self.test_case_data.arguments:
+                    keyword_arguments.append((arg.name, self.test_case_data.arguments[arg_name]))
+                elif arg.required:
+                    raise ValueError(f"Unassigned requiered argument detected: {arg_name}.")
+            return keyword_arguments
         return_arguments = []
-        unassigned_arguments = []
         for arg in self.template_keyword.args:
             if isinstance(arg, str):
                 variable_match = search_variable(arg)
                 arg_name = variable_match.name
-            elif isinstance(arg, ArgInfo):
-                arg_name = f"${{{arg.name}}}"
             else:
-                raise TypeError(f"Unknown argument type: {type(arg)} (DataDriver.py: 1869)")
+                raise TypeError(f"Unknown argument type: {type(arg)} (DataDriver.py)")
             if arg_name in self.test_case_data.arguments:
-                if unassigned_arguments:
-                    raise ValueError(f"Unassigned argument(s) detected: {unassigned_arguments}.")
                 return_arguments.append(self.test_case_data.arguments[arg_name])
             else:
-                unassigned_arguments.append(arg_name)
+                raise ValueError(f"Unassigned argument detected: {arg_name}.")
         return return_arguments
 
     def _add_test_case_tags(self):

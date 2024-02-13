@@ -1,7 +1,8 @@
 *** Settings ***
-Library           DataDriver    file=${CURDIR}/DataFiles/*_File.json    reader_class=glob_reader
-Library           OperatingSystem
-Test Template     Test all Files
+Library             DataDriver    file=${CURDIR}/DataFiles/*_File.json    reader_class=glob_reader
+Library             OperatingSystem
+
+Test Template       Test all Files
 
 
 *** Test Cases ***

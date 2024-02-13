@@ -1,7 +1,8 @@
 *** Settings ***
-Library           DataDriver    file=${CURDIR}/FoldersToFind/*/    reader_class=glob_reader    arg_name=\${folder_name}
-Library           OperatingSystem
-Test Template     Test all Files
+Library             DataDriver    file=${CURDIR}/FoldersToFind/*/    reader_class=glob_reader    arg_name=\${folder_name}
+Library             OperatingSystem
+
+Test Template       Test all Files
 
 
 *** Test Cases ***

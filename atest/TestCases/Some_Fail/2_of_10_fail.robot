@@ -1,7 +1,9 @@
 *** Settings ***
-Library           DataDriver    encoding=UTF8
-Test Template     Check
-Force Tags        Failing
+Library             DataDriver    encoding=UTF8
+
+Test Template       Check
+
+Force Tags          failing
 
 
 *** Test Cases ***

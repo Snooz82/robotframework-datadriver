@@ -1,5 +1,6 @@
-*** Settings ***    
+*** Settings ***
 Resource    login_resources.robot
+
 
 *** Test Cases ***
 valid Login
@@ -8,4 +9,4 @@ valid Login
     Input pwd    mode
     click login button
     welcome page should be visible
-    [Teardown]    Close Browsers 
+    [Teardown]    Close Browsers

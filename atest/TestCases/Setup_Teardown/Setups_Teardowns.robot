@@ -1,11 +1,14 @@
 *** Settings ***
-Library           DataDriver    encoding=utf8
-Suite Setup       Suite Start
-Test Setup        Start
-Test Template     DataDriver demo
-Test Teardown     End
-Suite Teardown    Suite End
-Force Tags        NoPabot
+Library             DataDriver    encoding=utf8
+
+Suite Setup         Suite Start
+Suite Teardown      Suite End
+Test Setup          Start
+Test Teardown       End
+Test Template       DataDriver demo
+
+Force Tags          nopabot
+
 
 *** Test Cases ***
 Datadriver execution: ${number}
