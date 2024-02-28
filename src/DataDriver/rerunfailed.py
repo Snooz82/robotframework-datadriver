@@ -19,7 +19,7 @@ class rerunfailed(SuiteVisitor):
 
     def start_suite(self, suite):
         """Remove tests that match the given pattern."""
-        if self.has_no_tests(suite.name):
+        if self.has_no_tests(suite.longname):
             suite.tests.clear()
             return
         if self._suite_is_data_driven(suite):
@@ -27,7 +27,7 @@ class rerunfailed(SuiteVisitor):
             suite.resource.variables.append(dynamic_tests)
         else:
             suite.tests = [
-                t for t in suite.tests if f"{t.parent.name}.{t.name}" in self._failed_tests
+                t for t in suite.tests if t.longname in self._failed_tests
             ]
 
     def has_no_tests(self, name):
@@ -54,4 +54,4 @@ class DataDriverResultsVisitor(ResultVisitor):
 
     def start_test(self, test):
         if test.status == "FAIL":
-            self.failed_tests.append(f"{test.parent.name}.{test.name}")
+            self.failed_tests.append(test.longname)
