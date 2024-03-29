@@ -51,7 +51,7 @@ from .utils import (  # type: ignore
     warn,
 )
 
-__version__ = "1.11.0"
+__version__ = "1.11.1"
 
 
 class DataDriver:

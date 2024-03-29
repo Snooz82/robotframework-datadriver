@@ -5,7 +5,10 @@ import re
 from pathlib import Path
 
 from robot.api import ExecutionResult, ResultVisitor, SuiteVisitor  # type: ignore
-from robot.running.model import Variable  # type: ignore
+try:
+    from robot.running.model import Variable  # type: ignore
+except ImportError:
+    from robot.running.resourcemodel import Variable  # type: ignore / robotframework>=7.0
 
 
 class rerunfailed(SuiteVisitor):
@@ -23,7 +26,7 @@ class rerunfailed(SuiteVisitor):
             suite.tests.clear()
             return
         if self._suite_is_data_driven(suite):
-            dynamic_tests = Variable("@{DYNAMICTESTS}", self._failed_tests, suite.source)
+            dynamic_tests = Variable("${DYNAMICTESTS}", self._failed_tests, suite.source)
             suite.resource.variables.append(dynamic_tests)
         else:
             suite.tests = [
