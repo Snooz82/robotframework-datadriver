@@ -1870,12 +1870,18 @@ When DataDriver is used together with Pabot, it optimizes the ``--testlevelsplit
 
     def _get_template_arguments(self) -> Union[List[Any], Dict[str, Any]]:
         is_rf_7 = isinstance(self.template_keyword.args, ArgumentSpec)
+        try:
+            from robot.running.model import Argument    # handling new RF 7.0.1 #5000
+        except ImportError:
+            class Argument(tuple):
+                def __new__(cls, name, value):
+                    return tuple.__new__(cls, (name, value))
         if is_rf_7:
             keyword_arguments = []
             for arg in self.template_keyword.args:
                 arg_name = f"${{{arg.name}}}"
                 if arg_name in self.test_case_data.arguments:
-                    keyword_arguments.append((arg.name, self.test_case_data.arguments[arg_name]))
+                    keyword_arguments.append(Argument(arg.name, self.test_case_data.arguments[arg_name]))
                 elif arg.required:
                     raise ValueError(f"Unassigned requiered argument detected: {arg_name}.")
             return keyword_arguments
